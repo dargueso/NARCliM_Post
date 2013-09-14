@@ -1,7 +1,7 @@
 import re
 import sys
 import os
-
+import netCDF4 as nc
 
 def read_input(filename):
     """
@@ -42,6 +42,8 @@ def read_input(filename):
                 values=li.split('=')
                 entryname.append(values[0])
                 entryvalue.append(values[1])
+    fileopts.close()
+    
     for ii in xrange(len(entryname)):
         inputinf[entryname[ii]]=entryvalue[ii]
         
@@ -57,7 +59,9 @@ def read_input(filename):
             #Ignore commented lines
             if not li.startswith("#"):
                 values=li.split()
-                varnames.append(values[0])       
+                varnames.append(values[0])
+    filevarnames.close()       
+    
     os.remove('filevarnames.tmp')
     os.remove('fileopts.tmp') 
     
@@ -91,7 +95,6 @@ def read_varinfo(filename):
         if li:
             #Ignore commented lines 
             if not li.startswith("#"):
-    	        print li
                 values=li.split(' ')
                 varname.append(values[0])
                 filetype.append(values[1])
@@ -103,6 +106,7 @@ def read_varinfo(filename):
 
     varinfo=dictionary2entries(filetype,varname,statsreq)
     return varinfo
+
  
 # *************************************************************************************
 def getwrfname(varname):
@@ -111,6 +115,131 @@ def getwrfname(varname):
     return dic[varname]
 
 
+# *************************************************************************************
+def read_schemes(filename):
+    """Method that reads a sample WRF file and gets the Physics option used in the simulation
+       Searches in WRF_schemes.inf file that contains the names and references of all schemes
+       Outputs a dictionary with the schemes types and the schemes names (and references used in the simulation)
+       To be used in get_globatt
+       ---
+       sch_info: dictionary with the schemes options information
+    """
+    filein=nc.Dataset(filename,'r')
+    schemes={}
+    schemes['ra_lw_physics']=filein.RA_LW_PHYSICS
+    schemes['sf_sfclay_physics']=filein.SF_SFCLAY_PHYSICS
+    schemes['cu_physics']=filein.CU_PHYSICS
+    schemes['bl_pbl_physics']=filein.BL_PBL_PHYSICS
+    schemes['ra_sw_physics']=filein.RA_SW_PHYSICS
+    schemes['sf_surface_physics']=filein.SF_SURFACE_PHYSICS
+    
+    fileschemes=open("./info_files/WRF_schemes.inf")
+    lines=fileschemes.readlines()
+    sch_infoall={}
+    sch_type=[]
+    sch_number=[]
+    sch_name=[]
+    sch_ref=[]
+    for line in lines:
+        line=re.sub('\s+',' ',line)
+        li=line.strip()
+        #Ignore empty lines
+        if li:
+            #Ignore commented lines 
+            if not li.startswith("#"):
+                values=li.split(' ')
+                sch_type.append(values[0])
+                sch_number.append(values[1])
+                sch_name.append('%s; %s' %(values[2],values[3]))
+                
+    fileschemes.close()
+    
+    sch_infoall=dictionary2entries(sch_type,sch_number,sch_name)
+    
+    
+    sch_info={}
+    for ii in xrange(len(schemes)):
+        sch=schemes.keys()[ii]
+        num=str(schemes[schemes.keys()[ii]])
+        sch_info[sch]=sch_infoall[sch][num].replace("!"," ")
+
+
+    return sch_info
+
+def get_globatt(GCM,RCM,sch_info,perturb=None):
+    """Method that generates the global attributes
+    Defines the name of the schemes and the references to include in the global attributes
+
+    GCM: Name of the GCM (e.g.:MIROC3.2)
+    RCM: Name of the RCM (e.g.: R1)
+    Period: Name of the perturbation of the GCM
+    sch_info: dictionary containing the kind of schemes as keys, and the name and references as values
+    e.g.: global_attributes=ga.globalatt("MIROC3.2","R1",sch_info,"d1")
+    """
+    
+    glatt={}
+    glatt['institution']				= "University of New South Wales (Australia)" 
+    glatt['contact']					= "jason.evans@unsw.edu.au"
+    glatt['institute_id']				= "CCRC"
+    glatt['institute']					= "Climate Change Research Centre"
+    glatt['references']					= "http://www.ccrc.unsw.edu.au"
+    glatt['model_id']					= "WRF"
+    glatt['RCM_version_id'] 			= "v3.3"
+    glatt['RCM_source']					= "WRF 3.3 modified at the Climate Change Research Centre"	
+    glatt['CORDEX_domain']              = "AUS44"
+    glatt['project_id']					= "NARCliM"
+    glatt['title']						= "Projection run"
+    glatt['experiment_id']				= "projection"
+    glatt['experiment']					= "Projection run with %s" %(GCM)
+    glatt['driving_experiment'] 		= "%s, projection, %s%s%s" %(GCM,RCM,GCM,perturb)
+    glatt['driving_model_id']			= "%s%s" %(GCM,perturb)
+    glatt['driving_model_ensemble_member'] = "%s%s%s" %(RCM,GCM,perturb)
+    glatt['wrf_options'] 		= "sst_update & tmn_update"
+    glatt['driving_experiment_name'] 	= "projection_%s_%s" %(GCM,RCM) 
+    glatt['product']					= "output"
+    glatt['creation_date'] = dt.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S UTC")
+    glatt['wrf_schemes_ra_lw_physics']            = "%s" %(sch_info['ra_lw_physics']) 
+    glatt['wrf_schemes_sf_sfclay_physics']        = "%s" %(sch_info['sf_sfclay_physics']) 
+    glatt['wrf_schemes_cu_physics']           = "%s" %(sch_info['cu_physics'])  
+    glatt['wrf_schemes_bl_pbl_physics']       = "%s" %(sch_info['bl_pbl_physics']) 
+    glatt['wrf_schemes_ra_sw_physics']            = "%s" %(sch_info['ra_sw_physics']) 
+    glatt['wrf_schemes_sf_surface_physics']   = "%s" %(sch_info['sf_surface_physics'])
+    
+    return glatt
+# *************************************************************************************
+def wrftime2date(files):
+    """ 
+    Conversion of dates from a wrf file or a list of wrf files
+    format: [Y] [Y] [Y] [Y] '-' [M] [M] '-' [D] [D] '_' [H] [H] ':' [M] [M] ':' [S] [S]
+    to a datetime object.
+    """
+
+
+    if len(files)==1:
+        fin=nc.Dataset(str(files[0]),'r')
+        times=fin.variables['Times']
+    else:
+        fin=nc.MFDataset(files[:])
+        times=fin.variables['Times']
+
+    year=np.zeros(len(times),dtype=np.int64)
+    month=year.copy()
+    day=year.copy()
+    hour=year.copy()
+    minute=year.copy()
+    second=year.copy()
+
+    for i in xrange(len(times)):
+        listdate=times[i]
+        year[i]=int(listdate[0])*1000 + int(listdate[1])*100 + int(listdate[2])*10 + int(listdate[3])
+        month[i]=int(listdate[5])*10 + int(listdate[6])
+        day[i]=int(listdate[8])*10 + int(listdate[9])
+        hour[i]=int(listdate[11])*10 + int(listdate[12])
+        minute[i]=int(listdate[14])*10 + int(listdate[15])
+        second[i]=int(listdate[17])*10 + int(listdate[18])
+
+    dates = [datetime.datetime(year[i], month[i], day[i], hour[i], minute[i], second[i]) for i in xrange(len(times))]
+        return dates
 # *************************************************************************************
 def dictionary2entries(vals1, vals2, vals3):
     """ Function to create a dictionary with 3 entries (thanks to Jeff Exbrayat, CoECSCC-CCRC)
