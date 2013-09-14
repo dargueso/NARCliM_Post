@@ -16,7 +16,7 @@ def read_input(filename):
     
     """
     filein=open(filename,'r')
-<<<<<<< .merge_file_v6RVqS
+
     
     options,sentinel,varnames=filein.read().partition('#### Requested output variables (DO NOT CHANGE THIS LINE) ####')
     fileopts=open('fileopts.tmp','w')
@@ -27,9 +27,7 @@ def read_input(filename):
     
     fileopts=open('fileopts.tmp','r')
     lines=fileopts.readlines()
-=======
-    lines=filein.readlines()
->>>>>>> .merge_file_lBdPWd
+
     inputinf={}
     entryname=[]
     entryvalue=[]
@@ -46,7 +44,6 @@ def read_input(filename):
                 entryvalue.append(values[1])
     for ii in xrange(len(entryname)):
         inputinf[entryname[ii]]=entryvalue[ii]
-<<<<<<< .merge_file_v6RVqS
         
     filevarnames=open('filevarnames.tmp','r')
     lines=filevarnames.readlines()
@@ -67,9 +64,7 @@ def read_input(filename):
     print 'Variables that will be obtained from postprocessing:'
     print varnames   
     return inputinf,varnames
-=======
-    return inputinf
->>>>>>> .merge_file_lBdPWd
+
 # *************************************************************************************
 
 def read_varinfo(filename):
