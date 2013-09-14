@@ -15,11 +15,12 @@ import sys
 import os 
 import datetime as dt
 import glob
-from netCDF4 import Dataset as ncdf
-from netCDF4 import num2date, date2num
-from netCDF4 import MFDataset
-from miscellaneous_AD import *
+from postprocess_modules import *
+import calendar
 
+# Check initial time
+ctime_i=checkpoint(0)
+ctime=checkpoint(0)
 
 #### READING INPUT FILE ######
 
@@ -45,6 +46,10 @@ file_type=['wrfhrly', 'wrfout', 'wrfxtrm', 'wrfdly']
 domain='d02'
 out_variables=['T2']
 
+if GCM=='CCMA':
+	calendar=='noleap'
+else:
+	calendar='standard'
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
 if not os.path.exists(pathout):
@@ -82,14 +87,17 @@ for file in file_type:
 				sys.exit(0)
 			
 			# READ FILES
-			fin=MFDataset(files_in) #Read all files
+			fin=nc.MFDataset(files_in) #Read all files
 			time = fin.variables['Times'][:] # Get time variable
 			lat=fin.variables['XLAT']
 			lon=fin.variables['XLONG']
 			print '   READ LATITUDE, LONGITUDE AND TIMES'
 			
 			# CHECKING: Check if the of time steps is right
-			n_timesteps = [dt.datetime(year,01,01,00)x+ timedelta(hours=x) for x in xrange(0,10,1)]
+			n_timesteps = dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)*24
+			if calendar=='noleap' and calendar.isleap(year)==True:
+				n_timesteps = (dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)-1)*24
+			
 			if len(files_in)!=12:
 				print 'ERROR: the number of ',file, ' files in year ', year,' is INCORRECT'
 				print ' ---- SOME FILES ARE MISSING ---'
@@ -103,7 +111,7 @@ for file in file_type:
 				varval=fin.variables['T2']
 				varatt=fin.variables[var].ncattrs()
 
-				create_netcdf(file_out, var, lat, lon, times, rotpole, varatt, overwrite=None):
+				create_netcdf(file_out, var, lat, lon, times, rotpole, varatt, overwrite=None)
 				
 				
 				
