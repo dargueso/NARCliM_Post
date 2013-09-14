@@ -1,5 +1,6 @@
 import re
 import sys
+import os
 
 
 def read_input(filename):
@@ -14,22 +15,53 @@ def read_input(filename):
     domain: domain to postprocess (e.g. 'd02')
     
     """
-    filein=open(opts.infile,'r')
-    lines=filein.readlines()
+    filein=open(filename,'r')
+    
+    options,sentinel,varnames=filein.read().partition('#### Requested output variables (DO NOT CHANGE THIS LINE) ####')
+    fileopts=open('fileopts.tmp','w')
+    fileopts.write(options)
+    filevarnames=open('filevarnames.tmp','w')
+    filevarnames.write(varnames)
+    
+    
+    fileopts=open('fileopts.tmp','r')
+    lines=fileopts.readlines()
     inputinf={}
+    entryname=[]
+    entryvalue=[]
     for line in lines:
         line=re.sub('\s+',' ',line)
+        line=line.replace(" ", "")
         li=line.strip()
         #Ignore empty lines
         if li:
-            #Ignore commented lines 
+            #Ignore commented lines
             if not li.startswith("#"): 
-                values=li.split(' ')
+                values=li.split('=')
                 entryname.append(values[0])
                 entryvalue.append(values[1])
     for ii in xrange(len(entryname)):
-        inputinf[entryname[i]]=entryvalue[i]
-    return inputinf
+        inputinf[entryname[ii]]=entryvalue[ii]
+        
+    filevarnames=open('filevarnames.tmp','r')
+    lines=filevarnames.readlines()
+    varnames=[]
+    for line in lines:
+        line=re.sub('\s+',' ',line)
+        line=line.replace(" ", "")
+        li=line.strip()
+        #Ignore empty lines
+        if li:
+            #Ignore commented lines
+            if not li.startswith("#"):
+                values=li.split()
+                varnames.append(values[0])       
+    os.remove('filevarnames.tmp')
+    os.remove('fileopts.tmp') 
+    
+    print 'Variables that will be obtained from postprocessing:'
+    print varnames   
+    return inputinf,varnames
 # *************************************************************************************
 def read_varinfo(filename):
     """
