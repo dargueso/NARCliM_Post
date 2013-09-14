@@ -34,11 +34,10 @@ help="file with the input arguments", metavar="INPUTFILE")
 
 ###
 
-<<<<<<< .merge_file_jqvVeC
+
 inputinf,out_variables=read_input(opts.infile)
-=======
-inputinf=pm.read_input(opts.infile)
->>>>>>> .merge_file_WSUV0D
+
+
 
 ##############################
 
@@ -49,11 +48,8 @@ RCM=inputinf['RCM']
 syear=inputinf['start_year']
 eyear=inputinf['end_year']
 domain=inputinf['domain']
-<<<<<<< .merge_file_jqvVeC
 outfile_patt=inputinf['outfile_patt']
-=======
-sys.exit(0)
->>>>>>> .merge_file_WSUV0D
+
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
 fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain,)
