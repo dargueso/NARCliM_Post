@@ -38,38 +38,44 @@ inputinf=read_input(opts.infile)
 
 ##############################
 
-#pathin=input['pathin']
-#pathout=input['pathout']
-#GCM=input['GCM']
-#RCM=input['RCM']
-#syear=input['start_year']
-#eyear=input['end_year']
-#out_variables=input['out_variables']
+pathin=inputinf['pathin']
+pathout=inputinf['pathout']
+GCM=inputinf['GCM']
+RCM=inputinf['RCM']
+syear=inputinf['start_year']
+eyear=inputinf['end_year']
+out_variables=inputinf['out_variables']
+domain=inputinf['domain']
 
-pathin='/home/z3393020/WRFouts/NARCliM/MK30/R1/1990-2010/'
-pathout='/srv/ccrc/data28/z3444417/NARCliM/new_post/'
-GCM='MK3.0'
-RCM='R1'
-syear=1990
-eyear=2009
+#CREATE OUTPUT DIR IF IT DOESN'T EXIST
+fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain,)
+if not os.path.exists(fullpathout):
+	os.makedirs(fullpathout)
+
+#CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
+if not os.path.exists("%s/temp/" %(fullpathout)):
+	os.makedirs("%s/temp/" %(fullpathout))
+
+
+
+#### Reading variable info file ######
+
+varinfo=read_varinfo("./info_files/variables.inf")
+file_type=varinfo.keys()
+
+
+######################################
+
+
 out_variables=['tas']
-
-file_type=['wrfhrly', 'wrfout', 'wrfxtrm', 'wrfdly']
-domain='d02'
 out_variables=['T2']
 
-if GCM=='CCMA':
+if GCM=='CCCMA3.1':
 	calendar=='noleap'
 else:
 	calendar='standard'
 
-#CREATE OUTPUT DIR IF IT DOESN'T EXIST
-if not os.path.exists(pathout):
-	os.makedirs(pathout)
 
-#CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
-if not os.path.exists("%s/temp/" %(pathout)):
-	os.makedirs("%s/temp/" %(pathout))
 
 
 	
