@@ -3,6 +3,28 @@ import sys
 import os
 import netCDF4 as nc
 
+class const:
+  """Class that contains most used atmospheric constant values
+  """   
+  Rd = 287.04
+  Rv = 461.5
+  RdRv = Rd / Rv
+  cp = 7.*Rd/2.
+  epsilon_gamma = 0.62197
+  es_base_bolton = 0.6112
+  es_Abolton = 17.67
+  es_Bbolton = 243.5
+  es_base_tetens = 6.1078
+  es_Atetens_vapor = 7.5
+  es_Btetens_vapor = 237.3
+  es_Atetens_ice = 9.5
+  es_Btetens_ice = 265.5
+  g = 9.81
+  p1000mb = 100000.
+  rcp = Rd/cp
+  tkelvin = 273.15
+  missingval = 1.e+20
+# *************************************************************************************
 def read_input(filename):
     """
     Read input file with input arguments:
@@ -167,7 +189,18 @@ def read_schemes(filename):
 
 
     return sch_info
-
+# *************************************************************************************
+def get_varatt(sn,ln,un,ts):
+    att={}
+    attribs['standard_name'] = sn
+    attribs['long_name'] = ln
+    att['units']=un
+    att['coordinates'] = "lon lat"
+    attribs['cell_method'] = "time: point values %s second" %(ts)
+    att['grid_mapping'] = "Rotated_pole"
+    att['_FillValue']=const.missinval
+    return at
+# *************************************************************************************
 def get_globatt(GCM,RCM,sch_info,perturb=None):
     import datetime as dt
     """Method that generates the global attributes
