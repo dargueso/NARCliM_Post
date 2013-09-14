@@ -8,6 +8,8 @@ syear=1990
 eyear=2009
 domain='d02'
 
+outfile_patt="CCRC_NARCliM_"
+
 #### Requested output variables ####
 
 tas		

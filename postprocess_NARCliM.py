@@ -46,6 +46,7 @@ syear=inputinf['start_year']
 eyear=inputinf['end_year']
 out_variables=inputinf['out_variables']
 domain=inputinf['domain']
+outfile_patt=inputinf['outfile_patt']
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
 fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain,)
