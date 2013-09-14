@@ -99,17 +99,22 @@ for filet in file_type:
 			
 			# READ FILES
 			fin=nc.MFDataset(files_in) #Read all files
-			time = fin.variables['Times'][:] # Get time variable
-			
-			# DEFINE DATES AKING INTO ACCOUNT IF LEAP-NOLEAP YEAR
+			time_old = fin.variables['Times'][:] # Get time variable
+					
+	
+			# DEFINE DATES TAKING INTO ACCOUNT IF LEAP-NOLEAP YEAR
 			dates_day = dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)
 			n_timesteps=dates_day.days*24
 			dates = [dt.datetime(year,01,01,00)+ dt.timedelta(hours=x) for x in xrange(0,n_timesteps,1)]
-			months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
-			days_all=np.asarray([dates[i].day for i in xrange(len(dates))])	
+
 			if calendar=='noleap' and cal.isleap(year)==True:
+				months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
+				days_all=np.asarray([dates[i].day for i in xrange(len(dates))])	
 				dates=dates[((months_all==2) & (days_all==29))==False]
+
+			time=nc.date2num(dates[:],units="hours since 1949-12-01 00:00:00")
 			
+
 			# -------------------
 			# CHECKING: Check if the of time steps is right
 			if n_timesteps!=time.shape[0]:
@@ -124,26 +129,34 @@ for filet in file_type:
 			# LOOP over variables
 			for var in out_variables:
 				print '  -->  READING VARIABLE ', var
-				wrfvar=pm.getwrfname(var)
+				wrfvar=(pm.getwrfname(var)[0]).split('-')
 		
-				#varval=np.array(fin.variables[wrfvar], dtype='d')
-				#varval=fin.variables[wrfvar][:]
-				varval=fin.variables[wrfvar][0:10,:,:]
-				varatt=[]
-				for att in fin.variables[wrfvar].ncattrs():
-					varatt.append(getattr(fin.variables[wrfvar],att))
+				count_v=0
+				for wrfv in wrfvar:
+                                        #varval=np.array(fin.variables[wrfvar], dtype='d')
+				        #varval=fin.variables[wrfvar][:]
+					if count_v==0:
+						varval=np.array(fin.variables[wrfv][:], dtype='d')
+					if count_v==1:
+						varval1=np.array(fin.variables[wrfv][], dtype='d')
+					if count_v==2:
+						varval2=np.array(fin.variables[wrfv][:], dtype='d')
+					count_v=count_v+1
+
 				ctime=pm.checkpoint(ctime)
 
 				#result=compute_tas(filet,varval,time)
+
 				result=varval
 				file_out=pathout+'%s_%s_%s-%s_%s.nc' % (outfile_patt,'01H',year,year,var) # Specify output file
 				wrf_file_eg=files_in[0]
-				info=[file_out, var, varatt, calendar, domain, wrf_file_eg]
+				varatt='asdfvsdv'
+				info=[file_out, var, varatt, calendar, domain, wrf_file_eg, GCM, RCM]
 				aa=pm.create_netcdf(info, result, time)
 				
 				print aa
 				ctime=pm.checkpoint(ctime)
-
+				sys.exit(0)
 				
 		# ***********************************************
 		# LOOP over variables

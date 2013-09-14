@@ -110,13 +110,15 @@ def read_varinfo(filename):
  
 # *************************************************************************************
 def getwrfname(varname):
-    dic={'tas':'T2','pr':'RAINC-RAINNC','ps':'PS'}
+    dic={'tas':['T2'],'pr':['RAINC-RAINNC'],'ps':['PS']}
     
     return dic[varname]
 
 
 # *************************************************************************************
 def read_schemes(filename):
+    import netCDF4 as nc
+
     """Method that reads a sample WRF file and gets the Physics option used in the simulation
        Searches in WRF_schemes.inf file that contains the names and references of all schemes
        Outputs a dictionary with the schemes types and the schemes names (and references used in the simulation)
@@ -167,6 +169,7 @@ def read_schemes(filename):
     return sch_info
 
 def get_globatt(GCM,RCM,sch_info,perturb=None):
+    import datetime as dt
     """Method that generates the global attributes
     Defines the name of the schemes and the references to include in the global attributes
 
@@ -206,40 +209,8 @@ def get_globatt(GCM,RCM,sch_info,perturb=None):
     glatt['wrf_schemes_sf_surface_physics']   = "%s" %(sch_info['sf_surface_physics'])
     
     return glatt
-# *************************************************************************************
-def wrftime2date(files):
-    """ 
-    Conversion of dates from a wrf file or a list of wrf files
-    format: [Y] [Y] [Y] [Y] '-' [M] [M] '-' [D] [D] '_' [H] [H] ':' [M] [M] ':' [S] [S]
-    to a datetime object.
-    """
 
 
-    if len(files)==1:
-        fin=nc.Dataset(str(files[0]),'r')
-        times=fin.variables['Times']
-    else:
-        fin=nc.MFDataset(files[:])
-        times=fin.variables['Times']
-
-    year=np.zeros(len(times),dtype=np.int64)
-    month=year.copy()
-    day=year.copy()
-    hour=year.copy()
-    minute=year.copy()
-    second=year.copy()
-
-    for i in xrange(len(times)):
-        listdate=times[i]
-        year[i]=int(listdate[0])*1000 + int(listdate[1])*100 + int(listdate[2])*10 + int(listdate[3])
-        month[i]=int(listdate[5])*10 + int(listdate[6])
-        day[i]=int(listdate[8])*10 + int(listdate[9])
-        hour[i]=int(listdate[11])*10 + int(listdate[12])
-        minute[i]=int(listdate[14])*10 + int(listdate[15])
-        second[i]=int(listdate[17])*10 + int(listdate[18])
-
-    dates = [datetime.datetime(year[i], month[i], day[i], hour[i], minute[i], second[i]) for i in xrange(len(times))]
-        return dates
 # *************************************************************************************
 def dictionary2entries(vals1, vals2, vals3):
     """ Function to create a dictionary with 3 entries (thanks to Jeff Exbrayat, CoECSCC-CCRC)
@@ -298,7 +269,9 @@ def create_netcdf(info, varval, time, overwrite=None):
         varatt=info[2]
         calendar=info[3]
         domain=info[4]
-        wrf_file_eg=info[4]
+        wrf_file_eg=info[5]
+        GCM=info[6]
+        RCM=info[7]
 
         # **********************************************************************
         # Read attributes from the geo_file of the corresponding domain
@@ -337,7 +310,7 @@ def create_netcdf(info, varval, time, overwrite=None):
         print "\n"
 	
         # VARIABLE 1: Rotated_Pole 
-        print 'Rotated_pole VARIABLE CREATED ' 
+        print '    ---   Rotated_pole VARIABLE CREATED ' 
         varout=fout.createVariable('Rotated_pole','c',[])
         setattr(varout, 'grid_mapping_name', 'rotated_latitude_longitude')
         setattr(varout, 'dx_m', dx)
@@ -349,12 +322,13 @@ def create_netcdf(info, varval, time, overwrite=None):
         setattr(varout, 'grid_north_pole_longitude', pole_lon)
 
         # VARIABLE 2: time_bnds 
-        print 'TIME_BNDS VARIABLE CREATED ' 
+        print '    ---   TIME_BNDS VARIABLE CREATED ' 
         varout=fout.createVariable('time_bnds','d',['time', 'bnds'])
-        varout[:]=time[:]
+        aa=np.reshape(np.concatenate([time,time]), (time.shape[0],2))
+        varout[:]=aa[:]
 
         # VARIABLE 3: time 
-        print 'TIME VARIABLE CREATED ' 
+        print '    ---   TIME VARIABLE CREATED ' 
         varout=fout.createVariable('time','d',['time'])
         varout[:]=time[:]
         setattr(varout, 'standard_name','time')
@@ -365,7 +339,7 @@ def create_netcdf(info, varval, time, overwrite=None):
 
 
         # VARIABLE 4: lon
-        print varname, ' VARIABLE CREATED ' 
+        print '    ---   ',varname, ' VARIABLE CREATED ' 
         varout=fout.createVariable('lon','f',['y', 'x'])
         varout[:]=lon[:]
         setattr(varout, 'standard_name','longitude')
@@ -374,7 +348,7 @@ def create_netcdf(info, varval, time, overwrite=None):
         setattr(varout, '_CoordinateAxisType','Lon')
         
         # VARIABLE 5: lat
-        print 'LATITUDE VARIABLE CREATED ' 
+        print '    ---   LATITUDE VARIABLE CREATED ' 
         varout=fout.createVariable('lat','f',['y', 'x'])
         varout[:]=lat[:]
         setattr(varout, 'standard_name','latitude')
@@ -383,12 +357,17 @@ def create_netcdf(info, varval, time, overwrite=None):
         setattr(varout, '_CoordinateAxisType','Lat')
            
         # VARIABLE 6: variable
-        print 'LATITUDE VARIABLE CREATED ' 
+        print '    ---   LATITUDE VARIABLE CREATED ' 
         varout=fout.createVariable(varname,'f',['time', 'y', 'x'])
         varout[:]=varval
-        # Copy attributes from varatt:
-        for att in varatt:
-            setattr(varout, att, getattr(fin.variables[var],att))
+
+        # for att in varatt:
+        #     setattr(varout, att, getattr(fin.variables[var],att))
+        
+        # ADD GLOBAL ATTRIBUTES
+        
+        sch_info=read_schemes(wrf_file_eg)
+        gblatt= get_globatt(GCM,RCM,sch_info)
 
 	fout.close()				
         return 'DONE!!!!!!!!!!!!!'
