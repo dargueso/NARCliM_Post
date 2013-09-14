@@ -128,6 +128,15 @@ def read_varinfo(filename):
 
     varinfo=dictionary2entries(filetype,varname,statsreq)
     return varinfo
+
+ 
+# *************************************************************************************
+def getwrfname(varname):
+    dic={'tas':'T2','pr':'RAINC-RAINNC','ps':'PS'}
+    
+    return dic[varname]
+
+
 # *************************************************************************************
 def read_schemes(filename):
     """Method that reads a sample WRF file and gets the Physics option used in the simulation
@@ -238,6 +247,7 @@ def wrftime2date(files):
     to a datetime object.
     """
 
+
     if len(files)==1:
         fin=nc.Dataset(str(files[0]),'r')
         times=fin.variables['Times']
@@ -297,7 +307,7 @@ def dictionary2entries(vals1, vals2, vals3):
     return dicjeff
 # *************************************************************************************
 
-def create_netcdf(info, varval, lat, lon, time, overwrite=None):
+def create_netcdf(info, varval, time, overwrite=None):
         
 
         """ Create a netcdf file for the post-processed variables of NARCliM simulations
@@ -307,22 +317,28 @@ def create_netcdf(info, varval, lat, lon, time, overwrite=None):
 
         Input: global  attributres from pre-defined classes:   
         Output: a netcdf file
-        Author: Alejandro Di Luca, Daniel Argueso
+        Author: Alejanro Di Luca, Daniel Argueso
         Created: 14/09/2013
         Last Modification: 07/08/2013
         
         """
+        print '\n', ' CALLING CREATE_NETCDF MODULE '
         import numpy as np
         import netCDF4 as nc
 
-        filename=info[0]
+        file_out=info[0]
         varname=info[1]
         varatt=info[2]
+        calendar=info[3]
+        domain=info[4]
+        wrf_file_eg=info[4]
 
         # **********************************************************************
         # Read attributes from the geo_file of the corresponding domain
-        file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.d02.nc'
+        file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.'+domain+'.nc'
         fin1=nc.Dataset(file10,mode='r')
+        lon=np.squeeze(fin1.variables['XLONG_M'][:,:]) # Getting longitude
+        lat=np.squeeze(fin1.variables['XLAT_M'][:,:]) # Getting latitude
         dx=getattr(fin1, 'DX')
         dy=getattr(fin1, 'DY')
         cen_lat=getattr(fin1, 'CEN_LAT')
@@ -332,7 +348,10 @@ def create_netcdf(info, varval, lat, lon, time, overwrite=None):
         stand_lon=getattr(fin1, 'STAND_LON')
         fin1.close()
 
-
+        # **********************************************************************
+        # Read GLOBAL attributes 
+        
+        
 	#**********************************************************************
 	# CREATING NETCDF FILE
 	# Create output file
@@ -349,9 +368,9 @@ def create_netcdf(info, varval, lat, lon, time, overwrite=None):
         # ------------------------
         # Create and assign values to variables
         print "\n"
-        print 'Creating variables: ', fin.variables.keys() 
 	
         # VARIABLE 1: Rotated_Pole 
+        print 'Rotated_pole VARIABLE CREATED ' 
         varout=fout.createVariable('Rotated_pole','c',[])
         setattr(varout, 'grid_mapping_name', 'rotated_latitude_longitude')
         setattr(varout, 'dx_m', dx)
@@ -363,20 +382,23 @@ def create_netcdf(info, varval, lat, lon, time, overwrite=None):
         setattr(varout, 'grid_north_pole_longitude', pole_lon)
 
         # VARIABLE 2: time_bnds 
+        print 'TIME_BNDS VARIABLE CREATED ' 
         varout=fout.createVariable('time_bnds','d',['time', 'bnds'])
-        varout[:]=time_bnds[0:time_dim]
+        varout[:]=time[:]
 
         # VARIABLE 3: time 
+        print 'TIME VARIABLE CREATED ' 
         varout=fout.createVariable('time','d',['time'])
         varout[:]=time[:]
         setattr(varout, 'standard_name','time')
         setattr(varout, 'long_name','time')
         setattr(varout, 'bounds','time_bnds')
         setattr(varout, 'units','hours since 1949-12-01 00:00:00')
-        setattr(varout, 'calendar','standard')
+        setattr(varout, 'calendar',calendar)
 
 
         # VARIABLE 4: lon
+        print varname, ' VARIABLE CREATED ' 
         varout=fout.createVariable('lon','f',['y', 'x'])
         varout[:]=lon[:]
         setattr(varout, 'standard_name','longitude')
@@ -385,6 +407,7 @@ def create_netcdf(info, varval, lat, lon, time, overwrite=None):
         setattr(varout, '_CoordinateAxisType','Lon')
         
         # VARIABLE 5: lat
+        print 'LATITUDE VARIABLE CREATED ' 
         varout=fout.createVariable('lat','f',['y', 'x'])
         varout[:]=lat[:]
         setattr(varout, 'standard_name','latitude')
@@ -393,37 +416,16 @@ def create_netcdf(info, varval, lat, lon, time, overwrite=None):
         setattr(varout, '_CoordinateAxisType','Lat')
            
         # VARIABLE 6: variable
+        print 'LATITUDE VARIABLE CREATED ' 
         varout=fout.createVariable(varname,'f',['time', 'y', 'x'])
         varout[:]=varval
         # Copy attributes from varatt:
         for att in varatt:
             setattr(varout, att, getattr(fin.variables[var],att))
 
-
-	# Add global attributes
-	for att in fin.ncattrs():
-		if hasattr(fout, att): 
-			pass
-		else:
-			setattr(fout, att, getattr(fin,att))
-
-		setattr(fout,"temporal_scale_hours", ts)
-		setattr(fout,"spatial_scale_km", ss)
-		setattr(fout,"orig_temporal_scale_hours", d['TempRes'])				
-		setattr(fout,"orig_spatial_scale_km", d['SpatRes'])
-		setattr(fout,"dataset", sname)
-		setattr(fout,"input_dir", d['path'])	
-		setattr(fout,"year", year)
-		setattr(fout,"interpolation_method", 'griddata-cubic')
-		setattr(fout,"Projection", Projection)
-		setattr(fout,"Geofile",'/srv/ccrc/data23/z3444417/studies/Data/RefGridMeshes/GeoFiles/geo_em_D10'+Projection+'.nc')
-		setattr(fout,"region_limits", file10)			
-		setattr(fout,"author","Alejandro Di Luca @ CCRC, UNSW, Australia")
-		setattr(fout,"comment","Variable extracted using extract_psl.py.")
-		setattr(fout,"date",datetime.today().strftime('%Y-%m-%d'))
-		setattr(fout,"contact","a.diluca@unsw.edu.au")
-
 	fout.close()				
+        return 'DONE!!!!!!!!!!!!!'
+
 	#****************************************************************************************
 
 #**************************************************************************************

@@ -1,4 +1,4 @@
-#OUTPUT VAR				FILETYPE			FREQUENCY			STATS
+#OUTPUT VAR			FILETYPE			FREQUENCY			STATS
 
 tas						wrfhrly				DAY,MON				mean,min,max
 pracc					wrfhrly				DAY,MON				acc

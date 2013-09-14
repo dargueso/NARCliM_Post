@@ -50,7 +50,6 @@ eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
 
-
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
 fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain,)
 if not os.path.exists(fullpathout):
@@ -65,11 +64,7 @@ if not os.path.exists("%s/temp/" %(fullpathout)):
 varinfo=pm.read_varinfo("./info_files/variables.inf")
 file_type=varinfo.keys()
 
-
 ######################################
-out_variables=['tas']
-out_variables=['T2']
-
 if GCM=='CCCMA3.1':
 	calendar=='noleap'
 else:
@@ -81,66 +76,83 @@ else:
 for filet in file_type:
 
 	if filet=='wrfhrly':
-		print ' Processing ', filet, ' WRF outputs'
-		
+		print '\n', ' Processing ', filet, ' outputs'
+	
 
 		#***********************************************
 		# LOOP over years
 		for year in np.arange(syear,eyear+1):
-			print ' -> Processing year: ', year
+			print '\n', ' -> Processing year: ', year
 			
 			loadfiles = pathin+'%s_%s_%s*' % (filet,domain,year) # Specify path
 			files_in=sorted(glob.glob(loadfiles))
 
-			print '   Number of files to read:', len(files_in)
+			print '  -->  Number of files to read:', len(files_in)
 
 			# -------------------
 			# CHECKING: Check if the number of files is right
 			if len(files_in)!=12:
-				print 'ERROR: the number of ',filet, ' files in year ', year,' is INCORRECT'
+				print '\n', 'ERROR: the number of ',filet, ' files in year ', year,' is INCORRECT'
 				print ' ---- SOME FILES ARE MISSING ---'
-				print 'SCRIPT stops running '
+				print 'SCRIPT stops running ','\n' 
 				sys.exit(0)
 			
 			# READ FILES
 			fin=nc.MFDataset(files_in) #Read all files
 			time = fin.variables['Times'][:] # Get time variable
-			lat=fin.variables['XLAT']
-			lon=fin.variables['XLONG']
-			print '   READ LATITUDE, LONGITUDE AND TIMES'
 			
+			# DEFINE DATES AKING INTO ACCOUNT IF LEAP-NOLEAP YEAR
 			dates_day = dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)
 			n_timesteps=dates_day.days*24
 			dates = [dt.datetime(year,01,01,00)+ dt.timedelta(hours=x) for x in xrange(0,n_timesteps,1)]
 			months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
-			days_all=np.asarray([dates[i].day for i in xrange(len(dates))])
-			
+			days_all=np.asarray([dates[i].day for i in xrange(len(dates))])	
 			if calendar=='noleap' and cal.isleap(year)==True:
 				dates=dates[((months_all==2) & (days_all==29))==False]
 			
 			# -------------------
 			# CHECKING: Check if the of time steps is right
 			if n_timesteps!=time.shape[0]:
-				print 'ERROR: the number of timesteps in year ', year,' is INCORRECT'
+				print '\n', 'ERROR: the number of timesteps in year ', year,' is INCORRECT'
 				print 'There should be: ', n_timesteps
 				print 'There are: ', time.shape[0]
-				print 'SCRIPT stops running '
+				print 'SCRIPT stops running ','\n'
 				sys.exit(0)
 
 
 			# ***********************************************
 			# LOOP over variables
 			for var in out_variables:
-				print '   READ VARIABLE ', var
-				varval=fin.variables['T2'].astype('float64')
-				varatt=fin.variables['T2'].ncattrs()
+				print '  -->  READING VARIABLE ', var
+				wrfvar=pm.getwrfname(var)
+		
+				#varval=np.array(fin.variables[wrfvar], dtype='d')
+				#varval=fin.variables[wrfvar][:]
+				varval=fin.variables[wrfvar][0:10,:,:]
+				varatt=[]
+				for att in fin.variables[wrfvar].ncattrs():
+					varatt.append(getattr(fin.variables[wrfvar],att))
+				ctime=pm.checkpoint(ctime)
 
 				#result=compute_tas(filet,varval,time)
 				result=varval
-				file_out=pathout+'%s_%s_%s-%s_%s.nc' % (head_files,'01H',year,year,var) # Specify output file
-				info=[file_out, varname, varatt, calendar, domain]
-				aa=create_netcdf(info, result, lat, lon, time, overwrite=None)
+				file_out=pathout+'%s_%s_%s-%s_%s.nc' % (outfile_patt,'01H',year,year,var) # Specify output file
+				wrf_file_eg=files_in[0]
+				info=[file_out, var, varatt, calendar, domain, wrf_file_eg]
+				aa=pm.create_netcdf(info, result, time)
 				
+				print aa
+				ctime=pm.checkpoint(ctime)
+
 				
-				
+		# ***********************************************
+		# LOOP over variables
+		for var in out_variables:
+		
+			# ***********************************************
+			# LOOP over FREQUENCIES
+			freqlist=(varinfo[filet][var]).split(',')
+			for freq in freqlist:
+				print freq
+
     
