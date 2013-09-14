@@ -45,5 +45,13 @@ class globalatt:
 		self.wrf_schemes_ra_sw_physics 			= "%s" %s(sch_info['ra_sw_physics ']) 
 		self.wrf_schemes_sf_surface_physics 	= "%s" %s(sch_info['sf_surface_physics']) 
 		
-		
+class varatt:
+
+    def __init__(self,standard_name,long_name,units,coordinates,cell_method,grid_mapping):
+        self.standard_name=standard_name
+        self.long_name=long_name
+        self.units=units
+        self.coordinates=coordinates
+        self.cell_method=cell_method
+        self.grid_mapping=grid_mapping
 		
