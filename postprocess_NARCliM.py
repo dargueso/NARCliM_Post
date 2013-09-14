@@ -15,6 +15,7 @@ import sys
 import os 
 import datetime as dt
 import glob
+from optparse import OptionParser
 from postprocess_modules import *
 import calendar as cal
 
@@ -23,6 +24,17 @@ ctime_i=checkpoint(0)
 ctime=checkpoint(0)
 
 #### READING INPUT FILE ######
+### Options 
+
+parser = OptionParser()
+
+parser.add_option("-i", "--infile", dest="infile",
+help="file with the input arguments", metavar="INPUTFILE")
+(opts, args) = parser.parse_args()
+
+###
+
+inputinf=read_input(opts.infile)
 
 ##############################
 
