@@ -16,7 +16,7 @@ import os
 import datetime as dt
 import glob
 from postprocess_modules import *
-import calendar
+import calendar as cal
 
 # Check initial time
 ctime_i=checkpoint(0)
@@ -79,6 +79,7 @@ for file in file_type:
 
 			print '   Number of files to read:', len(files_in)
 
+			# -------------------
 			# CHECKING: Check if the number of files is right
 			if len(files_in)!=12:
 				print 'ERROR: the number of ',file, ' files in year ', year,' is INCORRECT'
@@ -93,16 +94,30 @@ for file in file_type:
 			lon=fin.variables['XLONG']
 			print '   READ LATITUDE, LONGITUDE AND TIMES'
 			
-			# CHECKING: Check if the of time steps is right
-			n_timesteps = dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)*24
-			if calendar=='noleap' and calendar.isleap(year)==True:
-				n_timesteps = (dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)-1)*24
+			dates_day = dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)
+			dates = [datetime(int(year_i),01,01,00)+ timedelta(hours=x) for x in xrange(0,int(slp.shape[0])*ts,ts)]
 			
-			if len(files_in)!=12:
-				print 'ERROR: the number of ',file, ' files in year ', year,' is INCORRECT'
-				print ' ---- SOME FILES ARE MISSING ---'
+			if calendar=='noleap' and calendar.isleap(year)==True:
+				dates = (dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)-1)
+				months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
+				days_all=np.asarray([dates[i].day for i in xrange(len(dates))])
+				dates=dates[((months_all==2) & (days_all==29))==False]
+			
+			n_timesteps=n_timesteps_days*24
+
+			months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
+			days_all=np.asarray([dates[i].day for i in xrange(len(dates))])
+			dates=dates[((months_all==2) & (days_all==29))==False]
+
+			# -------------------
+			# CHECKING: Check if the of time steps is right
+			if n_timesteps!=time.shape[0]:
+				print 'ERROR: the number of timesteps in year ', year,' is INCORRECT'
+				print 'There should be: ', n_timesteps
+				print 'There are: ', time.shape[0]
 				print 'SCRIPT stops running '
 				sys.exit(0)
+
 
 			# ***********************************************
 			# LOOP over variables
