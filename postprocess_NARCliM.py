@@ -35,7 +35,7 @@ help="file with the input arguments", metavar="INPUTFILE")
 ###
 
 
-inputinf,out_variables=read_input(opts.infile)
+inputinf,out_variables=pm.read_input(opts.infile)
 
 
 
@@ -45,8 +45,8 @@ pathin=inputinf['pathin']
 pathout=inputinf['pathout']
 GCM=inputinf['GCM']
 RCM=inputinf['RCM']
-syear=inputinf['start_year']
-eyear=inputinf['end_year']
+syear=int(inputinf['syear'])
+eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
 
@@ -62,7 +62,7 @@ if not os.path.exists("%s/temp/" %(fullpathout)):
 
 
 #### Reading variable info file ######
-varinfo=read_varinfo("./info_files/variables.inf")
+varinfo=pm.read_varinfo("./info_files/variables.inf")
 file_type=varinfo.keys()
 
 
