@@ -20,7 +20,7 @@ def compute_tas(var,time):
         sys.exit('ERROR in compute_tas: The lenght of time variable does not correspond to var first dimension')     
     
     attribs={}
-    attribs[tseconds]=(time[-1]-time[0]).seconds/len(time)
+    attribs[tseconds]=round(((times[-1]-times[0]).total_seconds()/len(times)))
     attribs[standard_name] = "air_temperature"
     attribs[long_name] = "Surface air temperature"
     attribs[units] = "K"
