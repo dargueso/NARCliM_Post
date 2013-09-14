@@ -27,13 +27,13 @@ def read_input(filename):
                 values=li.split(' ')
                 entryname.append(values[0])
                 entryvalue.append(values[1])
-    for ii len(entryname):
+    for ii in xrange(len(entryname)):
         inputinf[entryname[i]]=entryvalue[i]
-
+    return inputinf
 # *************************************************************************************
-def read_varinfo:
+def read_varinfo(filename):
     """
-    Read file with information regarding the output variables.
+    Read file (filename) with information regarding the output variables.
     varname: Name of the variable
     filetype: Type of file where the original variables are stored (wrfhrly, wrfout, wrfxtrm, wrfdly)
     freqreq: Frequency requested (now it set to DAY and MON by default to all variables)
@@ -41,7 +41,7 @@ def read_varinfo:
     ---
     varinfo: dictionary with filetype,varnames and stats
     """
-    filein=open("./info_files/variables.inf","r")
+    filein=open(filename,"r")
     lines=filein.readlines()
     varinfo={}
     varname=[]
@@ -56,7 +56,7 @@ def read_varinfo:
             #Ignore commented lines 
             if not li.startswith("#"):
     	        print li
-                values=li_va:.split(' ')
+                values=li.split(' ')
                 varname.append(values[0])
                 filetype.append(values[1])
                 freqreq.append(values[2])
@@ -65,7 +65,8 @@ def read_varinfo:
     filein.close()
 
 
-    varinfo=ut.dictionary2entries(filetype,varname,statsreq)
+    varinfo=dictionary2entries(filetype,varname,statsreq)
+    return varinfo
 
 # *************************************************************************************
 def dictionary2entries(vals1, vals2, vals3):
