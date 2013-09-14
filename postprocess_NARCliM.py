@@ -16,12 +16,12 @@ import os
 import datetime as dt
 import glob
 from optparse import OptionParser
-from postprocess_modules import *
+import postprocess_modules as pm
 import calendar as cal
 
 # Check initial time
-ctime_i=checkpoint(0)
-ctime=checkpoint(0)
+ctime_i=pm.checkpoint(0)
+ctime=pm.checkpoint(0)
 
 #### READING INPUT FILE ######
 ### Options 
@@ -34,7 +34,7 @@ help="file with the input arguments", metavar="INPUTFILE")
 
 ###
 
-inputinf=read_input(opts.infile)
+inputinf=pm.read_input(opts.infile)
 
 ##############################
 
@@ -46,6 +46,7 @@ syear=inputinf['start_year']
 eyear=inputinf['end_year']
 out_variables=inputinf['out_variables']
 domain=inputinf['domain']
+sys.exit(0)
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
 fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain,)
@@ -57,16 +58,12 @@ if not os.path.exists("%s/temp/" %(fullpathout)):
 	os.makedirs("%s/temp/" %(fullpathout))
 
 
-
 #### Reading variable info file ######
-
 varinfo=read_varinfo("./info_files/variables.inf")
 file_type=varinfo.keys()
 
 
 ######################################
-
-
 out_variables=['tas']
 out_variables=['T2']
 
@@ -76,15 +73,12 @@ else:
 	calendar='standard'
 
 
-
-
-	
 #***********************************************
 # Loop over all types of WRF output files (i.e., wrfhrly, wrfout, etc) 
-for file in file_type:
+for filet in file_type:
 
-	if file=='wrfhrly':
-		print ' Processing ', file, ' WRF outputs'
+	if filet=='wrfhrly':
+		print ' Processing ', filet, ' WRF outputs'
 		
 
 		#***********************************************
@@ -92,7 +86,7 @@ for file in file_type:
 		for year in np.arange(syear,eyear+1):
 			print ' -> Processing year: ', year
 			
-			loadfiles = pathin+'%s_%s_%s*' % (file,domain,year) # Specify path
+			loadfiles = pathin+'%s_%s_%s*' % (filet,domain,year) # Specify path
 			files_in=sorted(glob.glob(loadfiles))
 
 			print '   Number of files to read:', len(files_in)
@@ -100,7 +94,7 @@ for file in file_type:
 			# -------------------
 			# CHECKING: Check if the number of files is right
 			if len(files_in)!=12:
-				print 'ERROR: the number of ',file, ' files in year ', year,' is INCORRECT'
+				print 'ERROR: the number of ',filet, ' files in year ', year,' is INCORRECT'
 				print ' ---- SOME FILES ARE MISSING ---'
 				print 'SCRIPT stops running '
 				sys.exit(0)
@@ -113,20 +107,14 @@ for file in file_type:
 			print '   READ LATITUDE, LONGITUDE AND TIMES'
 			
 			dates_day = dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)
-			dates = [datetime(int(year_i),01,01,00)+ timedelta(hours=x) for x in xrange(0,int(slp.shape[0])*ts,ts)]
-			
-			if calendar=='noleap' and calendar.isleap(year)==True:
-				dates = (dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)-1)
-				months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
-				days_all=np.asarray([dates[i].day for i in xrange(len(dates))])
-				dates=dates[((months_all==2) & (days_all==29))==False]
-			
-			n_timesteps=n_timesteps_days*24
-
+			n_timesteps=dates_day.days*24
+			dates = [dt.datetime(year,01,01,00)+ dt.timedelta(hours=x) for x in xrange(0,n_timesteps,1)]
 			months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
 			days_all=np.asarray([dates[i].day for i in xrange(len(dates))])
-			dates=dates[((months_all==2) & (days_all==29))==False]
-
+			
+			if calendar=='noleap' and cal.isleap(year)==True:
+				dates=dates[((months_all==2) & (days_all==29))==False]
+			
 			# -------------------
 			# CHECKING: Check if the of time steps is right
 			if n_timesteps!=time.shape[0]:
@@ -141,18 +129,14 @@ for file in file_type:
 			# LOOP over variables
 			for var in out_variables:
 				print '   READ VARIABLE ', var
-				varval=fin.variables['T2']
-				varatt=fin.variables[var].ncattrs()
+				varval=fin.variables['T2'].astype('float64')
+				varatt=fin.variables['T2'].ncattrs()
 
-				create_netcdf(file_out, var, lat, lon, times, rotpole, varatt, overwrite=None)
+				#result=compute_tas(filet,varval,time)
+				result=varval
+				file_out=pathout+'%s_%s_%s-%s_%s.nc' % (head_files,'01H',year,year,var) # Specify output file
+				aa=create_netcdf(file_out, result, lat, lon, time, varatt, domain, overwrite=None)
 				
 				
 				
-    
-
-    
-    
-    
-    
-    
     
