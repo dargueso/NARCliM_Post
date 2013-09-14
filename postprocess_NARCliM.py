@@ -44,7 +44,6 @@ GCM=inputinf['GCM']
 RCM=inputinf['RCM']
 syear=inputinf['start_year']
 eyear=inputinf['end_year']
-out_variables=inputinf['out_variables']
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
 
