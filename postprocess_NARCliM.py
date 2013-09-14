@@ -34,7 +34,7 @@ help="file with the input arguments", metavar="INPUTFILE")
 
 ###
 
-inputinf=read_input(opts.infile)
+inputinf,out_variables=read_input(opts.infile)
 
 ##############################
 
