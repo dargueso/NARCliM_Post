@@ -1,6 +1,107 @@
+import re
+import sys
+
+
+def read_input(filename):
+    """
+    Read input file with input arguments:
+    pathin: path to input wrf files
+    pathout: path to output postprocessed files
+    GCM: Name of the GCM (e.g. MIROC3.2)
+    RCM: Name of the RCM (e.g. R1)
+    syear: First year to postprocess (e.g. 1990)
+    eyear: Last year to postprocess (e.g. 2009)
+    domain: domain to postprocess (e.g. 'd02')
+    
+    """
+    filein=open(opts.infile,'r')
+    lines=filein.readlines()
+    inputinf={}
+    for line in lines:
+        line=re.sub('\s+',' ',line)
+        li=line.strip()
+        #Ignore empty lines
+        if li:
+            #Ignore commented lines 
+            if not li.startswith("#"): 
+                values=li.split(' ')
+                entryname.append(values[0])
+                entryvalue.append(values[1])
+    for ii len(entryname):
+        inputinf[entryname[i]]=entryvalue[i]
+
+# *************************************************************************************
+def read_varinfo:
+    """
+    Read file with information regarding the output variables.
+    varname: Name of the variable
+    filetype: Type of file where the original variables are stored (wrfhrly, wrfout, wrfxtrm, wrfdly)
+    freqreq: Frequency requested (now it set to DAY and MON by default to all variables)
+    statsreq: Statistics requested for each variable (acc, mean, max, min)
+    ---
+    varinfo: dictionary with filetype,varnames and stats
+    """
+    filein=open("./info_files/variables.inf","r")
+    lines=filein.readlines()
+    varinfo={}
+    varname=[]
+    filetype=[]
+    freqreq=[]
+    statsreq=[]
+    for line in lines:
+        line=re.sub('\s+',' ',line)
+        li=line.strip()
+        #Ignore empty lines
+        if li:
+            #Ignore commented lines 
+            if not li.startswith("#"):
+    	        print li
+                values=li_va:.split(' ')
+                varname.append(values[0])
+                filetype.append(values[1])
+                freqreq.append(values[2])
+                statsreq.append(values[3])
+
+    filein.close()
+
+
+    varinfo=ut.dictionary2entries(filetype,varname,statsreq)
+
+# *************************************************************************************
+def dictionary2entries(vals1, vals2, vals3):
+    """ Function to create a dictionary with 3 entries (thanks to Jeff Exbrayat, CoECSCC-CCRC)
+    >>>country = ['India', 'Germany', 'Guatemala', 'Burma', 'South Africa', 'South Africa']
+    >>>person = ['Mohandas Karamchand Ghandi', 'Albert Einstein', 'Rigoberta Menchu', 'Aung San Suu Kyi', 'Nelson Mandela', 'Desmond Tutu']
+    >>>fight = ['Independence', 'Nuclear bomb', 'Indigenous Rights', 'Freedom', 'anti-Apartheid', 'Reconciliation']
+
+    >>>dict3 = dictionary3entries(country, person, fight)
+
+    >>>print dict3['South Africa']['Nelson Mandela']
+    anti-Apartheid
+    >>>print dict3['South Africa']
+    {'Nelson Mandela': 'anti-Apartheid', 'Desmond Tutu': 'Reconciliation'}
+    """
+
+    dicjeff={}
+
+    for ii in range(len(vals1)):
+        if vals1[ii] not in dicjeff.keys():
+            dicjeff[vals1[ii]]={}
+            if vals2[ii] not in dicjeff[vals1[ii]].keys():
+                dicjeff[vals1[ii]][vals2[ii]]={}
+                dicjeff[vals1[ii]][vals2[ii]]=vals3[ii]
+            else:
+                dicjeff[vals1[ii]][vals2[ii]]=vals3[ii]
+        else:
+            if vals2[ii] not in dicjeff[vals1[ii]].keys():
+                dicjeff[vals1[ii]][vals2[ii]]={}
+                dicjeff[vals1[ii]][vals2[ii]]=vals3[ii]
+            else:
+                dicjeff[vals1[ii]][vals2[ii]]=vals3[ii]
+    return dicjeff
 # *************************************************************************************
 def create_netcdf(filename, var, lat, lon, times, rotpole, varatt, overwrite=None):
-        import sys
+        
 
         """ Create a netcdf file for the post-processed variables of NARCliM simulations
                    
