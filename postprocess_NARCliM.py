@@ -135,7 +135,8 @@ for filet in file_type:
 				#result=compute_tas(filet,varval,time)
 				result=varval
 				file_out=pathout+'%s_%s_%s-%s_%s.nc' % (head_files,'01H',year,year,var) # Specify output file
-				aa=create_netcdf(file_out, result, lat, lon, time, varatt, domain, overwrite=None)
+				info=[file_out, varname, varatt, calendar, domain]
+				aa=create_netcdf(info, result, lat, lon, time, overwrite=None)
 				
 				
 				

@@ -105,7 +105,7 @@ def dictionary2entries(vals1, vals2, vals3):
     return dicjeff
 # *************************************************************************************
 
-def create_netcdf(filename, var, lat, lon, time, varatt, domain, overwrite=None):
+def create_netcdf(info, varval, lat, lon, time, overwrite=None):
         
 
         """ Create a netcdf file for the post-processed variables of NARCliM simulations
@@ -123,9 +123,12 @@ def create_netcdf(filename, var, lat, lon, time, varatt, domain, overwrite=None)
         import numpy as np
         import netCDF4 as nc
 
+        filename=info[0]
+        varname=info[1]
+        varatt=info[2]
 
-#***********************************************************************************************
-# Read attributes from the geo_file of the corresponding domain
+        # **********************************************************************
+        # Read attributes from the geo_file of the corresponding domain
         file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.d02.nc'
         fin1=nc.Dataset(file10,mode='r')
         dx=getattr(fin1, 'DX')
@@ -138,10 +141,9 @@ def create_netcdf(filename, var, lat, lon, time, varatt, domain, overwrite=None)
         fin1.close()
 
 
-	#***************************************************************************************
+	#**********************************************************************
 	# CREATING NETCDF FILE
 	# Create output file
-	file_out='%s%s-%s-%s_%s_%s%s%s'%(path_out,sname,ss,ts,varname_out[var],str(year),Projection,'.nc')
 	fout=nc.Dataset(file_out,mode='w', format='NETCDF4_CLASSIC')
 
 	# ------------------------
@@ -149,8 +151,8 @@ def create_netcdf(filename, var, lat, lon, time, varatt, domain, overwrite=None)
         print '   Creating DIMENSIONS '
         fout.createDimension('bnds', 2)
         fout.createDimension('time',None)
-        fout.createDimension('y',var.shape[2])
-        fout.createDimension('x',var.shape[1])
+        fout.createDimension('y',varval.shape[2])
+        fout.createDimension('x',varval.shape[1])
 
         # ------------------------
         # Create and assign values to variables
@@ -169,26 +171,42 @@ def create_netcdf(filename, var, lat, lon, time, varatt, domain, overwrite=None)
         setattr(varout, 'grid_north_pole_longitude', pole_lon)
 
         # VARIABLE 2: time_bnds 
-        varout=fout.createVariable('time_bnds','c',[])
+        varout=fout.createVariable('time_bnds','d',['time', 'bnds'])
+        varout[:]=time_bnds[0:time_dim]
+
+        # VARIABLE 3: time 
+        varout=fout.createVariable('time','d',['time'])
+        varout[:]=time[:]
+        setattr(varout, 'standard_name','time')
+        setattr(varout, 'long_name','time')
+        setattr(varout, 'bounds','time_bnds')
+        setattr(varout, 'units','hours since 1949-12-01 00:00:00')
+        setattr(varout, 'calendar','standard')
 
 
+        # VARIABLE 4: lon
+        varout=fout.createVariable('lon','f',['y', 'x'])
+        varout[:]=lon[:]
+        setattr(varout, 'standard_name','longitude')
+        setattr(varout, 'long_name','Longitude')
+        setattr(varout, 'units','degrees_east')
+        setattr(varout, '_CoordinateAxisType','Lon')
+        
+        # VARIABLE 5: lat
+        varout=fout.createVariable('lat','f',['y', 'x'])
+        varout[:]=lat[:]
+        setattr(varout, 'standard_name','latitude')
+        setattr(varout, 'long_name','Latitude')
+        setattr(varout, 'units','degrees_north')
+        setattr(varout, '_CoordinateAxisType','Lat')
+           
+        # VARIABLE 6: variable
+        varout=fout.createVariable(varname,'f',['time', 'y', 'x'])
+        varout[:]=varval
+        # Copy attributes from varatt:
+        for att in varatt:
+            setattr(varout, att, getattr(fin.variables[var],att))
 
-	outvar=fout.createVariable(varname_out[var],vartypes[var],['time','latitude','longitude'],\
-					   fill_value=-32767)
-	outvar[:]=temp
-
-
-	# Copy attributes from invar and create some new ones:
-	setattr(outvar, 'units', 'hPa')
-	setattr(outvar, 'scale_factor', 1.0)
-	setattr(outvar, 'add_offset', 0)
-	print '     Adding Attributes: ', fin.variables[d['varname_in']].ncattrs()
-	for att in fin.variables[d['varname_in']].ncattrs():
-
-		if hasattr(outvar, att):
-			pass
-		else:
-			setattr(outvar, att, getattr(fin.variables[d['varname_in']],att))
 
 	# Add global attributes
 	for att in fin.ncattrs():
