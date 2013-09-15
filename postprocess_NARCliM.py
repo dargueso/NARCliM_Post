@@ -138,7 +138,7 @@ for filet in file_type:
 					if count_v==0:
 						varval=np.array(fin.variables[wrfv][:], dtype='d')
 					if count_v==1:
-						varval1=np.array(fin.variables[wrfv][], dtype='d')
+						varval1=np.array(fin.variables[wrfv][:], dtype='d')
 					if count_v==2:
 						varval2=np.array(fin.variables[wrfv][:], dtype='d')
 					count_v=count_v+1
@@ -148,13 +148,13 @@ for filet in file_type:
 				#result=compute_tas(filet,varval,time)
 
 				result=varval
-				file_out=pathout+'%s_%s_%s-%s_%s.nc' % (outfile_patt,'01H',year,year,var) # Specify output file
+				file_out=pathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,'01H',year,year,var) # Specify output file
 				wrf_file_eg=files_in[0]
 				varatt='asdfvsdv'
 				info=[file_out, var, varatt, calendar, domain, wrf_file_eg, GCM, RCM]
 				aa=pm.create_netcdf(info, result, time)
-				
-				print aa
+				print '  ===> FILE: ', file_out
+				print aa,'\n'
 				ctime=pm.checkpoint(ctime)
 				sys.exit(0)
 				

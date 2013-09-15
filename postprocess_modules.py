@@ -24,6 +24,8 @@ class const:
   rcp = Rd/cp
   tkelvin = 273.15
   missingval = 1.e+20
+
+
 # *************************************************************************************
 def read_input(filename):
     """
@@ -332,17 +334,57 @@ def create_netcdf(info, varval, time, overwrite=None):
 
 	# ------------------------
         # Create dimensions
-        print '   Creating DIMENSIONS '
+        print '   CREATING DIMENSIONS: BNDS, TIME, X, Y'
         fout.createDimension('bnds', 2)
         fout.createDimension('time',None)
-        fout.createDimension('y',varval.shape[2])
-        fout.createDimension('x',varval.shape[1])
+        fout.createDimension('y',varval.shape[1])
+        fout.createDimension('x',varval.shape[2])
 
         # ------------------------
         # Create and assign values to variables
         print "\n"
-	
-        # VARIABLE 1: Rotated_Pole 
+        print '   CREATING VARIABLES:'
+
+       # VARIABLE: longitude
+        print '    ---   ',varname, ' VARIABLE CREATED ' 
+        varout=fout.createVariable('lon','f',['y', 'x'])
+        varout[:]=lon[:]
+        setattr(varout, 'standard_name','longitude')
+        setattr(varout, 'long_name','Longitude')
+        setattr(varout, 'units','degrees_east')
+        setattr(varout, '_CoordinateAxisType','Lon')
+        
+        # VARIABLE: latitude
+        print '    ---   LATITUDE VARIABLE CREATED ' 
+        varout=fout.createVariable('lat','f',['y', 'x'])
+        varout[:]=lat[:]
+        setattr(varout, 'standard_name','latitude')
+        setattr(varout, 'long_name','Latitude')
+        setattr(varout, 'units','degrees_north')
+        setattr(varout, '_CoordinateAxisType','Lat')
+           
+        # VARIABLE: time_bnds 
+        print '    ---   TIME_BNDS VARIABLE CREATED ' 
+        varout=fout.createVariable('time_bnds','f',['time', 'bnds'])
+        aa=np.reshape(np.concatenate([time,time]), (time.shape[0],2))
+        varout[:]=aa[:]
+
+        # VARIABLE: time 
+        print '    ---   TIME VARIABLE CREATED ' 
+        varout=fout.createVariable('time','f',['time'])
+        varout[:]=time[:]
+        setattr(varout, 'standard_name','time')
+        setattr(varout, 'long_name','time')
+        setattr(varout, 'bounds','time_bnds')
+        setattr(varout, 'units','hours since 1949-12-01 00:00:00')
+        setattr(varout, 'calendar',calendar)
+
+        # VARIABLE: variable
+        print '    ---   LATITUDE VARIABLE CREATED ' 
+        varout=fout.createVariable(varname,'f',['time', 'y', 'x'])
+        varout[:]=varval[:]
+
+        # VARIABLE: Rotated_Pole 
         print '    ---   Rotated_pole VARIABLE CREATED ' 
         varout=fout.createVariable('Rotated_pole','c',[])
         setattr(varout, 'grid_mapping_name', 'rotated_latitude_longitude')
@@ -354,46 +396,6 @@ def create_netcdf(info, varval, time, overwrite=None):
         setattr(varout, 'grid_north_pole_latitude',  pole_lat)
         setattr(varout, 'grid_north_pole_longitude', pole_lon)
 
-        # VARIABLE 2: time_bnds 
-        print '    ---   TIME_BNDS VARIABLE CREATED ' 
-        varout=fout.createVariable('time_bnds','d',['time', 'bnds'])
-        aa=np.reshape(np.concatenate([time,time]), (time.shape[0],2))
-        varout[:]=aa[:]
-
-        # VARIABLE 3: time 
-        print '    ---   TIME VARIABLE CREATED ' 
-        varout=fout.createVariable('time','d',['time'])
-        varout[:]=time[:]
-        setattr(varout, 'standard_name','time')
-        setattr(varout, 'long_name','time')
-        setattr(varout, 'bounds','time_bnds')
-        setattr(varout, 'units','hours since 1949-12-01 00:00:00')
-        setattr(varout, 'calendar',calendar)
-
-
-        # VARIABLE 4: lon
-        print '    ---   ',varname, ' VARIABLE CREATED ' 
-        varout=fout.createVariable('lon','f',['y', 'x'])
-        varout[:]=lon[:]
-        setattr(varout, 'standard_name','longitude')
-        setattr(varout, 'long_name','Longitude')
-        setattr(varout, 'units','degrees_east')
-        setattr(varout, '_CoordinateAxisType','Lon')
-        
-        # VARIABLE 5: lat
-        print '    ---   LATITUDE VARIABLE CREATED ' 
-        varout=fout.createVariable('lat','f',['y', 'x'])
-        varout[:]=lat[:]
-        setattr(varout, 'standard_name','latitude')
-        setattr(varout, 'long_name','Latitude')
-        setattr(varout, 'units','degrees_north')
-        setattr(varout, '_CoordinateAxisType','Lat')
-           
-        # VARIABLE 6: variable
-        print '    ---   LATITUDE VARIABLE CREATED ' 
-        varout=fout.createVariable(varname,'f',['time', 'y', 'x'])
-        varout[:]=varval
-
         # for att in varatt:
         #     setattr(varout, att, getattr(fin.variables[var],att))
         
@@ -401,6 +403,7 @@ def create_netcdf(info, varval, time, overwrite=None):
         
         sch_info=read_schemes(wrf_file_eg)
         gblatt= get_globatt(GCM,RCM,sch_info)
+        print gblatt
 
 	fout.close()				
         return 'DONE!!!!!!!!!!!!!'
