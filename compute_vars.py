@@ -28,6 +28,24 @@ def compute_tas(t2,time):
     return tas,atts
     
     
+def compute_ps(psfc,time):
+    """Method to compute surface pressure
+    psfc: psfc from wrf files [Pa]
+    time: list of times corresponding to t2 1st dimension
+    ---
+    ps: output surface pressure [Pa]
+    atts: attributes of the output variable to be used in the output netcdf 
+    """
+    if len(time)!=psfc.shape[0]:
+        sys.exit('ERROR in compute_ps: The lenght of time variable does not correspond to psfc first dimension')     
+
+    #Generating a dictionary with the output attributes of the variable
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="surface_air_pressure",ln="surface pressure",un="Pa",ts="time: point values %s seconds" %(tseconds))
+
+    ps=psfc    
+    return ps,atts
+
 
 def compute_pracc(rainc,rainnc,time):
     """Method to compute precipitation
@@ -104,7 +122,7 @@ def compute_uas(u10,time):
     atts: attributes of the output variable to be used in the output netcdf
     """
     if len(time)!=u10.shape[0]:
-        sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to var first dimension')
+        sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to uas first dimension')
         
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="eastward_wind",ln="Eastward surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
@@ -115,7 +133,7 @@ def compute_uas(u10,time):
     return uas,atts
 
 
-def compute_uas(v10,time):
+def compute_vas(v10,time):
     """Method to compute northward wind
     v10: meridional wind [m s-1]
     time: list of times corresponding to v10 dimension
@@ -124,7 +142,7 @@ def compute_uas(v10,time):
     atts: attributes of the output variable to be used in the output netcdf
     """
     if len(time)!=v10.shape[0]:
-        sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to var first dimension')
+        sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to vas first dimension')
 
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="northward_wind",ln="Northward surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
