@@ -217,6 +217,115 @@ def compute_potevp(potevp_in,time):
     potevp_out=np.zeros((potevp_in.shape[0]-1,)+potevp_in.shape[1:],dtype=np.float64)
     potevp_out[:,:,:]=np.diff(potevp_in,axis=0)/tseconds
     
-    return potevp_out,atts  
+    return potevp_out,atts
+
+def compute_rsds(swdown,time):
+    """Method to compute downward shortwave surface radiation
+       swdown: downward short wave flux at ground surface [W m-2]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       rsds: downward shortwave surface radiation [W m-2]
+       atts: attributes of the output variable to be used in the output netcdf
+    """  
+    if len(time)!=swdown.shape[0]:
+        sys.exit('ERROR in compute_rsds: The lenght of time variable does not correspond to var first dimension')
     
-      
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="surface_downwelling_shortwave_flux_in_air",ln="Downward SW surface radiation",un="W m-2",ts=tseconds)
+    
+    rsds=swdown
+    
+    return rsds,atts
+
+def compute_rsds(glw,time):
+    """Method to compute downward longwave surface radiation
+       glw: downward long wave flux at ground surface [W m-2]
+       time: list of times corresponding to glw 1st dimension
+       ---
+       rlds: downward shortwave surface radiation [W m-2]
+       atts: attributes of the output variable to be used in the output netcdf
+    """  
+    if len(time)!=glw.shape[0]:
+        sys.exit('ERROR in compute_rlds: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="surface_downwelling_longwave_flux_in_air",ln="Downward LW surface radiation",un="W m-2",ts=tseconds)
+
+    rlds=swdown
+
+    return rlds,atts
+    
+def compute_hfls(lh,time):
+    """Method to compute surface latent heat flux
+       lh: latent heat flux at the surface [W m-2]
+       time: list of times corresponding to lh 1st dimension
+       ---
+       hfls: upward latent heat flux at the surface [W m-2]
+       atts: attributes of the output variable to be used in the output netcdf
+    """  
+    if len(time)!=lh.shape[0]:
+        sys.exit('ERROR in compute_hfls: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="surface_upward_latent_heat_flux",ln="Latent heat flux at surface",un="W m-2",ts=tseconds)
+
+    hfls=lh
+
+    return hfls,atts
+    
+def compute_hfss(hfx,time):
+    """Method to compute surface sensible heat flux
+       hfx: upward heat flux at the surface [W m-2]
+       time: list of times corresponding to emiss 1st dimension
+       ---
+       hfss: upward sensible heat flux at the surface [W m-2]
+       atts: attributes of the output variable to be used in the output netcdf
+    """  
+    if len(time)!=hfx.shape[0]:
+        sys.exit('ERROR in compute_hfss: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="surface_upward_sensible_heat_flux",ln="Heat flux at the surface",un="W m-2",ts=tseconds)
+
+    hfss=hfx
+
+    return hfss,atts
+
+def compute_emiss(emiss_in,time):
+"""Method to compute surface emissivity
+   emiss_in: surface emissivity
+   time: list of times corresponding to emiss 1st dimension
+   ---
+   emiss_out: surface emissivity
+   atts: attributes of the output variable to be used in the output netcdf
+"""  
+if len(time)!=emiss_in.shape[0]:
+    sys.exit('ERROR in compute_emiss: The lenght of time variable does not correspond to var first dimension')
+
+tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+atts=pm.get_varatt(sn="surface_emissivity",ln="Surface emissivity",un="",ts=tseconds)
+
+emiss_out=emiss_in
+
+return emiss_out,atts
+
+def compute_albedo(albedo_in,time):
+"""Method to compute surface albedo
+   albedo_in: surface albedo
+   time: list of times corresponding to emiss 1st dimension
+   ---
+   albedo_out: surface albedo
+   atts: attributes of the output variable to be used in the output netcdf
+"""  
+if len(time)!=albedo_in.shape[0]:
+    sys.exit('ERROR in compute_albedo: The lenght of time variable does not correspond to var first dimension')
+
+tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+atts=pm.get_varatt(sn="albedo",ln="Surface albedo",un="",ts=tseconds)
+
+albedo_out=albedo_in
+
+return albedo_out,atts
+
+def compute_rlus():
+def compute_tasmeantstep()
