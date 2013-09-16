@@ -22,7 +22,7 @@ def compute_tas(t2,time):
     
     #Generating a dictionary with the output attributes of the variable
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="air_temperature",ln="Surface air temperature",un="K",ts=tseconds)
+    atts=pm.get_varatt(sn="air_temperature",ln="Surface air temperature",un="K",ts=tseconds,hg="2 m")
 
     tas=t2[:]    
     return tas,atts
@@ -66,7 +66,7 @@ def compute_huss(q2,time):
         sys.exit('ERROR in compute_huss: The lenght of time variable does not correspond to var first dimension')
     
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="specific_humidity",ln="Surface specific humidity",un=" ",ts=tseconds)
+    atts=pm.get_varatt(sn="specific_humidity",ln="Surface specific humidity",un=" ",ts=tseconds,hg="2 m")
     
     huss=q2/(1+q2)
     
@@ -85,7 +85,7 @@ def compute_wss(u10,v10,time):
         sys.exit('ERROR in compute_wss: The lenght of time variable does not correspond to u10 or v10 first dimension')
     
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="air_velocity",ln="Surface wind speed",un="m s-1",ts=tseconds)
+    atts=pm.get_varatt(sn="air_velocity",ln="Surface wind speed",un="m s-1",ts=tseconds,hg="10 m")
     
     #Winds need to be unstagged    
     u10_unstagged=0.5*(u10[:,:,:-1]+u10[:,:,1:])
@@ -107,7 +107,7 @@ def compute_uas(u10,time):
         sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to var first dimension')
         
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="eastward_wind",ln="Eastward surface wind",un="m s-1",ts=tseconds)    
+    atts=pm.get_varatt(sn="eastward_wind",ln="Eastward surface wind",un="m s-1",ts=tseconds,hg="10 m")    
     
     #Zonal wind unstagged
     uas=0.5*(u10[:,:,:-1]+u10[:,:,1:])
@@ -127,7 +127,7 @@ def compute_uas(v10,time):
         sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to var first dimension')
 
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="northward_wind",ln="Northward surface wind",un="m s-1",ts=tseconds)    
+    atts=pm.get_varatt(sn="northward_wind",ln="Northward surface wind",un="m s-1",ts=tseconds,hg="10 m")    
 
     #Zonal wind unstagged
     vas=0.5*(v10[:,:-1,:]+v10[:,1:,:])
