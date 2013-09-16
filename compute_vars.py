@@ -380,7 +380,7 @@ def compute_tasmintstep(t2min,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts=tseconds,hg="2 m")
 
-	tasmintstep=t2min
+    tasmintstep=t2min
 
     return tasmintstep,atts
     
