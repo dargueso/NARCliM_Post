@@ -398,7 +398,7 @@ def compute_tasmaxtstep(t2max,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts=tseconds,hg="2 m")
 
-	tasmaxtstep=t2max
+    tasmaxtstep=t2max
 
     return tasmaxtstep,atts
 
@@ -416,7 +416,7 @@ def compute_pr5maxtstep(prmax5,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="5max_precipitation_flux",ln="Max. 5-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
 
-	pr5maxtstep=prmax5
+    pr5maxtstep=prmax5
 
     return pr5maxtstep,atts
 
@@ -434,7 +434,7 @@ def compute_pr10maxtstep(prmax10,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="10max_precipitation_flux",ln="Max. 10-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
 
-	pr10maxtstep=prmax10
+    pr10maxtstep=prmax10
 
     return pr10maxtstep,atts
 
@@ -452,7 +452,7 @@ def compute_pr20maxtstep(prmax20,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="20max_precipitation_flux",ln="Max. 20-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
 
-	pr20maxtstep=prmax20
+    pr20maxtstep=prmax20
 
     return pr20maxtstep,atts
     
@@ -470,7 +470,7 @@ def compute_pr30maxtstep(prmax30,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="30max_precipitation_flux",ln="Max. 30-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
 
-	pr30maxtstep=prmax30
+    pr30maxtstep=prmax30
 
     return pr30maxtstep,atts
     
@@ -489,7 +489,7 @@ def compute_pr1Hmaxtstep(prmax1H,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="1Hmax_precipitation_flux",ln="Max. 1-hour time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
 
-	pr1Hmaxtstep=prmax1H
+    pr1Hmaxtstep=prmax1H
 
     return pr1Hmaxtstep,atts
     
@@ -507,7 +507,7 @@ def compute_wss5maxtstep(uv10max5,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="5max_air_velocity",ln="Max. 5-minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
 
-	wss5maxtstep=uv10max5
+    wss5maxtstep=uv10max5
 
     return wss5maxtstep,atts
 
@@ -525,7 +525,7 @@ def compute_wss10maxtstep(uv10max10,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="10max_air_velocity",ln="Max. 10-minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
 
-	wss10maxtstep=uv10max10
+    wss10maxtstep=uv10max10
 
     return wss10maxtstep,atts
 
@@ -543,7 +543,7 @@ def compute_wss20maxtstep(uv10max20,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="20max_air_velocity",ln="Max. 20 minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
 
-	wss20maxtstep=uv10max20
+    wss20maxtstep=uv10max20
 
     return wss20maxtstep,atts
 
@@ -561,7 +561,7 @@ def compute_wss30maxtstep(uv10max30,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="30max_air_velocity",ln="Max. 30 minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
 
-	wss30maxtstep=uv10max30
+    wss30maxtstep=uv10max30
 
     return wss30maxtstep,atts
 
