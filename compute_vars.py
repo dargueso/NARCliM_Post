@@ -328,15 +328,15 @@ def compute_albedo(albedo_in,time):
     return albedo_out,atts
 
 def compute_rlus(tsk,emiss,time):
-"""Method to compute upward longwave surface radiation
+    """Method to compute upward longwave surface radiation
 
-   tsk: surface skin temperature [K]
-   emiss: surface emissivity
-   time: list of times corresponding to swdown 1st dimension
-   ---
-   rlus: upward longwave surface radiation [W m-2]
-   atts: attributes of the output variable to be used in the output netcdf
-"""  
+    tsk: surface skin temperature [K]
+    emiss: surface emissivity
+    time: list of times corresponding to swdown 1st dimension
+    ---
+    rlus: upward longwave surface radiation [W m-2]
+    atts: attributes of the output variable to be used in the output netcdf
+    """  
     if (len(time)!=tsk.shape[0]) or(len(time)!=emiss.shape[0]) :
         sys.exit('ERROR in compute_rlus: The lenght of time variable does not correspond to emiss or tsk first dimension')
 
