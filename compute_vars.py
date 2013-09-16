@@ -12,7 +12,7 @@ import postprocess_modules as pm
 def compute_tas(t2,time):
     """Method to compute 2-m temperature
     t2: T2 from wrf files [K]
-    time: list of times corresponding to var 1st dimension
+    time: list of times corresponding to t2 1st dimension
     ---
     tas: output temperature tas [K]
     atts: attributes of the output variable to be used in the output netcdf 
@@ -57,9 +57,9 @@ def compute_pracc(rainc,rainnc,time):
 def compute_huss(q2,time):
     """Method to compute specific humidity
     q2: mixing ratio [kg kg-2]
-    time: list of times corresponding to rainc 1st dimension
+    time: list of times corresponding to q2 1st dimension
     ---
-    huss: specific humidity 
+    huss: specific humidity []
     atts: attributes of the output variable to be used in the output netcdf
     """
     if len(time)!=q2.shape[0]:
@@ -76,10 +76,9 @@ def compute_wss(u10,v10,time):
     """Method to compute wind speed
     u10: zonal wind [m s-1]
     v10: meridional wind [m s-1]
-
-    time: list of times corresponding to rainc 1st dimension
+    time: list of times corresponding to u10 and v10 1st dimensions
     ---
-    wss: wind speed 
+    wss: wind speed [m s-1]
     atts: attributes of the output variable to be used in the output netcdf
     """
     if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
@@ -99,9 +98,9 @@ def compute_wss(u10,v10,time):
 def compute_uas(u10,time):
     """Method to compute eastward wind
     u10: zonal wind [m s-1]
-    time: list of times corresponding to rainc 1st dimension
+    time: list of times corresponding to u10 1st dimension
     ---
-    uas: eastward wind 
+    uas: eastward wind [m s-1]
     atts: attributes of the output variable to be used in the output netcdf
     """
     if len(time)!=u10.shape[0]:
@@ -119,9 +118,9 @@ def compute_uas(u10,time):
 def compute_uas(v10,time):
     """Method to compute northward wind
     v10: meridional wind [m s-1]
-    time: list of times corresponding to rainc 1st dimension
+    time: list of times corresponding to v10 dimension
     ---
-    vas: northward wind 
+    vas: northward wind [m s-1]
     atts: attributes of the output variable to be used in the output netcdf
     """
     if len(time)!=v10.shape[0]:
@@ -139,8 +138,9 @@ def compute_evspsbl(sfcevp,time):
     """Method to compute surface evaporation flux
        The original variable was accumulated throughout the simulation. Accumulation must be removed.
        sfcevp: accumulated surfave evaporation. Including the timestep previous to the first one in this period [kg m-2]
+       time: list of times corresponding to sfcevp 1st dimension
        ---
-       evspsbl: Surface evaporation flux
+       evspsbl: Surface evaporation flux [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
     #sfcevp includes the timestep previous to the first one to remove the accumulation. 
@@ -163,6 +163,7 @@ def compute_mrso(smstot,dzs,time):
        Integrates through all soil layers
        smstot: total soil moisture in each layer [m3 m-3]
        dzs: thickness of each soil layer [m]
+       time: list of times corresponding to smstot 1st dimension
        ---
        mrso: total soil moisture content [kg m-2]
        atts: attributes of the output variable to be used in the output netcdf
@@ -176,5 +177,21 @@ def compute_mrso(smstot,dzs,time):
     mrso=smstot*1000*np.sum(dzs)
     
     return mrso,att
+
+def compute_sst(sst_in,times):
+    """Method to compute the sea surface temperature
+       sst_in: sea surface temperature [K]
+       time: list of times corresponding to sst 1st dimension
+       ---
+       sst_out: sea surface temperature [K]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=sst_in.shape[0]:
+        sys.exit('ERROR in compute_sst: The lenght of time variable does not correspond to var first dimension')
     
-        
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="sea_surface_temperature",ln="sea surface temperature",un="K",ts=tseconds) 
+    
+    sst_out=sst_in
+    
+    return sst_out,sst_in       
