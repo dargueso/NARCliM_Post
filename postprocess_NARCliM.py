@@ -51,6 +51,7 @@ eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
 overwrite=True
+time_units="hours since 1949-12-01 00:00:00"
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
 fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain)
@@ -92,8 +93,6 @@ for filet in file_type:
 		# LOOP over years
 		for year in np.arange(syear,eyear+1):
 			print '\n', ' -> PROCESSING YEAR: ', year
-			time_bounds=False
-
 			loadfiles = pathin+'%s_%s_%s*' % (filet,domain,year) # Specify path
 			files_in=sorted(glob.glob(loadfiles))
 
@@ -110,37 +109,36 @@ for filet in file_type:
 			# READ FILES
 			fin=nc.MFDataset(files_in) #Read all files
 			time_old = fin.variables['Times'][:] # Get time variable
-					
-	
-			# DEFINE DATES TAKING INTO ACCOUNT IF LEAP-NOLEAP YEAR
-			dates_day = dt.datetime(year+1,01,01,00)-dt.datetime(year,01,01,00)
-			n_timesteps=dates_day.days*24
-			dates = [dt.datetime(year,01,01,00)+ dt.timedelta(hours=x) for x in xrange(0,n_timesteps,1)]
-
-			if calendar=='noleap' and cal.isleap(year)==True:
-				months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
-				days_all=np.asarray([dates[i].day for i in xrange(len(dates))])	
-				dates=dates[((months_all==2) & (days_all==29))==False]
-
-			time=nc.date2num(dates[:],units="hours since 1949-12-01 00:00:00")
 			
+			# FIRST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
+			year_i, month_i, day_i, hour_i = pm.get_wrfdate(time_old[0,:])
 
-			# -------------------
-			# CHECKING: Check if the of time steps is right
-			if n_timesteps!=time.shape[0]:
-				print '\n', 'ERROR: the number of timesteps in year ', year,' is INCORRECT'
-				print 'There should be: ', n_timesteps
-				print 'There are: ', time.shape[0]
-				print 'SCRIPT stops running ','\n'
-				sys.exit(0)
-
-
+			# LAST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
+			year_f, month_f, day_f, hour_f = pm.get_wrfdate(time_old[-1,:])
+							
 			# ***********************************************
 			# LOOP over variables
-			for var in out_variables:
+			for var in varinfo[filet].keys():
 				print '  -->  READING VARIABLE ', var
+				time_bounds=False
+				time_bnds=pm.const.missingval
 				wrfvar=(pm.getwrfname(var)[0]).split('-')
 		
+
+				# DEFINE DATES TAKING INTO ACCOUNT IF LEAP-NOLEAP YEAR
+				n_days = dt.datetime(year+1,month_i,day_i,hour_i)-dt.datetime(year,month_i,day_i,hour_i)
+				n_timesteps=n_days.days*24
+				dates = [dt.datetime(year,month_i,day_i,hour_i)+ dt.timedelta(hours=x) for x in xrange(0,n_timesteps,1)]
+				time=nc.date2num(dates[:],units=time_units)
+				
+				# -------------------
+				# CHECKING: Check if the of time steps is right
+				if n_timesteps!=time_old.shape[0]:
+					print '\n', 'ERROR: the number of timesteps in year ', year,' is INCORRECT'
+					print 'There should be: ', n_timesteps
+					print 'There are: ', time_old.shape[0]
+					print 'SCRIPT stops running ','\n'
+					sys.exit(0)
 
 				# ***********************************************************
 				# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
@@ -170,40 +168,81 @@ for filet in file_type:
 							varval1=np.array(fin.variables[wrfv][:], dtype='d')
 						if count_v==2:
 							varval2=np.array(fin.variables[wrfv][:], dtype='d')
-					fin.close()
-					count_v=count_v+1
-
+						count_v=count_v+1
 					ctime=pm.checkpoint(ctime)
+					
 
-					# GET ATTRIBUTES AND MODIFY OUTPUT VARIABLE IF NEEDED
-					compute=getattr(cv,'compute_'+var)
-					sys.exit(0)
-					# CALL COMPUTE_ MODULE
-					if var!='pracc':
-						result, varatt=compute(varval,dates)
-					else:
-						# PRECIPITATION NEEDS ONE TIME STEP MORE
-						last_file = sorted(glob.glob(pathin+'%s_%s_%s-12-01_*' % (filet,domain,year-1)))
-						fin=nc.Dataset(last_file,mode='r')
+					# FOR LEAP YEARS AND MODELS WITH NO LEAP YEARS REPLACE THE 29TH FEBRUARY BY 
+					# MISSING VALUES
+					if calendar=='noleap' and cal.isleap(year)==True:
+						months_all=np.asarray([dates[i].month for i in xrange(len(dates))]) 
+						days_all=np.asarray([dates[i].day for i in xrange(len(dates))])
+						index=np.where(np.logical_and(months_all==2,days_all==29))
+
 						count_v=0
 						for wrfv in wrfvar:
 							if count_v==0:
-								varval=np.array(fin.variables[wrfv][:], dtype='d')
-							if count_v==1:
-								varval1=np.array(fin.variables[wrfv][:], dtype='d')
+								varval = add_leap(varval,index)
 
-							result, varatt=compute(varval,last_val,dates)
+							if count_v==1:
+								varval1 = add_leap(varval1,index)
+
+							if count_v==2:
+								varval2 = add_leap(varval2,index)
+
+							count_v=count_v+1
+
+
+					# GET ATTRIBUTES AND MODIFY OUTPUT VARIABLE IF NEEDED
+					compute=getattr(cv,'compute_'+var)
+
+					# PRECIPITATION NEEDS ONE TIME STEP MORE TO COMPUTE DIFFERENCES
+					if var=='pracc':
+
+						# DEFINE TIME BOUNDS FOR ACCUMULATED PERIOD
+						time_bounds=True
+						dates_inf=dates
+						time_inf=nc.date2num(dates_inf[:],units=time_units)
+						dates_sup=[dt.datetime(year,month_i,day_i,hour_i+1)+ \
+								   dt.timedelta(hours=x) for x in xrange(0,n_timesteps,1)]
+						time_sup=nc.date2num(dates_sup[:],units=time_units)
+						time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
+
+						# READ ONE MORE TIME STEP FOR ACCUMULATED COMPUTATIONS
+						last_file = sorted(glob.glob(pathin+'%s_%s_%s-01-01_*' % (filet,domain,year+1,)))
+						fin2=nc.Dataset(last_file[0],mode='r')
+						count_v=0
+						for wrfv in wrfvar:
+							if count_v==0:
+								last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
+													dtype='d'),(1,varval.shape[1],varval.shape[2]))
+								varval=np.concatenate((varval,last_varval))
+							if count_v==1:
+								last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
+													dtype='d'),(1,varval.shape[1],varval.shape[2]))
+								varval1=np.concatenate((varval1,last_varval))
+							count_v=count_v+1
+						fin2.close()
+
+
+						# CALL COMPUTE_MODULE
+						varval, varatt=compute(varval,varval1,dates)
+				
+					else:
+						
+						# CALL COMPUTE_MODULE
+						varval, varatt=compute(varval,dates)
 
 					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-					nctcdf_info=[file_out, var, varatt, calendar, domain, files_in[0],\
-							     GCM, RCM, time_bounds]
+					netcdf_info=[file_out, var, varatt, calendar, domain, files_in[0], GCM, RCM, time_bounds]
 					
 					# CREATE NETCDF FILE
-					aa=pm.create_netcdf(netcdf_info, result, time)
+					aa=pm.create_netcdf(netcdf_info, varval, time, time_bnds)
 
-					print aa,'\n'
+					print aa
+					print ' %%%%%%%%%  %%%%%%%%%    %%%%%%%%%%%%%%     %%%%%%%%%%%%%', '\n', '\n'
 					ctime=pm.checkpoint(ctime)
-					sys.exit(0)
+			fin.close()
 				
 		# ***********************************************
 		# LOOP over variables
@@ -216,3 +255,69 @@ for filet in file_type:
 				print freq
 
     
+
+
+
+
+#***********************************************
+# Loop over all types of WRF output files (i.e., wrfhrly, wrfout, etc) 
+for filet in file_type:
+     if (filet!='wrfxtrm') or (filet!='wrfdly'): # These files are already daily
+        for varname in varinfo[filet].keys():
+            
+            stat_all=varinfo[filet][varname].split(',')
+            
+            
+            fileall=sorted(glob.glob('%s/%s0?H_*_%s.nc' %(fullpathout,outfile_patt,varname)))
+            eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
+            syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
+            
+            fileref=nc.Dataset(fileall[0],'r')
+            
+            syp=syear
+            while syp<eyear:
+                eyp=((int(syp)/5)+1)*5
+                sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
+                files=nc.MFDataset(sel_files)
+                time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
+                var=files.variables[varname][:]
+                
+                for stat in stat_all:
+                    dvar,dtime=cs.compute_daily(var,time,stat)
+                    dtime_nc=nc.date2num(dtime,units=time_units)
+                    varatts={}
+                                        
+                    for att in fileref.variables[varname].ncattrs():
+                        varatts[att]=getattr(fileref.variables[varname],att)
+                    
+                    
+                syp=eyp.copy()
+
+
+for filet in filetype:
+    for varname in varinfo[filet].keys():
+        stat_all=varinfo[filet][varname].split(',')
+        fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,outfile_patt,varname)))
+        eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
+        syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
+        
+        fileref=nc.Dataset(fileall[0],'r')
+        
+        syp=syear
+        while syp<eyear:
+            eyp=((int(syp)/10)+1)*10
+            sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
+            files=nc.MFDataset(sel_files)
+            time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
+            var=files.variables[varname][:]
+
+            for stat in stat_all:
+                mvar,mtime=cs.compute_monthly(var,time,stat)
+		mtime_nc=nc.date2num(mtime,units=time_units)
+		varatts={}
+   
+		
+		for att in fileref.variables[varname].ncattrs():
+                    varatts[att]=getattr(fileref.variables[varname],att)
+                    
+            syp=eyp.copy()     

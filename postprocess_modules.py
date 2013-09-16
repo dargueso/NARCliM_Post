@@ -134,7 +134,8 @@ def read_varinfo(filename):
  
 # *************************************************************************************
 def getwrfname(varname):
-    dic={'tas':['T2'],'pr':['RAINC-RAINNC'],'ps':['PS']}
+    dic={'tas':['T2'],'pracc':['RAINC-RAINNC'],'ps':['PSFC'], 'uas':['U10'], 'vas':['V10'],\
+           'huss':['Q2'], 'wss':['U10','V10']}
     
     return dic[varname]
 
@@ -208,6 +209,34 @@ def get_varatt(sn,ln,un,ts,hg=None):
     att['_FillValue']=const.missingval
 
     return att
+
+
+# *************************************************************************************
+def get_wrfdate(time):
+  import numpy as np
+  time=np.squeeze(time)
+  year=int(time[0])*1000+int(time[1])*100+int(time[2])*10+int(time[3]) 
+  month=int(time[5])*10+int(time[6])
+  day=int(time[8])*10+int(time[9])
+  hour=int(time[11])*10+int(time[12])
+
+  return year, month, day, hour
+
+
+# *************************************************************************************
+def add_leap(varval,index):
+  import numpy as np
+
+  temp=np.zeros((varval.shape[0]+1,varval.shape[1],varval.shape[2]))
+  temp[0:index[0][0]-1,:,:]=varval[0:index[0][0]-1,:,:]
+  temp[index[0][0]:index[0][23],:,:]=const.missingval
+  temp[index[0][23]+1:,:,:]=varval[0:index[0][0]:,:,:]
+  del varval
+  varval=temp
+  del temp 
+
+  return varval
+
 
 
 # *************************************************************************************
@@ -289,7 +318,7 @@ def dictionary2entries(vals1, vals2, vals3):
 
 
 # *************************************************************************************
-def create_netcdf(info, varval, time):
+def create_netcdf(info, varval, time, time_bnds):
         
 
         """ Create a netcdf file for the post-processed variables of NARCliM simulations
@@ -334,10 +363,7 @@ def create_netcdf(info, varval, time):
         stand_lon=getattr(fin1, 'STAND_LON')
         fin1.close()
 
-        # **********************************************************************
-        # Read GLOBAL attributes 
-        
-        
+      
 	#**********************************************************************
 	# CREATING NETCDF FILE
 	# Create output file
@@ -391,14 +417,14 @@ def create_netcdf(info, varval, time):
         varout[:]=varval[:]
         for att in varatt.keys():
           if att!='_FillValue':
-            setattr(varout, att, varatt[att])
+            if varatt[att]!=None:
+              setattr(varout, att, varatt[att])
             
         # VARIABLE: time_bnds 
         if time_bounds==True:
           print '    ---   TIME_BNDS VARIABLE CREATED ' 
           varout=fout.createVariable('time_bnds','f',['time', 'bnds'])
-          aa=np.reshape(np.concatenate([time,time]), (time.shape[0],2))
-          varout[:]=aa[:]
+          varout[:]=time_bnds[:]
           setattr(varout, 'units','hours since 1949-12-01 00:00:00')
           setattr(varout, 'calendar',calendar)
         
@@ -418,7 +444,6 @@ def create_netcdf(info, varval, time):
         print '\n', '   CREATING AND WRITING GLOBAL ATTRIBUTES:'
         sch_info=read_schemes(wrf_file_eg)
         gblatt = get_globatt(GCM,RCM,sch_info)
-
         for att in gblatt.keys():
           setattr(fout, att, gblatt[att])
         
@@ -426,7 +451,7 @@ def create_netcdf(info, varval, time):
 	fout.close()
         print '  ===> FILE: ', file_out
 				
-        return 'DONE!!!!!!!!!!!!!'
+        return '         ------------  SUCCESFULLY CREATED!!!    ------------ '
 
 
 #**************************************************************************************
