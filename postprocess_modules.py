@@ -199,9 +199,11 @@ def get_varatt(sn,ln,un,ts,hg=None):
     att['standard_name'] = sn
     att['long_name'] = ln
     att['units']=un
-    att['height']=hg
+    if hg!=None:
+        att['height']=hg
+    
     att['coordinates'] = "lon lat"
-    att['cell_method'] = "time: point values %s second" %(ts)
+    att['cell_method'] = "%s" %(ts)
     att['grid_mapping'] = "Rotated_pole"
     att['_FillValue']=const.missingval
 
