@@ -327,5 +327,258 @@ albedo_out=albedo_in
 
 return albedo_out,atts
 
-def compute_rlus():
-def compute_tasmeantstep()
+def compute_rlus(tsk,emiss,time):
+"""Method to compute upward longwave surface radiation
+
+   tsk: surface skin temperature [K]
+   emiss: surface emissivity
+   time: list of times corresponding to swdown 1st dimension
+   ---
+   rlus: upward longwave surface radiation [W m-2]
+   atts: attributes of the output variable to be used in the output netcdf
+"""  
+if (len(time)!=tsk.shape[0]) or(len(time)!=emiss.shape[0]) :
+    sys.exit('ERROR in compute_rlus: The lenght of time variable does not correspond to emiss or tsk first dimension')
+
+tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+atts=pm.get_varatt(sn="surface_upwelling_longwave_flux_in_air",ln="Upwelling surface LW radiation",un="W m-2",ts=tseconds)
+
+#calculating with net lw radiation using Stefan-Boltzmann
+rlus=emiss*(pm.const.stefanbolzt)*tsk**4
+
+return rlus,atts
+    
+def compute_tasmeantstep(t2mean,time):
+    """Method to compute the mean 2-m temperature using all timesteps of the model
+       t2mean: mean 2-m temperature over all timesteps [K]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       tasmeantstep:mean 2-m temperature over all timesteps [K]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=t2mean.shape[0]:
+        sys.exit('ERROR in compute_tasmeantstep: The lenght of time variable does not correspond to var first dimension')
+    
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts=tseconds,hg="2 m")
+    
+    tasmeantstep=t2mean
+    
+    return tasmeantstep,atts
+    
+def compute_tasmintstep(t2min,time):
+    """Method to compute the min 2-m temperature using all timesteps of the model
+       t2min: min 2-m temperature over all timesteps [K]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       tasmintstep:min 2-m temperature over all timesteps [K]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=t2min.shape[0]:
+        sys.exit('ERROR in compute_tasmintstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts=tseconds,hg="2 m")
+
+	tasmintstep=t2min
+
+    return tasmintstep,atts
+    
+def compute_tasmaxtstep(t2max,time):
+    """Method to compute the max 2-m temperature using all timesteps of the model
+       t2max: max 2-m temperature over all timesteps [K]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       tasmaxtstep:max 2-m temperature over all timesteps [K]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=t2max.shape[0]:
+        sys.exit('ERROR in compute_tasmaxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts=tseconds,hg="2 m")
+
+	tasmaxtstep=t2max
+
+    return tasmaxtstep,atts
+
+def compute_pr5maxtstep(prmax5,time):
+    """Method to compute the max 5-minute precipitationusing all timesteps of the model
+       prmax5: maximum 5-minute precipitation using all timesteps [kg m-2 s-1]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       pr5maxtstep:maximum 5-minute precipitation using all timesteps [kg m-2 s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=prmax5.shape[0]:
+        sys.exit('ERROR in compute_pr5maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="5max_precipitation_flux",ln="Max. 5-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
+
+	pr5maxtstep=prmax5
+
+    return pr5maxtstep,atts
+
+def compute_pr10maxtstep(prmax10,time):
+    """Method to compute the max 10-minute precipitationusing all timesteps of the model
+       prmax10: maximum 10-minute precipitation using all timesteps [kg m-2 s-1]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       pr10maxtstep:maximum 10-minute precipitation using all timesteps [kg m-2 s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=prmax10.shape[0]:
+        sys.exit('ERROR in compute_pr10maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="10max_precipitation_flux",ln="Max. 10-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
+
+	pr10maxtstep=prmax10
+
+    return pr10maxtstep,atts
+
+def compute_pr20maxtstep(prmax20,time):
+    """Method to compute the max 20-minute precipitationusing all timesteps of the model
+       prmax20: maximum 20-minute precipitation using all timesteps [kg m-2 s-1]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       pr20maxtstep:maximum 20-minute precipitation using all timesteps [kg m-2 s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=prmax20.shape[0]:
+        sys.exit('ERROR in compute_pr20maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="20max_precipitation_flux",ln="Max. 20-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
+
+	pr20maxtstep=prmax20
+
+    return pr20maxtstep,atts
+    
+def compute_pr30maxtstep(prmax30,time):
+    """Method to compute the max 30-minute precipitationusing all timesteps of the model
+       prmax30: maximum 30-minute precipitation using all timesteps [kg m-2 s-1]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       pr30maxtstep:maximum 30-minute precipitation using all timesteps [kg m-2 s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=prmax30.shape[0]:
+        sys.exit('ERROR in compute_pr30maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="30max_precipitation_flux",ln="Max. 30-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
+
+	pr30maxtstep=prmax30
+
+    return pr30maxtstep,atts
+    
+
+def compute_pr1Hmaxtstep(prmax1H,time):
+    """Method to compute the max 1-hour precipitationusing all timesteps of the model
+       prmax1H: maximum 1-hour precipitation using all timesteps [kg m-2 s-1]
+       time: list of times corresponding to swdown 1st dimension
+       ---
+       pr1Hmaxtstep:maximum 1-hour precipitation using all timesteps [kg m-2 s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=prmax1H.shape[0]:
+        sys.exit('ERROR in compute_pr1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="1Hmax_precipitation_flux",ln="Max. 1-hour time-window moving averaged precipitation rate",un="kg m-2 s-1",ts=tseconds)
+
+	pr1Hmaxtstep=prmax1H
+
+    return pr1Hmaxtstep,atts
+    
+def compute_wss5maxtstep(uv10max5,time):
+    """Method to compute the max 5-minute wind speed using all timesteps of the model
+       uv10max5: maximum 5-mimute wind speed using all timesteps [m s-1]
+       time: list of times corresponding to uv10max5 1st dimension
+       ---
+       wss5maxtstep:maximum 5-mimute wind speed using all timesteps [m s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=uv10max5.shape[0]:
+        sys.exit('ERROR in compute_wss5maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="5max_air_velocity",ln="Max. 5-minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
+
+	wss5maxtstep=uv10max5
+
+    return wss5maxtstep,atts
+
+def compute_wss10maxtstep(uv10max10,time):
+    """Method to compute the max 10-minute wind speed using all timesteps of the model
+       uv10max10: maximum 10-mimute wind speed using all timesteps [m s-1]
+       time: list of times corresponding to uv10max10 1st dimension
+       ---
+       wss10maxtstep:maximum 10-mimute wind speed using all timesteps [m s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=uv10max10.shape[0]:
+        sys.exit('ERROR in compute_wss10maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="10max_air_velocity",ln="Max. 10-minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
+
+	wss10maxtstep=uv10max10
+
+    return wss10maxtstep,atts
+
+def compute_wss20maxtstep(uv10max20,time):
+    """Method to compute the max 20-minute wind speed using all timesteps of the model
+       uv10max20: maximum 20-mimute wind speed using all timesteps [m s-1]
+       time: list of times corresponding to uv10max20 1st dimension
+       ---
+       wss20maxtstep:maximum 20-mimute wind speed using all timesteps [m s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=uv10max20.shape[0]:
+        sys.exit('ERROR in compute_wss20maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="20max_air_velocity",ln="Max. 20 minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
+
+	wss20maxtstep=uv10max20
+
+    return wss20maxtstep,atts
+
+def compute_wss30maxtstep(uv10max30,time):
+    """Method to compute the max 30-minute wind speed using all timesteps of the model
+       uv10max30: maximum 30-mimute wind speed using all timesteps [m s-1]
+       time: list of times corresponding to uv10max30 1st dimension
+       ---
+       wss30maxtstep:maximum 30-mimute wind speed using all timesteps [m s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=uv10max30.shape[0]:
+        sys.exit('ERROR in compute_wss30maxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="30max_air_velocity",ln="Max. 30 minute time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
+
+	wss30maxtstep=uv10max30
+
+    return wss30maxtstep,atts
+
+def compute_wss1Hmaxtstep(uv10max1H,time):
+    """Method to compute the max 1-hour wind speed using all timesteps of the model
+       uv10max1H: maximum 1-hour wind speed using all timesteps [m s-1]
+       time: list of times corresponding to uv10max1H 1st dimension
+       ---
+       wss1Hmaxtstep:maximum 1-hour wind speed using all timesteps [m s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=uv10max1H.shape[0]:
+        sys.exit('ERROR in compute_wss1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
+
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="1Hmax_air_velocity",ln="Max. 1-hour time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
+
+	wss1Hmaxtstep=uv10max1H
+
+    return wss1Hmaxtstep,atts
