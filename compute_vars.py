@@ -106,10 +106,10 @@ def compute_wss(u10,v10,time):
     atts=pm.get_varatt(sn="air_velocity",ln="Surface wind speed",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")
     
     #Winds need to be unstagged    
-    u10_unstagged=0.5*(u10[:,:,:-1]+u10[:,:,1:])
-    v10_unstagged=0.5*(v10[:,:-1,:]+v10[:,1:,:])
+    #Wu10_unstagged=0.5*(u10[:,:,:-1]+u10[:,:,1:])
+    #Wv10_unstagged=0.5*(v10[:,:-1,:]+v10[:,1:,:])
     
-    wss=(u10_unstagged**2+v10_unstagged**2)**0.5
+    wss=(u10**2+v10**2)**0.5
     
     return wss,atts
 
@@ -127,9 +127,10 @@ def compute_uas(u10,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="eastward_wind",ln="Eastward surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
     
-    #Zonal wind unstagged
-    uas=0.5*(u10[:,:,:-1]+u10[:,:,1:])
-    
+    # Zonal wind unstagged
+    # uas=0.5*(u10[:,:,:-1]+u10[:,:,1:])
+    uas = u10
+
     return uas,atts
 
 
@@ -147,8 +148,9 @@ def compute_vas(v10,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="northward_wind",ln="Northward surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
 
-    #Zonal wind unstagged
-    vas=0.5*(v10[:,:-1,:]+v10[:,1:,:])
+    # Zonal wind unstagged
+    # vas=0.5*(v10[:,:-1,:]+v10[:,1:,:])
+    vas = v10
 
     return uas,atts
 

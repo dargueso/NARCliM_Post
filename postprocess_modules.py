@@ -135,7 +135,7 @@ def read_varinfo(filename):
 # *************************************************************************************
 def getwrfname(varname):
     dic={'tas':['T2'],'pracc':['RAINC-RAINNC'],'ps':['PSFC'], 'uas':['U10'], 'vas':['V10'],\
-           'huss':['Q2'], 'wss':['U10','V10']}
+           'huss':['Q2'], 'wss':['U10-V10']}
     
     return dic[varname]
 

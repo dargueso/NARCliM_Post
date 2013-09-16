@@ -119,6 +119,7 @@ for filet in file_type:
 			# ***********************************************
 			# LOOP over variables
 			for var in varinfo[filet].keys():
+				ctime_var=pm.checkpoint(0)
 				print '  -->  READING VARIABLE ', var
 				time_bounds=False
 				time_bnds=pm.const.missingval
@@ -169,7 +170,7 @@ for filet in file_type:
 						if count_v==2:
 							varval2=np.array(fin.variables[wrfv][:], dtype='d')
 						count_v=count_v+1
-					ctime=pm.checkpoint(ctime)
+					
 					
 
 					# FOR LEAP YEARS AND MODELS WITH NO LEAP YEARS REPLACE THE 29TH FEBRUARY BY 
@@ -182,13 +183,13 @@ for filet in file_type:
 						count_v=0
 						for wrfv in wrfvar:
 							if count_v==0:
-								varval = add_leap(varval,index)
+								varval = pm.add_leap(varval,index)
 
 							if count_v==1:
-								varval1 = add_leap(varval1,index)
+								varval1 = pm.add_leap(varval1,index)
 
 							if count_v==2:
-								varval2 = add_leap(varval2,index)
+								varval2 = pm.add_leap(varval2,index)
 
 							count_v=count_v+1
 
@@ -223,15 +224,15 @@ for filet in file_type:
 								varval1=np.concatenate((varval1,last_varval))
 							count_v=count_v+1
 						fin2.close()
-
-
-						# CALL COMPUTE_MODULE
-						varval, varatt=compute(varval,varval1,dates)
 				
-					else:
-						
-						# CALL COMPUTE_MODULE
+					
+					# CALL COMPUTE_MODULE
+					if len(wrfvar)==1:
 						varval, varatt=compute(varval,dates)
+					if len(wrfvar)==2:
+						varval, varatt=compute(varval,varval1,dates)
+					if len(wrfvar)==3:
+						varval, varatt=compute(varval,varval1,varval2,dates)
 
 					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
 					netcdf_info=[file_out, var, varatt, calendar, domain, files_in[0], GCM, RCM, time_bounds]
@@ -240,8 +241,8 @@ for filet in file_type:
 					aa=pm.create_netcdf(netcdf_info, varval, time, time_bnds)
 
 					print aa
-					print ' %%%%%%%%%  %%%%%%%%%    %%%%%%%%%%%%%%     %%%%%%%%%%%%%', '\n', '\n'
-					ctime=pm.checkpoint(ctime)
+					ctime=pm.checkpoint(ctime_var)
+					print '=====================================================', '\n', '\n', '\n'
 			fin.close()
 				
 		# ***********************************************
