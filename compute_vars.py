@@ -137,7 +137,7 @@ def compute_uas(v10,time):
 def compute_evspsbl(sfcevp,time):
     """Method to compute surface evaporation flux
        The original variable was accumulated throughout the simulation. Accumulation must be removed.
-       sfcevp: accumulated surfave evaporation. Including the timestep previous to the first one in this period [kg m-2]
+       sfcevp: accumulated surface evaporation. Including the timestep previous to the first one in this period [kg m-2]
        time: list of times corresponding to sfcevp 1st dimension
        ---
        evspsbl: Surface evaporation flux [kg m-2 s-1]
@@ -176,9 +176,9 @@ def compute_mrso(smstot,dzs,time):
     
     mrso=smstot*1000*np.sum(dzs)
     
-    return mrso,att
+    return mrso,atts
 
-def compute_sst(sst_in,times):
+def compute_sst(sst_in,time):
     """Method to compute the sea surface temperature
        sst_in: sea surface temperature [K]
        time: list of times corresponding to sst 1st dimension
@@ -194,4 +194,29 @@ def compute_sst(sst_in,times):
     
     sst_out=sst_in
     
-    return sst_out,sst_in       
+    return sst_out,atts
+    
+def compute_potevp(potevp_in,time):
+    """Method to compute surface potential evaporation flux
+       The original variable was accumulated throughout the simulation. Accumulation must be removed.
+       potevp_in: accumulated surface potential evaporation. Including the timestep previous to the first one in this period [kg m-2]
+       time: list of times corresponding to potevp 1st dimension
+       ---
+       potevp_out: Surface evaporation flux [kg m-2 s-1]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    #potevp includes the timestep previous to the first one to remove the accumulation. 
+    if len(time)!=potevp_in.shape[0]+1:
+        sys.exit('ERROR in compute_potevp: The lenght of time variable does not correspond to var first dimension')    
+    
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="water_potential_evaporation_flux",ln="Potential evaporation",un="W m-2",ts=tseconds)
+    
+    #Calculating difference between each timestep to remove the accumulation
+    #Divided by the number of seconds in each timestep to calculate the flux
+    potevp_out=np.zeros((potevp_in.shape[0]-1,)+potevp_in.shape[1:],dtype=np.float64)
+    potevp_out[:,:,:]=np.diff(potevp_in,axis=0)/tseconds
+    
+    return potevp_out,atts  
+    
+      
