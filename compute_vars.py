@@ -18,7 +18,7 @@ def compute_tas(t2,time):
     atts: attributes of the output variable to be used in the output netcdf 
     """
     if len(time)!=t2.shape[0]:
-        sys.exit('ERROR in compute_tas: The lenght of time variable does not correspond to var first dimension')     
+        sys.exit('ERROR in compute_tas: The lenght of time variable does not correspond to t2 first dimension')     
     
     #Generating a dictionary with the output attributes of the variable
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
@@ -40,7 +40,7 @@ def compute_pracc(rainc,rainnc,time):
     atts: attributes of the output variable to be used in the output netcdf
     """
     #rainc and rainnc includes the timestep previous to the first one to remove the accumulation.
-    if (len(time)!=rainc.shape[0]+1) or (len(time)!=rainnc.shape[0]+1):
+    if (len(time)!=rainc.shape[0]-1) or (len(time)!=rainnc.shape[0]-1):
         sys.exit('ERROR in compute_pracc: The lenght of time variable does not correspond to rainc or rainnc first dimension')
     
     #Generating a dictionary with the output attributes of the variable
@@ -144,7 +144,7 @@ def compute_evspsbl(sfcevp,time):
        atts: attributes of the output variable to be used in the output netcdf
     """
     #sfcevp includes the timestep previous to the first one to remove the accumulation. 
-    if len(time)!=sfcevp.shape[0]+1:
+    if len(time)!=sfcevp.shape[0]-1:
         sys.exit('ERROR in compute_evspsbl: The lenght of time variable does not correspond to var first dimension')
     
     
@@ -206,7 +206,7 @@ def compute_potevp(potevp_in,time):
        atts: attributes of the output variable to be used in the output netcdf
     """
     #potevp includes the timestep previous to the first one to remove the accumulation. 
-    if len(time)!=potevp_in.shape[0]+1:
+    if len(time)!=potevp_in.shape[0]-1:
         sys.exit('ERROR in compute_potevp: The lenght of time variable does not correspond to var first dimension')    
     
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
