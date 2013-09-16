@@ -191,17 +191,23 @@ def read_schemes(filename):
 
 
     return sch_info
+
+
 # *************************************************************************************
-def get_varatt(sn,ln,un,ts):
+def get_varatt(sn,ln,un,ts,hg=None):
     att={}
-    attribs['standard_name'] = sn
-    attribs['long_name'] = ln
+    att['standard_name'] = sn
+    att['long_name'] = ln
     att['units']=un
+    att['height']=hg
     att['coordinates'] = "lon lat"
-    attribs['cell_method'] = "time: point values %s second" %(ts)
+    att['cell_method'] = "time: point values %s second" %(ts)
     att['grid_mapping'] = "Rotated_pole"
-    att['_FillValue']=const.missinval
-    return at
+    att['_FillValue']=const.missingval
+
+    return att
+
+
 # *************************************************************************************
 def get_globatt(GCM,RCM,sch_info,perturb=None):
     import datetime as dt
@@ -242,7 +248,7 @@ def get_globatt(GCM,RCM,sch_info,perturb=None):
     glatt['wrf_schemes_bl_pbl_physics']       = "%s" %(sch_info['bl_pbl_physics']) 
     glatt['wrf_schemes_ra_sw_physics']            = "%s" %(sch_info['ra_sw_physics']) 
     glatt['wrf_schemes_sf_surface_physics']   = "%s" %(sch_info['sf_surface_physics'])
-    
+      
     return glatt
 
 
@@ -278,9 +284,10 @@ def dictionary2entries(vals1, vals2, vals3):
             else:
                 dicjeff[vals1[ii]][vals2[ii]]=vals3[ii]
     return dicjeff
-# *************************************************************************************
 
-def create_netcdf(info, varval, time, overwrite=None):
+
+# *************************************************************************************
+def create_netcdf(info, varval, time):
         
 
         """ Create a netcdf file for the post-processed variables of NARCliM simulations
@@ -295,9 +302,10 @@ def create_netcdf(info, varval, time, overwrite=None):
         Last Modification: 07/08/2013
         
         """
-        print '\n', ' CALLING CREATE_NETCDF MODULE '
+        print '\n', ' CALLING CREATE_NETCDF MODULE ','\n'
         import numpy as np
         import netCDF4 as nc
+        import sys
 
         file_out=info[0]
         varname=info[1]
@@ -307,6 +315,7 @@ def create_netcdf(info, varval, time, overwrite=None):
         wrf_file_eg=info[5]
         GCM=info[6]
         RCM=info[7]
+        time_bounds=info[8]
 
         # **********************************************************************
         # Read attributes from the geo_file of the corresponding domain
@@ -334,7 +343,8 @@ def create_netcdf(info, varval, time, overwrite=None):
 
 	# ------------------------
         # Create dimensions
-        print '   CREATING DIMENSIONS: BNDS, TIME, X, Y'
+        print '   CREATING AND WRITING DIMENSIONS: '
+        print '                        TIME, X, Y(, TIME_BNDS)'
         fout.createDimension('bnds', 2)
         fout.createDimension('time',None)
         fout.createDimension('y',varval.shape[1])
@@ -343,10 +353,10 @@ def create_netcdf(info, varval, time, overwrite=None):
         # ------------------------
         # Create and assign values to variables
         print "\n"
-        print '   CREATING VARIABLES:'
+        print '   CREATING AND WRITING VARIABLES:'
 
        # VARIABLE: longitude
-        print '    ---   ',varname, ' VARIABLE CREATED ' 
+        print '    ---   LONGITUDE VARIABLE CREATED ' 
         varout=fout.createVariable('lon','f',['y', 'x'])
         varout[:]=lon[:]
         setattr(varout, 'standard_name','longitude')
@@ -363,12 +373,6 @@ def create_netcdf(info, varval, time, overwrite=None):
         setattr(varout, 'units','degrees_north')
         setattr(varout, '_CoordinateAxisType','Lat')
            
-        # VARIABLE: time_bnds 
-        print '    ---   TIME_BNDS VARIABLE CREATED ' 
-        varout=fout.createVariable('time_bnds','f',['time', 'bnds'])
-        aa=np.reshape(np.concatenate([time,time]), (time.shape[0],2))
-        varout[:]=aa[:]
-
         # VARIABLE: time 
         print '    ---   TIME VARIABLE CREATED ' 
         varout=fout.createVariable('time','f',['time'])
@@ -380,11 +384,23 @@ def create_netcdf(info, varval, time, overwrite=None):
         setattr(varout, 'calendar',calendar)
 
         # VARIABLE: variable
-        print '    ---   LATITUDE VARIABLE CREATED ' 
-        varout=fout.createVariable(varname,'f',['time', 'y', 'x'])
+        print '    ---   ',varname, ' VARIABLE CREATED ' 
+        varout=fout.createVariable(varname,'f',['time', 'y', 'x'], fill_value=varatt['_FillValue'])
         varout[:]=varval[:]
-
-        # VARIABLE: Rotated_Pole 
+        for att in varatt.keys():
+          if att!='_FillValue':
+            setattr(varout, att, varatt[att])
+            
+        # VARIABLE: time_bnds 
+        if time_bounds==True:
+          print '    ---   TIME_BNDS VARIABLE CREATED ' 
+          varout=fout.createVariable('time_bnds','f',['time', 'bnds'])
+          aa=np.reshape(np.concatenate([time,time]), (time.shape[0],2))
+          varout[:]=aa[:]
+          setattr(varout, 'units','hours since 1949-12-01 00:00:00')
+          setattr(varout, 'calendar',calendar)
+        
+       # VARIABLE: Rotated_Pole 
         print '    ---   Rotated_pole VARIABLE CREATED ' 
         varout=fout.createVariable('Rotated_pole','c',[])
         setattr(varout, 'grid_mapping_name', 'rotated_latitude_longitude')
@@ -395,20 +411,21 @@ def create_netcdf(info, varval, time, overwrite=None):
         setattr(varout, 'true_longitude_of_projection',stand_lon)
         setattr(varout, 'grid_north_pole_latitude',  pole_lat)
         setattr(varout, 'grid_north_pole_longitude', pole_lon)
-
-        # for att in varatt:
-        #     setattr(varout, att, getattr(fin.variables[var],att))
-        
-        # ADD GLOBAL ATTRIBUTES
-        
+      
+        # WRITE GLOBAL ATTRIBUTES
+        print '\n', '   CREATING AND WRITING GLOBAL ATTRIBUTES:'
         sch_info=read_schemes(wrf_file_eg)
-        gblatt= get_globatt(GCM,RCM,sch_info)
-        print gblatt
+        gblatt = get_globatt(GCM,RCM,sch_info)
 
-	fout.close()				
+        for att in gblatt.keys():
+          setattr(fout, att, gblatt[att])
+        
+   
+	fout.close()
+        print '  ===> FILE: ', file_out
+				
         return 'DONE!!!!!!!!!!!!!'
 
-	#****************************************************************************************
 
 #**************************************************************************************
 

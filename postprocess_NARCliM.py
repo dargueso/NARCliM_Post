@@ -17,6 +17,7 @@ import datetime as dt
 import glob
 from optparse import OptionParser
 import postprocess_modules as pm
+import compute_vars as cv
 import calendar as cal
 
 # Check initial time
@@ -49,15 +50,23 @@ syear=int(inputinf['syear'])
 eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
+overwrite=True
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
-fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain,)
+fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain)
 if not os.path.exists(fullpathout):
 	os.makedirs(fullpathout)
 
 #CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
 if not os.path.exists("%s/temp/" %(fullpathout)):
 	os.makedirs("%s/temp/" %(fullpathout))
+
+
+#CREATE A LOG IFLE TO PUT OUTPUT FROM THE MAIN SCRIPT
+datenow=dt.datetime.now().strftime("%Y-%m-%d_%H:%M")
+logfile = '%s/postprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,GCM,RCM,syear,eyear,domain,datenow)
+print 'The output messages are written to %s' %(logfile)
+#sys.stdout = open('%s' %(logfile), "w") 
 
 
 #### Reading variable info file ######
@@ -76,14 +85,15 @@ else:
 for filet in file_type:
 
 	if filet=='wrfhrly':
-		print '\n', ' Processing ', filet, ' outputs'
+		print '\n', ' PROCESSING ', filet, ' OUTPUTS'
 	
 
 		#***********************************************
 		# LOOP over years
 		for year in np.arange(syear,eyear+1):
-			print '\n', ' -> Processing year: ', year
-			
+			print '\n', ' -> PROCESSING YEAR: ', year
+			time_bounds=False
+
 			loadfiles = pathin+'%s_%s_%s*' % (filet,domain,year) # Specify path
 			files_in=sorted(glob.glob(loadfiles))
 
@@ -131,32 +141,69 @@ for filet in file_type:
 				print '  -->  READING VARIABLE ', var
 				wrfvar=(pm.getwrfname(var)[0]).split('-')
 		
-				count_v=0
-				for wrfv in wrfvar:
-                                        #varval=np.array(fin.variables[wrfvar], dtype='d')
-				        #varval=fin.variables[wrfvar][:]
-					if count_v==0:
-						varval=np.array(fin.variables[wrfv][:], dtype='d')
-					if count_v==1:
-						varval1=np.array(fin.variables[wrfv][:], dtype='d')
-					if count_v==2:
-						varval2=np.array(fin.variables[wrfv][:], dtype='d')
+
+				# ***********************************************************
+				# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
+				# IF THE FILE ALREADY EXISTS
+				# If it does then go to the next one...
+				file_out=pathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,'01H',year,year,var) # Specify output file
+				a=os.path.exists(file_out)
+				print '  --> OUTPUT FILE:'
+				print '                 ', file_out
+				if a==True and overwrite==False:
+					print '                  +++ FILE ALREADY EXISTS +++'
+				else:
+					if  a==True and overwrite==True:
+						print '                   +++ FILE EXISTS AND WILL BE OVERWRITE +++'
+					else:
+						print '                   +++ FILE DOES NOT EXISTS YET +++'
+				# ***********************************************************
+
+
+					# ***********************************************
+					# LOOP over wrf variables need to compute the variable of interest
+					count_v=0
+					for wrfv in wrfvar:
+						if count_v==0:
+							varval=np.array(fin.variables[wrfv][:], dtype='d')
+						if count_v==1:
+							varval1=np.array(fin.variables[wrfv][:], dtype='d')
+						if count_v==2:
+							varval2=np.array(fin.variables[wrfv][:], dtype='d')
+					fin.close()
 					count_v=count_v+1
 
-				ctime=pm.checkpoint(ctime)
+					ctime=pm.checkpoint(ctime)
 
-				#result=compute_tas(filet,varval,time)
+					# GET ATTRIBUTES AND MODIFY OUTPUT VARIABLE IF NEEDED
+					compute=getattr(cv,'compute_'+var)
+					sys.exit(0)
+					# CALL COMPUTE_ MODULE
+					if var!='pracc':
+						result, varatt=compute(varval,dates)
+					else:
+						# PRECIPITATION NEEDS ONE TIME STEP MORE
+						last_file = sorted(glob.glob(pathin+'%s_%s_%s-12-01_*' % (filet,domain,year-1)))
+						fin=nc.Dataset(last_file,mode='r')
+						count_v=0
+						for wrfv in wrfvar:
+							if count_v==0:
+								varval=np.array(fin.variables[wrfv][:], dtype='d')
+							if count_v==1:
+								varval1=np.array(fin.variables[wrfv][:], dtype='d')
 
-				result=varval
-				file_out=pathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,'01H',year,year,var) # Specify output file
-				wrf_file_eg=files_in[0]
-				varatt='asdfvsdv'
-				info=[file_out, var, varatt, calendar, domain, wrf_file_eg, GCM, RCM]
-				aa=pm.create_netcdf(info, result, time)
-				print '  ===> FILE: ', file_out
-				print aa,'\n'
-				ctime=pm.checkpoint(ctime)
-				sys.exit(0)
+							result, varatt=compute(varval,last_val,dates)
+
+					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
+					nctcdf_info=[file_out, var, varatt, calendar, domain, files_in[0],\
+							     GCM, RCM, time_bounds]
+					
+					# CREATE NETCDF FILE
+					aa=pm.create_netcdf(netcdf_info, result, time)
+
+					print aa,'\n'
+					ctime=pm.checkpoint(ctime)
+					sys.exit(0)
 				
 		# ***********************************************
 		# LOOP over variables

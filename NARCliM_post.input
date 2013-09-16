@@ -1,6 +1,6 @@
 #File with NARCliM postprocessing input arguments
 
-pathin = /home/z3393020/WRFouts/NARCliM/MK30/R1/1990-2010/
+pathin = /home/z3393020/WRFouts/NARCliM/MK30/R1/1990-2010/out/
 pathout = /srv/ccrc/data28/z3444417/NARCliM/new_post/
 GCM = MK3.0
 RCM = R1
