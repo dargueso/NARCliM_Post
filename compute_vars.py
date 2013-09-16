@@ -144,7 +144,7 @@ def compute_evspsbl(sfcevp,time):
        atts: attributes of the output variable to be used in the output netcdf
     """
     #sfcevp includes the timestep previous to the first one to remove the accumulation. 
-    if len(time)!sfcevp.shape[0]+1:
+    if len(time)!=sfcevp.shape[0]+1:
         sys.exit('ERROR in compute_evspsbl: The lenght of time variable does not correspond to var first dimension')
     
     
@@ -158,5 +158,23 @@ def compute_evspsbl(sfcevp,time):
     
     return evspsbl,atts
 
-def compute_mrso():
+def compute_mrso(smstot,dzs,time):
+    """Method to compute the total soil moisture content
+       Integrates through all soil layers
+       smstot: total soil moisture in each layer [m3 m-3]
+       dzs: thickness of each soil layer [m]
+       ---
+       mrso: total soil moisture content [kg m-2]
+       atts: attributes of the output variable to be used in the output netcdf
+    """
+    if len(time)!=smstot.shape[0]:
+        sys.exit('ERROR in compute_mrso: The lenght of time variable does not correspond to var first dimension')
     
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="soil_moisture_content",ln="Total soil moisture content",un="kg m-2",ts=tseconds)
+    
+    mrso=smstot*1000*np.sum(dzs)
+    
+    return mrso,att
+    
+        
