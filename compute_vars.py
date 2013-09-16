@@ -567,11 +567,11 @@ def compute_wss30maxtstep(uv10max30,time):
 
 def compute_wss1Hmaxtstep(uv10max1H,time):
     """Method to compute the max 1-hour wind speed using all timesteps of the model
-       uv10max1H: maximum 1-hour wind speed using all timesteps [m s-1]
-       time: list of times corresponding to uv10max1H 1st dimension
-       ---
-       wss1Hmaxtstep:maximum 1-hour wind speed using all timesteps [m s-1]
-       atts: attributes of the output variable to be used in the output netcdf
+    uv10max1H: maximum 1-hour wind speed using all timesteps [m s-1]
+    time: list of times corresponding to uv10max1H 1st dimension
+    ---
+    wss1Hmaxtstep:maximum 1-hour wind speed using all timesteps [m s-1]
+    atts: attributes of the output variable to be used in the output netcdf
     """
     if len(time)!=uv10max1H.shape[0]:
         sys.exit('ERROR in compute_wss1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
@@ -579,6 +579,6 @@ def compute_wss1Hmaxtstep(uv10max1H,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="1Hmax_air_velocity",ln="Max. 1-hour time-window moving averaged surface wind speed",un="m s-1",ts=tseconds)
 
-	wss1Hmaxtstep=uv10max1H
+    wss1Hmaxtstep=uv10max1H
 
     return wss1Hmaxtstep,atts
