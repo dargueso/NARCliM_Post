@@ -301,7 +301,6 @@ for filet in file_type:
 				syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
 
 				fileref=nc.Dataset(fileall[0],'r')
-				print 
 				fileref_att=nc.Dataset(pathin+'/wrfhrly_%s_%s-01-01_00:00:00' %(domain,syear),'r')
 
 				syp=syear
@@ -344,25 +343,45 @@ for filet in file_type:
 # MONTHLY STATISTICS
 for filet in filetype:
 	for varname in varinfo[filet].keys():
-		stat_all=varinfo[filet][varname].split(',')
-		fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,outfile_patt,varname)))
-		eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
-		syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
+		if varname in out_variables:
+			stat_all=varinfo[filet][varname].split(',')
+			fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,outfile_patt,varname)))
+			eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
+			syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
 
-		fileref=nc.Dataset(fileall[0],'r')
+			fileref=nc.Dataset(fileall[0],'r')
+			fileref_att=nc.Dataset(pathin+'/wrfhrly_%s_%s-01-01_00:00:00' %(domain,syear),'r')
 
-		syp=syear
-		while syp<eyear:
-			eyp=((int(syp)/10)+1)*10
-			sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
-			files=nc.MFDataset(sel_files)
-			time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
-			var=files.variables[varname][:]
-			for stat in stat_all:
-				mvar,mtime=coms.compute_monthly(var,time,stat)
-			mtime_nc=nc.date2num(mtime,units=time_units)
-			varatt={}
+			syp=syear
+			while syp<eyear:
+				ctime_var=pm.checkpoint(0)
+				eyp=((int(syp)/10)+1)*10
+				print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varname)
+				sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
+				files=nc.MFDataset(sel_files)
+				time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
+				var=files.variables[varname][:]
+				ctime=pm.checkpoint(ctime_var)
+				
+				for stat in stat_all:
+					print stat
+					ctime_var=pm.checkpoint(0)
+					varstat=varname+stat
+					file_out=fullpathout+'%sMON_%s-%s_%s.nc' % (outfile_patt,syp,eyp-1,varstat) # Specify output file
+					filewrite=pm.checkfile(file_out,overwrite)
+					if filewrite==True
+						mvar,mtime=coms.compute_monthly(var,time,stat)
+						mtime_nc=nc.date2num(mtime,units=time_units)
+						varatt={}
 		
-			for att in fileref.variables[varname].ncattrs():
-				varatt[att]=getattr(fileref.variables[varname],att)
-			syp=eyp.copy()     
+						for att in fileref.variables[varname].ncattrs():
+							varatt[att]=getattr(fileref.variables[varname],att)
+						
+							# INFO NEEDED TO WRITE THE OUTPUT NETCDF
+							netcdf_info=[file_out, varstat, varatt, calendar, domain, fileref_att, GCM, RCM, False]
+
+							# CREATE NETCDF FILE
+							pm.create_netcdf(netcdf_info, mvar, mtime_nc)
+							ctime=pm.checkpoint(ctime_var)
+							print '=====================================================', '\n', '\n', '\n'
+				syp=eyp.copy()     
