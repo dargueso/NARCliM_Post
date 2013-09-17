@@ -19,6 +19,7 @@ from optparse import OptionParser
 import postprocess_modules as pm
 import compute_vars as comv
 import calendar as cal
+import compute_stats as coms
 
 # Check initial time
 ctime_i=pm.checkpoint(0)
@@ -50,10 +51,8 @@ syear=int(inputinf['syear'])
 eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
-overwrite=True
+overwrite=False
 time_units="hours since 1949-12-01 00:00:00"
-
-eyear=1996
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
 fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain)
@@ -146,25 +145,13 @@ for filet in file_type:
 		# LOOP OVER VARIABLES IN THE GIVEN KIND OF FILE
 		for var in varinfo[filet].keys():
 			ctime_var=pm.checkpoint(0)
-
-
 			# ***********************************************************
 			# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
 			# IF THE FILE ALREADY EXISTS
 			# If it does then go to the next one...
-			file_out=pathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,file_freq,year,year,var) # Specify output file
-			a=os.path.exists(file_out)
-			print '  --> OUTPUT FILE:'
-			print '                 ', file_out
-			if a==True and overwrite==False:
-				print '                  +++ FILE ALREADY EXISTS +++'
-			else:
-				if  a==True and overwrite==True:
-					print '                   +++ FILE EXISTS AND WILL BE OVERWRITE +++'
-				else:
-					print '                   +++ FILE DOES NOT EXISTS YET +++'
-			# ***********************************************************
-
+			file_out=fullpathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,file_freq,year,year,var) # Specify output file
+			filewrite=pm.checkfile(file_out,overwrite)
+			if filewrite==True:
 				# READ FILES FROM THE CORRESPONDING PERIOD
 				print '    -->  READING FILES '
 				fin=nc.MFDataset(files_list) # Read all files
@@ -291,7 +278,7 @@ for filet in file_type:
 				netcdf_info=[file_out, var, varatt, 'standard', domain, files_list[0], GCM, RCM, time_bounds]
 
 				# CREATE NETCDF FILE
-				aa=pm.create_netcdf(netcdf_info, varval, time, time_bnds)
+				pm.create_netcdf(netcdf_info, varval, time, time_bnds)
 				ctime=pm.checkpoint(ctime_var)
 				fin.close()
 				ctime=pm.checkpoint(ctime_var)
@@ -299,64 +286,82 @@ for filet in file_type:
 				
 
 #***********************************************
+# DAILY STATISTICS
 # Loop over all types of WRF output files (i.e., wrfhrly, wrfout, etc) 
 for filet in file_type:
-     if (filet!='wrfxtrm') or (filet!='wrfdly'): # These files are already daily
-        for varname in varinfo[filet].keys():
-            
-            stat_all=varinfo[filet][varname].split(',')
-            
-            
-            fileall=sorted(glob.glob('%s/%s0?H_*_%s.nc' %(fullpathout,outfile_patt,varname)))
-            eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
-            syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
-            
-            fileref=nc.Dataset(fileall[0],'r')
-            
-            syp=syear
-            while syp<eyear:
-                eyp=((int(syp)/5)+1)*5
-                sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
-                files=nc.MFDataset(sel_files)
-                time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
-                var=files.variables[varname][:]
-                
-                for stat in stat_all:
-                    dvar,dtime=cs.compute_daily(var,time,stat)
-                    dtime_nc=nc.date2num(dtime,units=time_units)
-                    varatts={}
-                                        
-                    for att in fileref.variables[varname].ncattrs():
-                        varatts[att]=getattr(fileref.variables[varname],att)
-                    
-                    
-                syp=eyp.copy()
+	if (filet!='wrfxtrm') and (filet!='wrfdly'): # These files are already daily
+		for varname in varinfo[filet].keys():
+			if varname in out_variables:
+				stat_all=varinfo[filet][varname].split(',')
+				print 'yes'
+				print '%s/%s0?H_*_%s.nc' %(fullpathout,outfile_patt,varname)
+				fileall=sorted(glob.glob('%s/%s0?H_*_%s.nc' %(fullpathout,outfile_patt,varname)))
+				eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
+				syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
 
+				fileref=nc.Dataset(fileall[0],'r')
+				print 
+				fileref_att=nc.Dataset(pathin+'/wrfhrly_%s_%s-01-01_00:00:00' %(domain,syear),'r')
 
+				syp=syear
+				while syp<eyear:
+					ctime_var=pm.checkpoint(0)
+					eyp=((int(syp)/5)+1)*5
+					print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varname)
+					sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
+					files=nc.MFDataset(sel_files)
+					time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
+					var=files.variables[varname][:]
+					ctime=pm.checkpoint(ctime_var)
+
+					for stat in stat_all:
+						print stat
+						ctime_var=pm.checkpoint(0)
+						varstat=varname+stat
+						file_out=fullpathout+'%sDAY_%s-%s_%s.nc' % (outfile_patt,syp,eyp-1,varstat) # Specify output file
+						filewrite=pm.checkfile(file_out,overwrite)
+						if filewrite==True:
+							dvar,dtime=coms.compute_daily(var,time,stat)
+							dtime_nc=nc.date2num(dtime,units=time_units)
+							time_bnds_inf=dtime_nc-12
+							time_bnds_sup=dtime_nc+12
+							time_bnds=np.reshape(np.concatenate([time_bnds_inf,time_bnds_sup]), (len(dtime),2))
+							varatt={}
+							for att in fileref.variables[varname].ncattrs():
+								varatt[att]=getattr(fileref.variables[varname],att)
+
+							# INFO NEEDED TO WRITE THE OUTPUT NETCDF
+							netcdf_info=[file_out, varstat, varatt, calendar, domain, fileref_att, GCM, RCM, True]
+
+							# CREATE NETCDF FILE
+							pm.create_netcdf(netcdf_info, dvar, dtime_nc, time_bnds)
+							ctime=pm.checkpoint(ctime_var)
+							print '=====================================================', '\n', '\n', '\n'
+					syp=eyp
+					
+					
+# MONTHLY STATISTICS
 for filet in filetype:
-    for varname in varinfo[filet].keys():
-        stat_all=varinfo[filet][varname].split(',')
-        fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,outfile_patt,varname)))
-        eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
-        syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
-        
-        fileref=nc.Dataset(fileall[0],'r')
-        
-        syp=syear
-        while syp<eyear:
-            eyp=((int(syp)/10)+1)*10
-            sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
-            files=nc.MFDataset(sel_files)
-            time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
-            var=files.variables[varname][:]
+	for varname in varinfo[filet].keys():
+		stat_all=varinfo[filet][varname].split(',')
+		fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,outfile_patt,varname)))
+		eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
+		syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
 
-            for stat in stat_all:
-                mvar,mtime=cs.compute_monthly(var,time,stat)
-		mtime_nc=nc.date2num(mtime,units=time_units)
-		varatts={}
-   
+		fileref=nc.Dataset(fileall[0],'r')
+
+		syp=syear
+		while syp<eyear:
+			eyp=((int(syp)/10)+1)*10
+			sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
+			files=nc.MFDataset(sel_files)
+			time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
+			var=files.variables[varname][:]
+			for stat in stat_all:
+				mvar,mtime=coms.compute_monthly(var,time,stat)
+			mtime_nc=nc.date2num(mtime,units=time_units)
+			varatt={}
 		
-		for att in fileref.variables[varname].ncattrs():
-                    varatts[att]=getattr(fileref.variables[varname],att)
-                    
-            syp=eyp.copy()     
+			for att in fileref.variables[varname].ncattrs():
+				varatt[att]=getattr(fileref.variables[varname],att)
+			syp=eyp.copy()     
