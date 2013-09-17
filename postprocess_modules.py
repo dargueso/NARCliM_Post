@@ -134,8 +134,18 @@ def read_varinfo(filename):
  
 # *************************************************************************************
 def getwrfname(varname):
+    """ Dictionary containing the equivalence between CF variable names and WRF 
+    variable names.
+    """
+
     dic={'tas':['T2'],'pracc':['RAINC-RAINNC'],'ps':['PSFC'], 'uas':['U10'], 'vas':['V10'],\
-           'huss':['Q2'], 'wss':['U10-V10']}
+           'huss':['Q2'], 'wss':['U10-V10'], 'sst':['SST'],'rsds':['GSW'], 'rlds':['GLW'],\
+           'emiss':['EMISS'], 'albedo':['ALBEDO'], 'hfls':['LH'], 'hfss':['HFX'],'evspsbl':['SFCEVP'],\
+           'mrso':['SMSTOT-DZS'], 'potevp':['POTEVP'], 'rlus':['TSK'],'tasmeantstep':['T2MEAN'],\
+           'tasmintstep':['T2MIN'],'tasmaxtstep':['T2MAX'],'wssmaxtstep':['SPDUV10MAX'], 'pr5maxtstep':['PRMAX5'],\
+           'pr10maxtstep':['PRMAX10'],'pr20maxtstep':['PRMAX20'],'pr30maxtstep':['PRMAX30'], 'pr1Hmaxtstep':['PRMAX1H'],\
+           'wss5maxtstep':['UV10MAX5'], 'wss10maxtstep':['UV10MAX10'], 'wss20maxtstep':['UV10MAX20'],\
+           'wss30maxtstep':['UV10MAX30'], 'wss1Hmaxtstep':['UV10MAX1H']}
     
     return dic[varname]
 
@@ -214,6 +224,12 @@ def get_varatt(sn,ln,un,ts,hg=None):
 # *************************************************************************************
 def get_wrfdate(time):
   import numpy as np
+  """Method to extract year, month, day and hour from a particular timestep of the
+  time variable of the wrf output.
+  
+  time: string from the time variable of a wrf output.
+  """
+  
   time=np.squeeze(time)
   year=int(time[0])*1000+int(time[1])*100+int(time[2])*10+int(time[3]) 
   month=int(time[5])*10+int(time[6])
@@ -226,7 +242,15 @@ def get_wrfdate(time):
 # *************************************************************************************
 def add_leap(varval,index):
   import numpy as np
-
+  """Method that add missing values to the 29th February in leap year for
+  those simulations that are run without leap years.
+  
+  varval: 3-D matrix with time, latitude and longitude in the first, second and third dimensions. 
+  The time dimension has one year of data without 29th february in a leap-year case.
+  
+  index: is the index of the 29th feburary in the time dimension.
+  """
+  
   temp=np.zeros((varval.shape[0]+1,varval.shape[1],varval.shape[2]))
   temp[0:index[0][0]-1,:,:]=varval[0:index[0][0]-1,:,:]
   temp[index[0][0]:index[0][23],:,:]=const.missingval
