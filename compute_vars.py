@@ -152,7 +152,7 @@ def compute_vas(v10,time):
     # vas=0.5*(v10[:,:-1,:]+v10[:,1:,:])
     vas = v10
 
-    return uas,atts
+    return vas,atts
 
 def compute_evspsbl(sfcevp,time):
     """Method to compute surface evaporation flux
