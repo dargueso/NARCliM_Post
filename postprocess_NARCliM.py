@@ -144,145 +144,146 @@ for filet in file_type:
 		# ***********************************************
 		# LOOP OVER VARIABLES IN THE GIVEN KIND OF FILE
 		for var in varinfo[filet].keys():
-			ctime_var=pm.checkpoint(0)
-			# ***********************************************************
-			# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
-			# IF THE FILE ALREADY EXISTS
-			# If it does then go to the next one...
-			file_out=fullpathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,file_freq,year,year,var) # Specify output file
-			filewrite=pm.checkfile(file_out,overwrite)
-			if filewrite==True:
-				# READ FILES FROM THE CORRESPONDING PERIOD
-				print '    -->  READING FILES '
-				fin=nc.MFDataset(files_list) # Read all files
-				print '    -->  EXTRACTING VARIABLE Time'
-				time_old = fin.variables['Times'][:] # Get time variable
+			if var in out_variables:
+				ctime_var=pm.checkpoint(0)
+				# ***********************************************************
+				# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
+				# IF THE FILE ALREADY EXISTS
+				# If it does then go to the next one...
+				file_out=fullpathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,file_freq,year,year,var) # Specify output file
+				filewrite=pm.checkfile(file_out,overwrite)
+				if filewrite==True:
+					# READ FILES FROM THE CORRESPONDING PERIOD
+					print '    -->  READING FILES '
+					fin=nc.MFDataset(files_list) # Read all files
+					print '    -->  EXTRACTING VARIABLE Time'
+					time_old = fin.variables['Times'][:] # Get time variable
 
-				# FIRST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
-				year_i, month_i, day_i, hour_i = pm.get_wrfdate(time_old[0,:])
+					# FIRST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
+					year_i, month_i, day_i, hour_i = pm.get_wrfdate(time_old[0,:])
 
-				# LAST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
-				year_f, month_f, day_f, hour_f = pm.get_wrfdate(time_old[-1,:])
+					# LAST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
+					year_f, month_f, day_f, hour_f = pm.get_wrfdate(time_old[-1,:])
 
-				# DEFINE TIME BOUNDS VARIABLES 
-				time_bounds=tbounds
-				time_bnds=pm.const.missingval
+					# DEFINE TIME BOUNDS VARIABLES 
+					time_bounds=tbounds
+					time_bnds=pm.const.missingval
 
-				# DEFINE DATES USING STANDARD CALENDAR
-				n_days = dt.datetime(year+1,month_i,day_i,hour_i)-dt.datetime(year,month_i,day_i,hour_i)
-				n_timesteps=n_days.days*int(24./time_step)
-				date = [dt.datetime(year,month_i,day_i,hour_i)+ dt.timedelta(hours=x) \
-						for x in xrange(0,n_timesteps*time_step,time_step)]
-				time=nc.date2num(date[:],units=time_units)
+					# DEFINE DATES USING STANDARD CALENDAR
+					n_days = dt.datetime(year+1,month_i,day_i,hour_i)-dt.datetime(year,month_i,day_i,hour_i)
+					n_timesteps=n_days.days*int(24./time_step)
+					date = [dt.datetime(year,month_i,day_i,hour_i)+ dt.timedelta(hours=x) \
+							for x in xrange(0,n_timesteps*time_step,time_step)]
+					time=nc.date2num(date[:],units=time_units)
 
-				# -------------------
-				# CHECKING: Check if the of time steps is right
-				if n_timesteps!=time_old.shape[0]:
-					print '\n', 'ERROR: the number of timesteps in period ', year,' is INCORRECT'
-					print 'There should be: ', n_timesteps
-					print 'There are: ', time_old.shape[0]
-					print 'SCRIPT stops running ','\n'
-					sys.exit(0)
-
-
-				# ***********************************************
-				# LOOP over wrf variables need to compute the variable of interest
-				print '    -->  EXTRACTING VARIABLE ', var
-				wrfvar=(pm.getwrfname(var)[0]).split('-')
-				for cv,wrfv in enumerate(wrfvar):
-					if cv==0:
-						varval=np.array(fin.variables[wrfv][:], dtype='d')
-					if cv==1:
-						varval1=np.array(fin.variables[wrfv][:], dtype='d')
-					if cv==2:
-						varval2=np.array(fin.variables[wrfv][:], dtype='d')
+					# -------------------
+					# CHECKING: Check if the of time steps is right
+					if n_timesteps!=time_old.shape[0]:
+						print '\n', 'ERROR: the number of timesteps in period ', year,' is INCORRECT'
+						print 'There should be: ', n_timesteps
+						print 'There are: ', time_old.shape[0]
+						print 'SCRIPT stops running ','\n'
+						sys.exit(0)
 
 
-				# ***********************************************
-				# FOR LEAP YEARS AND MODELS WITH NO LEAP YEARS REPLACE THE 29TH FEBRUARY BY 
-				# MISSING VALUES
-				if calendar=='noleap' and cal.isleap(year)==True:
-					months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
-					days_all=np.asarray([date[i].day for i in xrange(len(date))])
-					index=np.where(np.logical_and(months_all==2,days_all==29))
-
+					# ***********************************************
+					# LOOP over wrf variables need to compute the variable of interest
+					print '    -->  EXTRACTING VARIABLE ', var
+					wrfvar=(pm.getwrfname(var)[0]).split('-')
 					for cv,wrfv in enumerate(wrfvar):
 						if cv==0:
-							varval = pm.add_leap(varval,index)
+							varval=np.array(fin.variables[wrfv][:], dtype='d')
 						if cv==1:
-							varval1 = pm.add_leap(varval1,index)
+							varval1=np.array(fin.variables[wrfv][:], dtype='d')
 						if cv==2:
-							varval2 = pm.add_leap(varval2,index)
+							varval2=np.array(fin.variables[wrfv][:], dtype='d')
 
 
-				# ***********************************************
-				# PRECIPITATION NEEDS ONE TIME STEP MORE TO COMPUTE DIFFERENCES
-				if var=='pracc' or var=='potevp' or var=='evspsbl':
+					# ***********************************************
+					# FOR LEAP YEARS AND MODELS WITH NO LEAP YEARS REPLACE THE 29TH FEBRUARY BY 
+					# MISSING VALUES
+					if calendar=='noleap' and cal.isleap(year)==True:
+						months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
+						days_all=np.asarray([date[i].day for i in xrange(len(date))])
+						index=np.where(np.logical_and(months_all==2,days_all==29))
 
-					# DEFINE TIME BOUNDS FOR ACCUMULATED VARIABLES
-					time_bounds=True
-					if filet=='wrfhrly' or filet=='wrfout':
-						date_inf=date
+						for cv,wrfv in enumerate(wrfvar):
+							if cv==0:
+								varval = pm.add_leap(varval,index)
+							if cv==1:
+								varval1 = pm.add_leap(varval1,index)
+							if cv==2:
+								varval2 = pm.add_leap(varval2,index)
+
+
+					# ***********************************************
+					# PRECIPITATION NEEDS ONE TIME STEP MORE TO COMPUTE DIFFERENCES
+					if var=='pracc' or var=='potevp' or var=='evspsbl':
+
+						# DEFINE TIME BOUNDS FOR ACCUMULATED VARIABLES
+						time_bounds=True
+						if filet=='wrfhrly' or filet=='wrfout':
+							date_inf=date
+							time_inf=nc.date2num(date_inf[:],units=time_units)
+							date_sup=[dt.datetime(year,month_i,day_i,hour_i+time_step)+ \
+									   dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
+							time_sup=nc.date2num(date_sup[:],units=time_units)
+							time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
+
+						# READ ONE MORE TIME STEP FOR ACCUMULATED COMPUTATIONS
+						if year<2009:
+							last_file = sorted(glob.glob(pathin+'%s_%s_%s-01-01_*' % (filet,domain,year+1)))
+							fin2=nc.Dataset(last_file[0],mode='r')
+							for cv,wrfv in enumerate(wrfvar):
+								if cv==0:
+									last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
+														dtype='d'),(1,varval.shape[1],varval.shape[2]))
+									varval=np.concatenate((varval,last_varval))
+								if cv==1:
+									last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
+														dtype='d'),(1,varval.shape[1],varval.shape[2]))
+									varval1=np.concatenate((varval1,last_varval))
+							fin2.close()
+						else:
+							last_varval=np.zeros((1,varval.shape[1],varval.shape[2]))
+							last_varval[:]=pm.const.missingval
+							for cv,wrfv in enumerate(wrfvar):
+								if cv==0:
+									varval=np.concatenate((varval,last_varval))
+								if cv==1:
+									varval1=np.concatenate((varval1,last_varval))
+						
+
+					# ***********************************************
+					# DEFINE TIME BOUNDS FOR XTRM AND DAILY VARIABLES
+					if filet=='wrfxtrm' or filet=='wrfdly':
+						datei=date[0]-dt.timedelta(hours=int(float(time_step)/2.))
+						date_inf=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
 						time_inf=nc.date2num(date_inf[:],units=time_units)
-						date_sup=[dt.datetime(year,month_i,day_i,hour_i+time_step)+ \
-								   dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
+						datei=date[0]+dt.timedelta(hours=int(float(time_step)/2.))
+						date_sup=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
 						time_sup=nc.date2num(date_sup[:],units=time_units)
 						time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
 
-					# READ ONE MORE TIME STEP FOR ACCUMULATED COMPUTATIONS
-					if year<2009:
-						last_file = sorted(glob.glob(pathin+'%s_%s_%s-01-01_*' % (filet,domain,year+1)))
-						fin2=nc.Dataset(last_file[0],mode='r')
-						for cv,wrfv in enumerate(wrfvar):
-							if cv==0:
-								last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
-													dtype='d'),(1,varval.shape[1],varval.shape[2]))
-								varval=np.concatenate((varval,last_varval))
-							if cv==1:
-								last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
-													dtype='d'),(1,varval.shape[1],varval.shape[2]))
-								varval1=np.concatenate((varval1,last_varval))
-						fin2.close()
-					else:
-						last_varval=np.zeros((1,varval.shape[1],varval.shape[2]))
-						last_varval[:]=pm.const.missingval
-						for cv,wrfv in enumerate(wrfvar):
-							if cv==0:
-								varval=np.concatenate((varval,last_varval))
-							if cv==1:
-								varval1=np.concatenate((varval1,last_varval))
-						
 
-				# ***********************************************
-				# DEFINE TIME BOUNDS FOR XTRM AND DAILY VARIABLES
-				if filet=='wrfxtrm' or filet=='wrfdly':
-					datei=date[0]-dt.timedelta(hours=int(float(time_step)/2.))
-					date_inf=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
-					time_inf=nc.date2num(date_inf[:],units=time_units)
-					datei=date[0]+dt.timedelta(hours=int(float(time_step)/2.))
-					date_sup=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
-					time_sup=nc.date2num(date_sup[:],units=time_units)
-					time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
+					# CALL COMPUTE_VAR MODULE
+					compute=getattr(comv,'compute_'+var) # FROM STRING TO ATTRIBUTE
+					if len(wrfvar)==1:
+						varval, varatt=compute(varval,date)
+					if len(wrfvar)==2:
+						varval, varatt=compute(varval,varval1,date)
+					if len(wrfvar)==3:
+						varval, varatt=compute(varval,varval1,varval2,date)
 
+					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
+					netcdf_info=[file_out, var, varatt, 'standard', domain, files_list[0], GCM, RCM, time_bounds]
 
-				# CALL COMPUTE_VAR MODULE
-				compute=getattr(comv,'compute_'+var) # FROM STRING TO ATTRIBUTE
-				if len(wrfvar)==1:
-					varval, varatt=compute(varval,date)
-				if len(wrfvar)==2:
-					varval, varatt=compute(varval,varval1,date)
-				if len(wrfvar)==3:
-					varval, varatt=compute(varval,varval1,varval2,date)
-
-				# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-				netcdf_info=[file_out, var, varatt, 'standard', domain, files_list[0], GCM, RCM, time_bounds]
-
-				# CREATE NETCDF FILE
-				pm.create_netcdf(netcdf_info, varval, time, time_bnds)
-				ctime=pm.checkpoint(ctime_var)
-				fin.close()
-				ctime=pm.checkpoint(ctime_var)
-				print '=====================================================', '\n', '\n', '\n'
+					# CREATE NETCDF FILE
+					pm.create_netcdf(netcdf_info, varval, time, time_bnds)
+					ctime=pm.checkpoint(ctime_var)
+					fin.close()
+					ctime=pm.checkpoint(ctime_var)
+					print '=====================================================', '\n', '\n', '\n'
 				
 
 #***********************************************
