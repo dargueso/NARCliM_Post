@@ -451,7 +451,7 @@ def create_netcdf(info, varval, time, time_bnds):
 	fout.close()
         print '  ===> FILE: ', file_out
 				
-        return '         ------------  SUCCESFULLY CREATED!!!    ------------ '
+        print '         ------------  SUCCESFULLY CREATED!!!    ------------ '
 
 
 #**************************************************************************************
@@ -479,3 +479,29 @@ def checkpoint(ctime):
 
         return ctime
 
+#**************************************************************************************
+
+def checkfile(file_out,overwrite):
+	"""Checks if the output file exist and whether it should be written or not
+	"""
+	
+	# ***********************************************************
+	# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
+	# IF THE FILE ALREADY EXISTS
+	# If it does then go to the next one...
+	fileexist=os.path.exists(file_out)
+	print '  --> OUTPUT FILE:'
+	print '                 ', file_out
+	if fileexist==True and overwrite==False:
+		print '                  +++ FILE ALREADY EXISTS +++'
+		filewrite=False
+	else:
+		if  fileexist==True and overwrite==True:
+			print '                   +++ FILE EXISTS AND WILL BE OVERWRITE +++'
+			filewrite=True
+		else:
+			print '                   +++ FILE DOES NOT EXISTS YET +++'
+			filewrite=True
+	# ***********************************************************
+	return filewrite
+	
