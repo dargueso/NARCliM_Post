@@ -1,11 +1,11 @@
 #File with NARCliM postprocessing input arguments
 
-pathin = /home/z3393020/WRFouts/NARCliM/MK30/R1/1990-2010/out/
-pathout = /srv/ccrc/data28/z3444417/NARCliM/new_post/
-GCM = MK3.0
+pathin = /home/z3393020/WRFouts/NARCliM/MIROC3.2/R1/1990-2010/out/
+pathout = /srv/ccrc/data29/z3393020/NARCliM/new_post/
+GCM = MIROC3.2
 RCM = R1
 syear = 1990
-eyear = 2009
+eyear = 2005
 domain = d02
 
 outfile_patt=CCRC_NARCliM_
@@ -14,11 +14,11 @@ outfile_patt=CCRC_NARCliM_
 
 tas		
 pracc	
-ps		
-huss	
-# wss		
-# uas		
-# vas		
+#ps		
+#huss	
+#wss		
+#uas		
+#vas		
 # evspsbl	
 # mrso	
 # sst		
