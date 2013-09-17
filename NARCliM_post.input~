@@ -5,7 +5,7 @@ pathout = /srv/ccrc/data29/z3393020/NARCliM/new_post/
 GCM = MIROC3.2
 RCM = R1
 syear = 1990
-eyear = 2009
+eyear = 2005
 domain = d02
 
 outfile_patt=CCRC_NARCliM_
