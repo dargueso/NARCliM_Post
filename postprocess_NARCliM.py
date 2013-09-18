@@ -51,17 +51,17 @@ syear=int(inputinf['syear'])
 eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
-overwrite=False
+overwrite=True
 time_units="hours since 1949-12-01 00:00:00"
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
-fullpathout='%s/%s/%s/%s-%s/%s' %(pathout,GCM,RCM,syear,eyear,domain)
+fullpathout='%s%s/%s/%s-%s/%s/' %(pathout,GCM,RCM,syear,eyear,domain)
 if not os.path.exists(fullpathout):
 	os.makedirs(fullpathout)
 
 #CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
-if not os.path.exists("%s/temp/" %(fullpathout)):
-	os.makedirs("%s/temp/" %(fullpathout))
+if not os.path.exists("%stemp/" %(fullpathout)):
+	os.makedirs("%stemp/" %(fullpathout))
 
 
 #CREATE A LOG IFLE TO PUT OUTPUT FROM THE MAIN SCRIPT
@@ -85,7 +85,10 @@ else:
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
 for filet in file_type:
-
+	ctime_filet=pm.checkpoint(0)
+	filet='wrfout'
+	filet='wrfhrly'
+	
 	print '\n','\n', '*************************************'
 	print '  PROCESSING ', filet, ' FILE OUTPUTS'
 	print '*************************************'
@@ -118,13 +121,13 @@ for filet in file_type:
 	#***********************************************
 	# LOOP OVER YEARS
 	for year in np.arange(syear,eyear+1):
-
+		ctime_year=pm.checkpoint(0)
 		if filet=='wrfout':
 			n_files=365
 			if cal.isleap(year):
 				n_files=perstep*366
 
-
+				
 		# SELECTING FILES TO READ
 		print '\n', ' -> PROCESSING PERIOD: ', str(year)+' - '+str(year)
 		loadfiles = pathin+'%s_%s_%s*' % (filet,domain,year) # Specify path
@@ -140,12 +143,12 @@ for filet in file_type:
 			print 'SCRIPT stops running ','\n' 
 			sys.exit(0)
 
-
 		# ***********************************************
 		# LOOP OVER VARIABLES IN THE GIVEN KIND OF FILE
 		for var in varinfo[filet].keys():
 			if var in out_variables:
 				ctime_var=pm.checkpoint(0)
+
 				# ***********************************************************
 				# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
 				# IF THE FILE ALREADY EXISTS
@@ -153,6 +156,7 @@ for filet in file_type:
 				file_out=fullpathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,file_freq,year,year,var) # Specify output file
 				filewrite=pm.checkfile(file_out,overwrite)
 				if filewrite==True:
+
 					# READ FILES FROM THE CORRESPONDING PERIOD
 					print '    -->  READING FILES '
 					fin=nc.MFDataset(files_list) # Read all files
@@ -161,6 +165,7 @@ for filet in file_type:
 
 					# FIRST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
 					year_i, month_i, day_i, hour_i = pm.get_wrfdate(time_old[0,:])
+					mins=0
 
 					# LAST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
 					year_f, month_f, day_f, hour_f = pm.get_wrfdate(time_old[-1,:])
@@ -172,8 +177,7 @@ for filet in file_type:
 					# DEFINE DATES USING STANDARD CALENDAR
 					n_days = dt.datetime(year+1,month_i,day_i,hour_i)-dt.datetime(year,month_i,day_i,hour_i)
 					n_timesteps=n_days.days*int(24./time_step)
-					date = [dt.datetime(year,month_i,day_i,hour_i)+ dt.timedelta(hours=x) \
-							for x in xrange(0,n_timesteps*time_step,time_step)]
+					date = pm.get_dates(year,month_i,day_i,hour_i,mins,time_step,n_timesteps)
 					time=nc.date2num(date[:],units=time_units)
 
 					# -------------------
@@ -214,10 +218,11 @@ for filet in file_type:
 								varval1 = pm.add_leap(varval1,index)
 							if cv==2:
 								varval2 = pm.add_leap(varval2,index)
+					fin.close() # CLOSE FILES
 
-
+					
 					# ***********************************************
-					# PRECIPITATION NEEDS ONE TIME STEP MORE TO COMPUTE DIFFERENCES
+					# ACCUMULATED VARIABLES NEED ONE TIME STEP MORE TO COMPUTE DIFFERENCES
 					if var=='pracc' or var=='potevp' or var=='evspsbl':
 
 						# DEFINE TIME BOUNDS FOR ACCUMULATED VARIABLES
@@ -225,10 +230,13 @@ for filet in file_type:
 						if filet=='wrfhrly' or filet=='wrfout':
 							date_inf=date
 							time_inf=nc.date2num(date_inf[:],units=time_units)
-							date_sup=[dt.datetime(year,month_i,day_i,hour_i+time_step)+ \
-									   dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
+							date_sup=pm.get_dates(year,month_i,day_i,hour_i+time_step,mins,time_step,n_timesteps)
 							time_sup=nc.date2num(date_sup[:],units=time_units)
 							time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
+
+							# Time variable is defined in the middle of time bounds
+							date=pm.get_dates(year,month_i,day_i,hour_i,30,time_step,n_timesteps)
+							time=nc.date2num(date[:],units=time_units)
 
 						# READ ONE MORE TIME STEP FOR ACCUMULATED COMPUTATIONS
 						if year<2009:
@@ -281,10 +289,12 @@ for filet in file_type:
 					# CREATE NETCDF FILE
 					pm.create_netcdf(netcdf_info, varval, time, time_bnds)
 					ctime=pm.checkpoint(ctime_var)
-					fin.close()
-					ctime=pm.checkpoint(ctime_var)
 					print '=====================================================', '\n', '\n', '\n'
-				
+	print ' =======================  YEAR:',year, ' FINISHED ==============', '\n', '\n',
+	ctime=pm.checkpoint(ctime_year)
+print ' =======================  FILE TYPE :',filet, ' FINISHED ==============', '\n', '\n',
+ctime=pm.checkpoint(ctime_filet)
+
 
 #***********************************************
 # DAILY STATISTICS
@@ -340,6 +350,7 @@ for filet in file_type:
 					syp=eyp
 					
 					
+#***********************************************
 # MONTHLY STATISTICS
 for filet in filetype:
 	for varname in varinfo[filet].keys():
@@ -369,7 +380,7 @@ for filet in filetype:
 					varstat=varname+stat
 					file_out=fullpathout+'%sMON_%s-%s_%s.nc' % (outfile_patt,syp,eyp-1,varstat) # Specify output file
 					filewrite=pm.checkfile(file_out,overwrite)
-					if filewrite==True
+					if filewrite==True:
 						mvar,mtime=coms.compute_monthly(var,time,stat)
 						mtime_nc=nc.date2num(mtime,units=time_units)
 						varatt={}
