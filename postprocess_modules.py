@@ -134,8 +134,18 @@ def read_varinfo(filename):
  
 # *************************************************************************************
 def getwrfname(varname):
+    """ Dictionary containing the equivalence between CF variable names and WRF 
+    variable names.
+    """
+
     dic={'tas':['T2'],'pracc':['RAINC-RAINNC'],'ps':['PSFC'], 'uas':['U10'], 'vas':['V10'],\
-           'huss':['Q2'], 'wss':['U10-V10']}
+           'huss':['Q2'], 'wss':['U10-V10'], 'sst':['SST'],'rsds':['SWDOWN'], 'rlds':['GLW'],\
+           'emiss':['EMISS'], 'albedo':['ALBEDO'], 'hfls':['LH'], 'hfss':['HFX'],'evspsbl':['SFCEVP'],\
+           'mrso':['SMSTOT-DZS'], 'potevp':['POTEVP'], 'rlus':['TSK-EMISS'],'tasmeantstep':['T2MEAN'],\
+           'tasmintstep':['T2MIN'],'tasmaxtstep':['T2MAX'],'wssmaxtstep':['SPDUV10MAX'], 'pr5maxtstep':['PRMAX5'],\
+           'pr10maxtstep':['PRMAX10'],'pr20maxtstep':['PRMAX20'],'pr30maxtstep':['PRMAX30'], 'pr1Hmaxtstep':['PRMAX1H'],\
+           'wss5maxtstep':['UV10MAX5'], 'wss10maxtstep':['UV10MAX10'], 'wss20maxtstep':['UV10MAX20'],\
+           'wss30maxtstep':['UV10MAX30'], 'wss1Hmaxtstep':['UV10MAX1H']}
     
     return dic[varname]
 
@@ -214,6 +224,12 @@ def get_varatt(sn,ln,un,ts,hg=None):
 # *************************************************************************************
 def get_wrfdate(time):
   import numpy as np
+  """Method to extract year, month, day and hour from a particular timestep of the
+  time variable of the wrf output.
+  
+  time: string from the time variable of a wrf output.
+  """
+  
   time=np.squeeze(time)
   year=int(time[0])*1000+int(time[1])*100+int(time[2])*10+int(time[3]) 
   month=int(time[5])*10+int(time[6])
@@ -226,7 +242,15 @@ def get_wrfdate(time):
 # *************************************************************************************
 def add_leap(varval,index):
   import numpy as np
-
+  """Method that add missing values to the 29th February in leap year for
+  those simulations that are run without leap years.
+  
+  varval: 3-D matrix with time, latitude and longitude in the first, second and third dimensions. 
+  The time dimension has one year of data without 29th february in a leap-year case.
+  
+  index: is the index of the 29th feburary in the time dimension.
+  """
+  
   temp=np.zeros((varval.shape[0]+1,varval.shape[1],varval.shape[2]))
   temp[0:index[0][0]-1,:,:]=varval[0:index[0][0]-1,:,:]
   temp[index[0][0]:index[0][23],:,:]=const.missingval
@@ -318,50 +342,49 @@ def dictionary2entries(vals1, vals2, vals3):
 
 
 # *************************************************************************************
-def create_netcdf(info, varval, time, time_bnds):
+def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
         
 
-        """ Create a netcdf file for the post-processed variables of NARCliM simulations
-                   
+	""" Create a netcdf file for the post-processed variables of NARCliM simulations
+           
 	By default, the module do not overwrite the file so if there is one with the same name then 
 	the script does not do anything.
 
-        Input: global  attributres from pre-defined classes:   
-        Output: a netcdf file
-        Author: Alejanro Di Luca, Daniel Argueso
-        Created: 14/09/2013
-        Last Modification: 07/08/2013
-        
-        """
-        print '\n', ' CALLING CREATE_NETCDF MODULE ','\n'
-        import numpy as np
-        import netCDF4 as nc
-        import sys
+	Input: global  attributres from pre-defined classes:   
+	Output: a netcdf file
+	Author: Alejanro Di Luca, Daniel Argueso
+	Created: 14/09/2013
+	Last Modification: 07/08/2013
 
-        file_out=info[0]
-        varname=info[1]
-        varatt=info[2]
-        calendar=info[3]
-        domain=info[4]
-        wrf_file_eg=info[5]
-        GCM=info[6]
-        RCM=info[7]
-        time_bounds=info[8]
+	"""
+	print '\n', ' CALLING CREATE_NETCDF MODULE ','\n'
+	import numpy as np
+	import netCDF4 as nc
+	import sys
 
-        # **********************************************************************
-        # Read attributes from the geo_file of the corresponding domain
-        file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.'+domain+'.nc'
-        fin1=nc.Dataset(file10,mode='r')
-        lon=np.squeeze(fin1.variables['XLONG_M'][:,:]) # Getting longitude
-        lat=np.squeeze(fin1.variables['XLAT_M'][:,:]) # Getting latitude
-        dx=getattr(fin1, 'DX')
-        dy=getattr(fin1, 'DY')
-        cen_lat=getattr(fin1, 'CEN_LAT')
-        cen_lon=getattr(fin1, 'CEN_LON')
-        pole_lat=getattr(fin1, 'POLE_LAT')
-        pole_lon=getattr(fin1, 'POLE_LON')
-        stand_lon=getattr(fin1, 'STAND_LON')
-        fin1.close()
+	file_out=info[0]
+	varname=info[1]
+	varatt=info[2]
+	calendar=info[3]
+	domain=info[4]
+	GCM=info[5]
+	RCM=info[6]
+	time_bounds=info[7]
+
+	# **********************************************************************
+	# Read attributes from the geo_file of the corresponding domain
+	file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.'+domain+'.nc'
+	fin1=nc.Dataset(file10,mode='r')
+	lon=np.squeeze(fin1.variables['XLONG_M'][:,:]) # Getting longitude
+	lat=np.squeeze(fin1.variables['XLAT_M'][:,:]) # Getting latitude
+	dx=getattr(fin1, 'DX')
+	dy=getattr(fin1, 'DY')
+	cen_lat=getattr(fin1, 'CEN_LAT')
+	cen_lon=getattr(fin1, 'CEN_LON')
+	pole_lat=getattr(fin1, 'POLE_LAT')
+	pole_lon=getattr(fin1, 'POLE_LON')
+	stand_lon=getattr(fin1, 'STAND_LON')
+	fin1.close()
 
       
 	#**********************************************************************
@@ -373,10 +396,10 @@ def create_netcdf(info, varval, time, time_bnds):
         # Create dimensions
         print '   CREATING AND WRITING DIMENSIONS: '
         print '                        TIME, X, Y(, TIME_BNDS)'
-        fout.createDimension('bnds', 2)
-        fout.createDimension('time',None)
-        fout.createDimension('y',varval.shape[1])
         fout.createDimension('x',varval.shape[2])
+        fout.createDimension('y',varval.shape[1])
+        fout.createDimension('time',None)
+        fout.createDimension('bnds', 2)
 
         # ------------------------
         # Create and assign values to variables
@@ -408,7 +431,7 @@ def create_netcdf(info, varval, time, time_bnds):
         setattr(varout, 'standard_name','time')
         setattr(varout, 'long_name','time')
         setattr(varout, 'bounds','time_bnds')
-        setattr(varout, 'units','hours since 1949-12-01 00:00:00')
+        setattr(varout, 'units',time_units)
         setattr(varout, 'calendar',calendar)
 
         # VARIABLE: variable
@@ -423,9 +446,9 @@ def create_netcdf(info, varval, time, time_bnds):
         # VARIABLE: time_bnds 
         if time_bounds==True:
           print '    ---   TIME_BNDS VARIABLE CREATED ' 
-          varout=fout.createVariable('time_bnds','f',['time', 'bnds'])
+          varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
           varout[:]=time_bnds[:]
-          setattr(varout, 'units','hours since 1949-12-01 00:00:00')
+          setattr(varout, 'units', time_units)
           setattr(varout, 'calendar',calendar)
         
        # VARIABLE: Rotated_Pole 
@@ -442,7 +465,6 @@ def create_netcdf(info, varval, time, time_bnds):
       
         # WRITE GLOBAL ATTRIBUTES
         print '\n', '   CREATING AND WRITING GLOBAL ATTRIBUTES:'
-        sch_info=read_schemes(wrf_file_eg)
         gblatt = get_globatt(GCM,RCM,sch_info)
         for att in gblatt.keys():
           setattr(fout, att, gblatt[att])
@@ -484,7 +506,7 @@ def checkpoint(ctime):
 def checkfile(file_out,overwrite):
 	"""Checks if the output file exist and whether it should be written or not
 	"""
-	
+
 	# ***********************************************************
 	# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
 	# IF THE FILE ALREADY EXISTS
@@ -497,11 +519,24 @@ def checkfile(file_out,overwrite):
 		filewrite=False
 	else:
 		if  fileexist==True and overwrite==True:
-			print '                   +++ FILE EXISTS AND WILL BE OVERWRITE +++'
+			print '                   +++ FILE EXISTS AND WILL BE OVERWRITTEN +++'
 			filewrite=True
 		else:
 			print '                   +++ FILE DOES NOT EXISTS YET +++'
 			filewrite=True
 	# ***********************************************************
 	return filewrite
-	
+
+#**************************************************************************************
+
+def get_dates(year,month,day,hour,mins,time_step,n_timesteps):
+  import datetime as dt
+  """ Gives a dates vector starting on year/month/day/time with a total 
+  of n_timesteps each time_steps in hours.
+  """
+  dates=[dt.datetime(year,month,day,hour,mins)+ \
+           dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
+
+  # ***********************************************************
+  return dates
+

@@ -65,11 +65,11 @@ def compute_monthly(var,time,stat):
 	mvar=np.zeros((max(months),)+var.shape[1:],dtype=np.float64)*pm.const.missingval
 
 	#Calculating the middle of each month. Data is provided in the mid point between the time_bounds
-	mtime=[]
+	mtime=[0]*max(months)
 	for mo in xrange(max(months)):
 	    time_m=time[months==mo+1]
 	    tdiference=(time_m[-1]-time_m[0]).total_seconds()/2
-	    mtime.append([time_m[0]+dt.timedelta(seconds=tdiference)])
+	    mtime[mo]=time_m[0]+dt.timedelta(seconds=tdiference)
 
 
 	if stat == 'acc':

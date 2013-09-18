@@ -257,7 +257,7 @@ def compute_rsds(swdown,time):
     
     return rsds,atts
 
-def compute_rsds(glw,time):
+def compute_rlds(glw,time):
     """Method to compute downward longwave surface radiation
        glw: downward long wave flux at ground surface [W m-2]
        time: list of times corresponding to glw 1st dimension
@@ -271,7 +271,7 @@ def compute_rsds(glw,time):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="surface_downwelling_longwave_flux_in_air",ln="Downward LW surface radiation",un="W m-2",ts="time: point values %s seconds" %(tseconds))
 
-    rlds=swdown
+    rlds=glw
 
     return rlds,atts
     
@@ -506,7 +506,7 @@ def compute_pr30maxtstep(prmax30,time):
         sys.exit('ERROR in compute_pr30maxtstep: The lenght of time variable does not correspond to var first dimension')
 
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="30max_precipitation_flux",ln="Max. 30-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",s="time: maximum 30-minute time-window moving averaged values from point values 60.0 second")
+    atts=pm.get_varatt(sn="30max_precipitation_flux",ln="Max. 30-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts="time: maximum 30-minute time-window moving averaged values from point values 60.0 second")
 
     pr30maxtstep=prmax30
 
