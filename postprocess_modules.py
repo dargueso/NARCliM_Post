@@ -345,47 +345,46 @@ def dictionary2entries(vals1, vals2, vals3):
 def create_netcdf(info, varval, time, time_bnds):
         
 
-        """ Create a netcdf file for the post-processed variables of NARCliM simulations
-                   
+	""" Create a netcdf file for the post-processed variables of NARCliM simulations
+           
 	By default, the module do not overwrite the file so if there is one with the same name then 
 	the script does not do anything.
 
-        Input: global  attributres from pre-defined classes:   
-        Output: a netcdf file
-        Author: Alejanro Di Luca, Daniel Argueso
-        Created: 14/09/2013
-        Last Modification: 07/08/2013
-        
-        """
-        print '\n', ' CALLING CREATE_NETCDF MODULE ','\n'
-        import numpy as np
-        import netCDF4 as nc
-        import sys
+	Input: global  attributres from pre-defined classes:   
+	Output: a netcdf file
+	Author: Alejanro Di Luca, Daniel Argueso
+	Created: 14/09/2013
+	Last Modification: 07/08/2013
 
-        file_out=info[0]
-        varname=info[1]
-        varatt=info[2]
-        calendar=info[3]
-        domain=info[4]
-        wrf_file_eg=info[5]
-        GCM=info[6]
-        RCM=info[7]
-        time_bounds=info[8]
+	"""
+	print '\n', ' CALLING CREATE_NETCDF MODULE ','\n'
+	import numpy as np
+	import netCDF4 as nc
+	import sys
 
-        # **********************************************************************
-        # Read attributes from the geo_file of the corresponding domain
-        file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.'+domain+'.nc'
-        fin1=nc.Dataset(file10,mode='r')
-        lon=np.squeeze(fin1.variables['XLONG_M'][:,:]) # Getting longitude
-        lat=np.squeeze(fin1.variables['XLAT_M'][:,:]) # Getting latitude
-        dx=getattr(fin1, 'DX')
-        dy=getattr(fin1, 'DY')
-        cen_lat=getattr(fin1, 'CEN_LAT')
-        cen_lon=getattr(fin1, 'CEN_LON')
-        pole_lat=getattr(fin1, 'POLE_LAT')
-        pole_lon=getattr(fin1, 'POLE_LON')
-        stand_lon=getattr(fin1, 'STAND_LON')
-        fin1.close()
+	file_out=info[0]
+	varname=info[1]
+	varatt=info[2]
+	calendar=info[3]
+	domain=info[4]
+	GCM=info[5]
+	RCM=info[6]
+	time_bounds=info[7]
+
+	# **********************************************************************
+	# Read attributes from the geo_file of the corresponding domain
+	file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.'+domain+'.nc'
+	fin1=nc.Dataset(file10,mode='r')
+	lon=np.squeeze(fin1.variables['XLONG_M'][:,:]) # Getting longitude
+	lat=np.squeeze(fin1.variables['XLAT_M'][:,:]) # Getting latitude
+	dx=getattr(fin1, 'DX')
+	dy=getattr(fin1, 'DY')
+	cen_lat=getattr(fin1, 'CEN_LAT')
+	cen_lon=getattr(fin1, 'CEN_LON')
+	pole_lat=getattr(fin1, 'POLE_LAT')
+	pole_lon=getattr(fin1, 'POLE_LON')
+	stand_lon=getattr(fin1, 'STAND_LON')
+	fin1.close()
 
       
 	#**********************************************************************
@@ -432,7 +431,7 @@ def create_netcdf(info, varval, time, time_bnds):
         setattr(varout, 'standard_name','time')
         setattr(varout, 'long_name','time')
         setattr(varout, 'bounds','time_bnds')
-        setattr(varout, 'units','hours since 1949-12-01 00:00:00')
+        setattr(varout, 'units',time_units)
         setattr(varout, 'calendar',calendar)
 
         # VARIABLE: variable
@@ -449,7 +448,7 @@ def create_netcdf(info, varval, time, time_bnds):
           print '    ---   TIME_BNDS VARIABLE CREATED ' 
           varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
           varout[:]=time_bnds[:]
-          setattr(varout, 'units','hours since 1949-12-01 00:00:00')
+          setattr(varout, 'units', time_units)
           setattr(varout, 'calendar',calendar)
         
        # VARIABLE: Rotated_Pole 
@@ -466,7 +465,6 @@ def create_netcdf(info, varval, time, time_bnds):
       
         # WRITE GLOBAL ATTRIBUTES
         print '\n', '   CREATING AND WRITING GLOBAL ATTRIBUTES:'
-        sch_info=read_schemes(wrf_file_eg)
         gblatt = get_globatt(GCM,RCM,sch_info)
         for att in gblatt.keys():
           setattr(fout, att, gblatt[att])
@@ -521,10 +519,24 @@ def checkfile(file_out,overwrite):
 		filewrite=False
 	else:
 		if  fileexist==True and overwrite==True:
-			print '                   +++ FILE EXISTS AND WILL BE OVERWRITE +++'
+			print '                   +++ FILE EXISTS AND WILL BE OVERWRITTEN +++'
 			filewrite=True
 		else:
 			print '                   +++ FILE DOES NOT EXISTS YET +++'
 			filewrite=True
 	# ***********************************************************
 	return filewrite
+
+#**************************************************************************************
+
+def get_dates(year,month,day,hour,mins,time_step,n_timesteps):
+  import datetime as dt
+  """ Gives a dates vector starting on year/month/day/time with a total 
+  of n_timesteps each time_steps in hours.
+  """
+  dates=[dt.datetime(year,month,day,hour,mins)+ \
+           dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
+
+  # ***********************************************************
+  return dates
+

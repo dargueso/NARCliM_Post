@@ -52,6 +52,15 @@ eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
 overwrite=True
+
+
+### Reference file (attributes and other) #########
+
+fileref_att=pathin+'/wrfhrly_%s_%s-01-01_00:00:00' %(domain,syear)
+sch_info=pm.read_schemes(fileref_att) #Information about the physics schemes used in the simulation
+
+### Time units (reference time for netcdf time units) ###########
+
 time_units="hours since 1949-12-01 00:00:00"
 
 #CREATE OUTPUT DIR IF IT DOESN'T EXIST
@@ -284,7 +293,7 @@ for filet in file_type:
 						varval, varatt=compute(varval,varval1,varval2,date)
 
 					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-					netcdf_info=[file_out, var, varatt, 'standard', domain, files_list[0], GCM, RCM, time_bounds]
+					netcdf_info=[file_out, var, varatt, 'standard', domain, GCM, RCM, time_bounds]
 
 					# CREATE NETCDF FILE
 					pm.create_netcdf(netcdf_info, varval, time, time_bnds)
@@ -310,7 +319,6 @@ for filet in file_type:
 				syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
 
 				fileref=nc.Dataset(fileall[0],'r')
-				fileref_att=pathin+'/wrfhrly_%s_%s-01-01_00:00:00' %(domain,syear)
 
 				syp=syear
 				while syp<eyear:
@@ -354,7 +362,7 @@ for filet in file_type:
 									varatt[att]=getattr(fileref.variables[varname],att)
 
 								# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-								netcdf_info=[file_out, varstat, varatt, calendar, domain, fileref_att, GCM, RCM, True]
+								netcdf_info=[file_out, varstat, varatt, calendar, domain, GCM, RCM, True]
 
 								# CREATE NETCDF FILE
 								pm.create_netcdf(netcdf_info, dvar, dtime_nc, time_bnds)
@@ -381,7 +389,6 @@ for filet in file_type:
 				syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varstat))[0][-9:-5]) for i in xrange(len(fileall))])
 
 				fileref=nc.Dataset(fileall[0],'r')
-				fileref_att=pathin+'/wrfhrly_%s_%s-01-01_00:00:00' %(domain,syear)
 
 				syp=syear
 				while syp<eyear:
@@ -409,7 +416,7 @@ for filet in file_type:
 							varatt[att]=getattr(fileref.variables[varstat],att)
 						
 							# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-							netcdf_info=[file_out, varstat, varatt, calendar, domain, fileref_att, GCM, RCM, True]
+							netcdf_info=[file_out, varstat, varatt, calendar, domain, GCM, RCM, True]
 
 							# CREATE NETCDF FILE
 							pm.create_netcdf(netcdf_info, mvar, mtime_nc, mtime_bnds)
