@@ -427,7 +427,7 @@ def create_netcdf(info, varval, time, time_bnds):
            
         # VARIABLE: time 
         print '    ---   TIME VARIABLE CREATED ' 
-        varout=fout.createVariable('time','d',['time'])
+        varout=fout.createVariable('time','f',['time'])
         varout[:]=time[:]
         setattr(varout, 'standard_name','time')
         setattr(varout, 'long_name','time')
@@ -447,7 +447,7 @@ def create_netcdf(info, varval, time, time_bnds):
         # VARIABLE: time_bnds 
         if time_bounds==True:
           print '    ---   TIME_BNDS VARIABLE CREATED ' 
-          varout=fout.createVariable('time_bnds','d',['time', 'bnds'])
+          varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
           varout[:]=time_bnds[:]
           setattr(varout, 'units','hours since 1949-12-01 00:00:00')
           setattr(varout, 'calendar',calendar)
@@ -528,17 +528,3 @@ def checkfile(file_out,overwrite):
 			filewrite=True
 	# ***********************************************************
 	return filewrite
-
-#**************************************************************************************
-
-def get_dates(year,month,day,hour,mins,time_step,n_timesteps):
-  import datetime as dt
-  """ Gives a dates vector starting on year/month/day/time with a total 
-  of n_timesteps each time_steps in hours.
-  """
-  dates=[dt.datetime(year,month,day,hour,mins)+ \
-           dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
-  
-  # ***********************************************************
-  return dates
-
