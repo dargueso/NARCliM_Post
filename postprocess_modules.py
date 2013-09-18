@@ -342,7 +342,7 @@ def dictionary2entries(vals1, vals2, vals3):
 
 
 # *************************************************************************************
-def create_netcdf(info, varval, time, time_bnds):
+def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
         
 
 	""" Create a netcdf file for the post-processed variables of NARCliM simulations

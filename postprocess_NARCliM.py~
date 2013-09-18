@@ -51,7 +51,7 @@ syear=int(inputinf['syear'])
 eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
-overwrite=False
+overwrite=True
 
 
 ### Reference file (attributes and other) #########

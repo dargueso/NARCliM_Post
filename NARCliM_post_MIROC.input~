@@ -14,29 +14,29 @@ outfile_patt=CCRC_NARCliM_
 
 tas		
 pracc	
-ps		
-huss	
-wss		
-uas		
-vas		
- evspsbl	
- mrso	
- sst		
+#ps		
+#huss	
+#wss		
+#uas		
+#vas		
+# evspsbl	
+# mrso	
+# sst		
 potevp	
- rsds	
- rlds	
- hfls	
- hfss	
- pr5maxtstep
- pr10maxtstep
- pr20maxtstep
- pr30maxtstep
- pr1Hmaxtstep
- wss5maxtstep
- wss10maxtstep
- wss20maxtstep
- wss30maxtstep
- wss1Hmaxtstep
- tasmeantstep
- tasmintstep
- tasmaxtstep
+# rsds	
+# rlds	
+# hfls	
+# hfss	
+# pr5maxtstep
+# pr10maxtstep
+# pr20maxtstep
+# pr30maxtstep
+# pr1Hmaxtstep
+# wss5maxtstep
+# wss10maxtstep
+# wss20maxtstep
+# wss30maxtstep
+# wss1Hmaxtstep
+# tasmeantstep
+# tasmintstep
+# tasmaxtstep
