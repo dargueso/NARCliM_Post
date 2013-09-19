@@ -2,8 +2,10 @@ import re
 import sys
 import os
 import netCDF4 as nc
+import numpy as np
+import datetime as dt
+import glob as glob
 from collections import OrderedDict
-
 class const:
   """Class that contains most used atmospheric constant values
   """   
@@ -26,8 +28,31 @@ class const:
   tkelvin = 273.15
   missingval = 1.e+20
 
-def create_outdir(inputinf):
-	fullpathout='%s%s/%s/%s-%s/%s/' %(inputinf['pathout'],inputinf['GCM'],inputinf['RCM'],inputinf['syear'],inputinf['eyear'],inputinf['domain'])
+class gvar:
+
+  def __init__(self,inputinf):
+      if inputinf['GCM']=='CCCMA3.1':
+          self.GCM_calendar='no_leap'
+      else:
+          self.GCM_calendar='standard'
+
+
+      self.ref_date=dt.datetime(1949,12,1,00,00,00)
+
+      self.pathin=inputinf['pathin']
+      self.pathout=inputinf['pathout']
+      self.GCM=inputinf['GCM']
+      self.RCM=inputinf['RCM']
+      self.syear=int(inputinf['syear'])
+      self.eyear=int(inputinf['eyear'])
+      self.domain=inputinf['domain']
+      self.overwrite=inputinf['overwrite']
+      self.outfile_patt=inputinf['outfile_patt']
+
+      self.fileref_att='%s/wrfhrly_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
+
+def create_outdir(gvars):
+	fullpathout='%s%s/%s/%s-%s/%s/' %(gvars.pathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain)
 
 	#CREATE OUTPUT DIR IF IT DOESN'T EXIST
 	if not os.path.exists(fullpathout):
@@ -39,9 +64,9 @@ def create_outdir(inputinf):
 		
 	return fullpathout
 	
-def create_outtime(dates):
+def create_outtime(dates,gvars):
 	
-	datehours=date2hours(dates,ref_date)
+	datehours=date2hours(dates,gvars.ref_date)
 	time=np.zeros(len(datehours),dtype=np.float64)
 	
 	time[0]=datehours[0]-(datehours[1]-datehours[0])
@@ -53,35 +78,34 @@ def create_timebnds(time):
 	
 	time_bnds=np.zeros((len(time),2),dtype=np.float64)
 	
-	time_bnds[1:,0]=timehours[:-1]+np.diff(timehours)/2
-	time_bnds[0:,1]=time_bnds[1:,0]
+	time_bnds[1:,0]=time[:-1]+np.diff(time)/2
+	time_bnds[:-1,1]=time_bnds[1:,0]
 	
-	time_bnds[0,0]=timehours[0]-(timehours[1]-timehours[0])
-	time_bnds[1,1]=timehours[-1]+(timehours[-1]+timehours[-2])
+	time_bnds[0,0]=time[0]-(time[1]-time[0])
+	time_bnds[1,1]=time[-1]+(time[-1]+time[-2])
 	
 	return time_bnds
 
 	
-def add_timestep_acc(wrfvar,varval,year,eyear):
-	accvar=[]
+def add_timestep_acc(wrfvar,varvals,year,gvars):
+	accvar={}
 	filet='wrfhrly'
-	for cv,wrfv in enumerate(wrfvar):
-		if year<eyear:
-			next_file=pathin+'%s_%s_%s-01-01_00:00:00' % (filet,domain,year+1)
+	for wrfv in wrfvar:
+		if year<gvars.eyear:
+			next_file='%s%s_%s_%s-01-01_00:00:00' % (gvars.pathin,filet,gvars.domain,year+1)
 			ncfile=nc.Dataset(next_file,'r')
-			accvar[]=np.concatenate((varvals[cv],ncfile.variables[wrfv][:]),axis=0)
-	
+			next_tstep=np.squeeze(ncfile.variables[wrfv][:])
+			accvar[wrfv]=np.concatenate((varvals[wrfv],next_tstep[0:1,:,:]),axis=0)
 		else:
-			fillvar=np.ones((1,)+var.shape[1:],dtype=np.float64)*const.missingval
-			accvar[cv]=np.concatenate((varvals[cv],fillvar),axis=0)
+			fillvar=np.ones((1,)+varvals[wrfv].shape[1:],dtype=np.float64)*const.missingval
+			accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
 	
 	return accvar
 	
 def get_wrfvars(wrfvar,fin):
-	variabs=[]
-	for cv,wrfv in enumerate(wrfvar):
-		xFragment=fin.variables[wrfv][:].astype('float64')
-		variabs.append(xFragment)
+	variabs={}
+	for wrfv in wrfvar:
+		variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
 		
 	return  variabs
 	
@@ -92,8 +116,8 @@ def add_leapdays(varvals):
 	days_all=np.asarray([date[i].day for i in xrange(len(date))])
 	index=np.where(np.logical_and(months_all==2,days_all==29))
 
-	for cv,wrfv in enumerate(wrfvar):
-		varvals[cv]=add_leap(varvals[0],index)
+	for wrfv in wrfvar:
+		varvals[wrfv]=add_leap(varvals[wrfv],index)
 	fin.close() # CLOSE FILES
 	
 	return varvals
@@ -422,7 +446,7 @@ def dictionary2entries(vals1, vals2, vals3):
 
 
 # *************************************************************************************
-def create_netcdf(info, varval, time, time_bnds, sch_info,date_ref):
+def create_netcdf(info,gvars, varval, time, time_bnds):
         
 
 	""" Create a netcdf file for the post-processed variables of NARCliM simulations
@@ -441,21 +465,18 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,date_ref):
 	import numpy as np
 	import netCDF4 as nc
 	import sys
+	
 
 	file_out=info[0]
 	varname=info[1]
 	varatt=info[2]
-	domain=info[3]
-	GCM=info[4]
-	RCM=info[5]
-	time_bounds=info[6]
+	time_bounds=info[3]
 
 	# **********************************************************************
 	# Read attributes from the geo_file of the corresponding domain
-	file10='/srv/ccrc/data18/z3393242/studies/domains/NARCliM/geo_em.'+domain+'.nc'
-	fin1=nc.Dataset(file10,mode='r')
-	lon=np.squeeze(fin1.variables['XLONG_M'][:,:]) # Getting longitude
-	lat=np.squeeze(fin1.variables['XLAT_M'][:,:]) # Getting latitude
+	fin1=nc.Dataset(gvars.fileref_att,mode='r')
+	lon=np.squeeze(fin1.variables['XLONG'][0,:,:]) # Getting longitude
+	lat=np.squeeze(fin1.variables['XLAT'][0,:,:]) # Getting latitude
 	dx=getattr(fin1, 'DX')
 	dy=getattr(fin1, 'DY')
 	cen_lat=getattr(fin1, 'CEN_LAT')
@@ -464,8 +485,7 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,date_ref):
 	pole_lon=getattr(fin1, 'POLE_LON')
 	stand_lon=getattr(fin1, 'STAND_LON')
 	fin1.close()
-
-      
+	sch_info=read_schemes(gvars.fileref_att) 
 	#**********************************************************************
 	# CREATING NETCDF FILE
 	# Create output file
@@ -510,7 +530,7 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,date_ref):
         setattr(varout, 'standard_name','time')
         setattr(varout, 'long_name','time')
         setattr(varout, 'bounds','time_bnds')
-        setattr(varout, 'units','hours since %s' %(date_ref.strftime("%Y-%m-%d %H:%M:%S")))
+        setattr(varout, 'units','hours since %s' %(gvars.ref_date.strftime("%Y-%m-%d %H:%M:%S")))
         setattr(varout, 'calendar','standard')
 
         # VARIABLE: variable
@@ -527,7 +547,7 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,date_ref):
           print '    ---   TIME_BNDS VARIABLE CREATED ' 
           varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
           varout[:]=time_bnds[:]
-          setattr(varout, 'units','hours since %s' %(date_ref.strftime("%Y-%m-%d %H:%M:%S")))
+          setattr(varout, 'units','hours since %s' %(gvars.ref_date.strftime("%Y-%m-%d %H:%M:%S")))
           setattr(varout, 'calendar','standard')
         
        # VARIABLE: Rotated_Pole 
@@ -544,8 +564,7 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,date_ref):
       
         # WRITE GLOBAL ATTRIBUTES
         print '\n', '   CREATING AND WRITING GLOBAL ATTRIBUTES:'
-        gblatt = get_globatt(GCM,RCM,sch_info)
-        print gblatt.keys()
+        gblatt = get_globatt(gvars.GCM,gvars.RCM,sch_info)
         for att in gblatt.keys():
           setattr(fout, att, gblatt[att])
         
@@ -592,18 +611,30 @@ def checkfile(file_out,overwrite):
 	# IF THE FILE ALREADY EXISTS
 	# If it does then go to the next one...
 	fileexist=os.path.exists(file_out)
+	filewrite=False
 	print '  --> OUTPUT FILE:'
 	print '                 ', file_out
-	if fileexist==True and overwrite==False:
-		print '                  +++ FILE ALREADY EXISTS +++'
-		filewrite=False
-	else:
-		if  fileexist==True and overwrite==True:
+	print overwrite
+	print fileexist
+	if (fileexist==True):
+		if (overwrite==False):
+			print '                  +++ FILE ALREADY EXISTS +++'
+			filewrite=False
+		elif overwrite==True:
 			print '                   +++ FILE EXISTS AND WILL BE OVERWRITTEN +++'
 			filewrite=True
-		else:
-			print '                   +++ FILE DOES NOT EXISTS YET +++'
-			filewrite=True
+	else:
+		print '                   +++ FILE DOES NOT EXISTS YET +++'
+		filewrite=True
+		
+			
+	# else:
+	# 	if  fileexist==True and overwrite==True:
+	# 		print '                   +++ FILE EXISTS AND WILL BE OVERWRITTEN +++'
+	# 		filewrite=True
+	# 	else:
+	# 		print '                   +++ FILE DOES NOT EXISTS YET +++'
+	# 		filewrite=True
 	# ***********************************************************
 	return filewrite
 
@@ -624,5 +655,109 @@ def date2hours(datelist,ref_date):
     hourssince=[(datelist[i]-ref_date).days*24. + (datelist[i]-ref_date).seconds/3600. for i in xrange(len(datelist))]
     return hourssince
     
-    
 
+def get_yearsfile(fileall,varname):
+	eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
+	syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
+	return syfile,eyfile
+
+def create_dailyfiles(gvars,varname,stat_all):
+	syp=gvars.syear
+	fullpathout=create_outdir(gvars)
+	fileall=sorted(glob.glob('%s/%s0?H_*_%s.nc' %(fullpathout,gvars.outfile_patt,varname)))
+	fileref=nc.Dataset(fileall[0],'r')
+	syfile,eyfile=get_yearsfile(fileall,varname)
+	while syp<gvars.eyear:
+		ctime_var=checkpoint(0)
+		eyp=((int(syp)/5)+1)*5
+		loadfile=False
+		for stat in stat_all:
+			if varname=='pracc':
+				varstat=varname
+			else:
+				varstat=varname+stat
+			
+			file_out='%s/%sDAY_%s-%s_%s.nc' % (fullpathout,gvars.outfile_patt,syp,eyp-1,varstat) # Specify output file
+			filewrite=checkfile(file_out,gvars.overwrite)
+			if filewrite==True:
+				loadfile=True
+		if loadfile==True:
+
+			print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varname)
+			sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
+			files=nc.MFDataset(sel_files)
+			time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
+			var=files.variables[varname][:]
+			ctime=checkpoint(ctime_var)
+
+			for stat in stat_all:
+				ctime_var=checkpoint(0)
+				if varname=='pracc':
+					varstat=varname
+				else:
+					varstat=varname+stat
+				file_out='%s/%sDAY_%s-%s_%s.nc' % (fullpathout,gvars.outfile_patt,syp,eyp-1,varstat) # Specify output file
+				filewrite=checkfile(file_out,gvars.overwrite)
+				if filewrite==True:
+					dvar,dtime=coms.compute_daily(var,time,stat)
+					dtime_nc=date2hours(dtime,gvars.ref_date)
+					time_bnds=create_timebnds(dtime_nc)
+					varatt={}
+					for att in fileref.variables[varname].ncattrs():
+						varatt[att]=getattr(fileref.variables[varname],att)
+
+					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
+					netcdf_info=[file_out, varstat, varatt, True]
+
+					# CREATE NETCDF FILE
+					print 'yes'
+					create_netcdf(netcdf_info,gvars, dvar, dtime_nc, time_bnds)
+					ctime=checkpoint(ctime_var)
+					print '=====================================================', '\n', '\n', '\n'
+		syp=eyp
+
+def create_monthlyfiles(gvars,varname,stat_all):
+	syp=gvars.syear
+	fullpathout=create_outdir(gvars)
+	for stat in stat_all:
+		if varname=='pracc':
+			varstat=varname
+		else:
+			varstat=varname+stat
+		
+		fileall=sorted(glob.glob('%s/%s0?H_*_%s.nc' %(fullpathout,gvars.outfile_patt,varname)))
+		fileref=nc.Dataset(fileall[0],'r')
+		syfile,eyfile=get_yearsfile(fileall,varname)
+
+		syp=gvars.syear
+		while syp<gvars.eyear:
+			ctime_var=checkpoint(0)
+			eyp=((int(syp)/10)+1)*10
+			print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varname)
+			sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
+			files=nc.MFDataset(sel_files)
+			time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
+			var=files.variables[varstat][:]
+			ctime=checkpoint(ctime_var)
+			file_out=fullpathout+'/%sMON_%s-%s_%s.nc' % (outfile_patt,syp,eyp-1,varstat) # Specify output file
+			filewrite=checkfile(file_out,gvars.overwrite)
+			if filewrite==True:
+				mvar,mtime=coms.compute_monthly(var,time,stat)
+				mtime_nc=date2hours(mtime,gvars.ref_date)
+				mtime_bnds_inf=date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0) for i in xrange(len(mtime))],gvars.ref_date)
+				mtime_bnds_sup=date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0)+relativedelta(months=1) for i in xrange(len(mtime))],gvars.ref_date)
+				mtime_bnds=np.reshape(np.concatenate([mtime_bnds_inf,mtime_bnds_sup],axis=0), (len(mtime),2),order='F')
+				print mtime_bnds
+				varatt={}
+
+				for att in fileref.variables[varstat].ncattrs():
+					varatt[att]=getattr(fileref.variables[varstat],att)
+				
+					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
+					netcdf_info=[file_out, varstat, varatt, True]
+
+					# CREATE NETCDF FILE
+					create_netcdf(netcdf_info,gvars,mvar, mtime_nc, mtime_bnds)
+					ctime=checkpoint(ctime_var)
+					print '=====================================================', '\n', '\n', '\n'
+			syp=eyp
