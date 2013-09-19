@@ -5,6 +5,8 @@ import netCDF4 as nc
 import numpy as np
 import datetime as dt
 import glob as glob
+import compute_stats as coms
+import compute_vars as comv
 from collections import OrderedDict
 class const:
   """Class that contains most used atmospheric constant values
@@ -614,8 +616,6 @@ def checkfile(file_out,overwrite):
 	filewrite=False
 	print '  --> OUTPUT FILE:'
 	print '                 ', file_out
-	print overwrite
-	print fileexist
 	if (fileexist==True):
 		if (overwrite==False):
 			print '                  +++ FILE ALREADY EXISTS +++'
