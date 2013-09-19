@@ -95,8 +95,6 @@ else:
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
 for filet in file_type:
 	ctime_filet=pm.checkpoint(0)
-	filet='wrfout'
-	filet='wrfhrly'
 	
 	print '\n','\n', '*************************************'
 	print '  PROCESSING ', filet, ' FILE OUTPUTS'
