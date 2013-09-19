@@ -739,7 +739,7 @@ def create_monthlyfiles(gvars,varname,stat_all):
 			time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
 			var=files.variables[varstat][:]
 			ctime=checkpoint(ctime_var)
-			file_out=fullpathout+'/%sMON_%s-%s_%s.nc' % (outfile_patt,syp,eyp-1,varstat) # Specify output file
+			file_out=fullpathout+'/%sMON_%s-%s_%s.nc' % (gvars.outfile_patt,syp,eyp-1,varstat) # Specify output file
 			filewrite=checkfile(file_out,gvars.overwrite)
 			if filewrite==True:
 				mvar,mtime=coms.compute_monthly(var,time,stat)
