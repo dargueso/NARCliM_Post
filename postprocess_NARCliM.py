@@ -6,7 +6,7 @@
    Authors: Daniel Argueso (d.argueso@unsw.edu.au), Alejandro Di Luca (a.diluca@unsw.edu.au)
    Institution: CoECSS, UNSW. CCRC, UNSW.
    Created: 13 September 2013
-   Modified: 17 Septemvber 2013
+   Modified: 17 September 2013
 """
 
 import netCDF4 as nc
@@ -21,6 +21,7 @@ import compute_vars as comv
 import calendar as cal
 import compute_stats as coms
 from dateutil.relativedelta import relativedelta
+from config import *
 # Check initial time
 ctime_i=pm.checkpoint(0)
 ctime=pm.checkpoint(0)
@@ -50,8 +51,8 @@ RCM=inputinf['RCM']
 syear=int(inputinf['syear'])
 eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
+overwrite=inputinf['overwrite']
 outfile_patt=inputinf['outfile_patt']
-overwrite=False
 
 
 ### Reference file (attributes and other) #########
@@ -59,20 +60,8 @@ overwrite=False
 fileref_att=pathin+'/wrfhrly_%s_%s-01-01_00:00:00' %(domain,syear)
 sch_info=pm.read_schemes(fileref_att) #Information about the physics schemes used in the simulation
 
-### Time units (reference time for netcdf time units) ###########
-
-time_units="hours since 1949-12-01 00:00:00"
-
-#CREATE OUTPUT DIR IF IT DOESN'T EXIST
-fullpathout='%s%s/%s/%s-%s/%s/' %(pathout,GCM,RCM,syear,eyear,domain)
-if not os.path.exists(fullpathout):
-	os.makedirs(fullpathout)
-
-#CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
-if not os.path.exists("%stemp/" %(fullpathout)):
-	os.makedirs("%stemp/" %(fullpathout))
-
-
+fullpathout=pm.create_outdir(inputinf)
+ 
 #CREATE A LOG IFLE TO PUT OUTPUT FROM THE MAIN SCRIPT
 datenow=dt.datetime.now().strftime("%Y-%m-%d_%H:%M")
 logfile = '%s/postprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,GCM,RCM,syear,eyear,domain,datenow)
@@ -83,14 +72,6 @@ print 'The output messages are written to %s' %(logfile)
 #### Reading variable info file ######
 varinfo=pm.read_varinfo("./info_files/variables.inf")
 file_type=varinfo.keys()
-
-######################################
-if GCM=='CCCMA3.1':
-	calendar=='noleap'
-else:
-	calendar='standard'
-
-
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
 for filet in file_type:
@@ -185,7 +166,7 @@ for filet in file_type:
 					n_days = dt.datetime(year+1,month_i,day_i,hour_i)-dt.datetime(year,month_i,day_i,hour_i)
 					n_timesteps=n_days.days*int(24./time_step)
 					date = pm.get_dates(year,month_i,day_i,hour_i,mins,time_step,n_timesteps)
-					time=nc.date2num(date[:],units=time_units)
+					time=pm.date2hours(date,ref_date)
 
 					# -------------------
 					# CHECKING: Check if the of time steps is right
@@ -201,31 +182,12 @@ for filet in file_type:
 					# LOOP over wrf variables need to compute the variable of interest
 					print '    -->  EXTRACTING VARIABLE ', var
 					wrfvar=(pm.getwrfname(var)[0]).split('-')
-					for cv,wrfv in enumerate(wrfvar):
-						if cv==0:
-							varval=np.array(fin.variables[wrfv][:], dtype='d')
-						if cv==1:
-							varval1=np.array(fin.variables[wrfv][:], dtype='d')
-						if cv==2:
-							varval2=np.array(fin.variables[wrfv][:], dtype='d')
+					
+					varvals=pm.get_wrfvars(wrfvar,fin)
+					
+					if GCM_calendar[GCM]=='noleap' and cal.isleap(year)==True:
+						varvals=add_leapdays(varvals)
 
-
-					# ***********************************************
-					# FOR LEAP YEARS AND MODELS WITH NO LEAP YEARS REPLACE THE 29TH FEBRUARY BY 
-					# MISSING VALUES
-					if calendar=='noleap' and cal.isleap(year)==True:
-						months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
-						days_all=np.asarray([date[i].day for i in xrange(len(date))])
-						index=np.where(np.logical_and(months_all==2,days_all==29))
-
-						for cv,wrfv in enumerate(wrfvar):
-							if cv==0:
-								varval = pm.add_leap(varval,index)
-							if cv==1:
-								varval1 = pm.add_leap(varval1,index)
-							if cv==2:
-								varval2 = pm.add_leap(varval2,index)
-					fin.close() # CLOSE FILES
 
 					
 					# ***********************************************
@@ -235,38 +197,13 @@ for filet in file_type:
 						# DEFINE TIME BOUNDS FOR ACCUMULATED VARIABLES
 						time_bounds=True
 						if filet=='wrfhrly' or filet=='wrfout':
-							date_inf=date
-							time_inf=nc.date2num(date_inf[:],units=time_units)
-							date_sup=pm.get_dates(year,month_i,day_i,hour_i+time_step,mins,time_step,n_timesteps)
-							time_sup=nc.date2num(date_sup[:],units=time_units)
-							time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
+							time=pm.create_outtime(date)
+							time_bnds=pm.create_timebnds(time)
+							accvarval=pm.add_timestep_acc(wrfvar,varvals,year,eyear)
+							
+							
+						sys.exit(0)
 
-							# Time variable is defined in the middle of time bounds
-							date=pm.get_dates(year,month_i,day_i,hour_i,30,time_step,n_timesteps)
-							time=nc.date2num(date[:],units=time_units)
-
-						# READ ONE MORE TIME STEP FOR ACCUMULATED COMPUTATIONS
-						if year<2009:
-							last_file = sorted(glob.glob(pathin+'%s_%s_%s-01-01_*' % (filet,domain,year+1)))
-							fin2=nc.Dataset(last_file[0],mode='r')
-							for cv,wrfv in enumerate(wrfvar):
-								if cv==0:
-									last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
-														dtype='d'),(1,varval.shape[1],varval.shape[2]))
-									varval=np.concatenate((varval,last_varval))
-								if cv==1:
-									last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
-														dtype='d'),(1,varval.shape[1],varval.shape[2]))
-									varval1=np.concatenate((varval1,last_varval))
-							fin2.close()
-						else:
-							last_varval=np.zeros((1,varval.shape[1],varval.shape[2]))
-							last_varval[:]=pm.const.missingval
-							for cv,wrfv in enumerate(wrfvar):
-								if cv==0:
-									varval=np.concatenate((varval,last_varval))
-								if cv==1:
-									varval1=np.concatenate((varval1,last_varval))
 						
 
 					# ***********************************************
@@ -274,11 +211,11 @@ for filet in file_type:
 					if filet=='wrfxtrm' or filet=='wrfdly':
 						datei=date[0]-dt.timedelta(hours=int(float(time_step)/2.))
 						date_inf=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
-						time_inf=nc.date2num(date_inf[:],units=time_units)
+						time_inf=pm.date2hours(date_inf,ref_date)
 						datei=date[0]+dt.timedelta(hours=int(float(time_step)/2.))
 						date_sup=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
-						time_sup=nc.date2num(date_sup[:],units=time_units)
-						time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
+						time_sup=pm.date2hours(date_sup,ref_date)
+						time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (len(time_inf),2),order='F')
 
 
 					# CALL COMPUTE_VAR MODULE
@@ -294,7 +231,7 @@ for filet in file_type:
 					netcdf_info=[file_out, var, varatt, 'standard', domain, GCM, RCM, time_bounds]
 
 					# CREATE NETCDF FILE
-					pm.create_netcdf(netcdf_info, varval, time, time_bnds, sch_info,time_units)
+					pm.create_netcdf(netcdf_info, varval, time, time_bnds, sch_info,ref_date)
 					ctime=pm.checkpoint(ctime_var)
 					print '=====================================================', '\n', '\n', '\n'
 	print ' =======================  YEAR:',year, ' FINISHED ==============', '\n', '\n',
@@ -351,19 +288,20 @@ for filet in file_type:
 							filewrite=pm.checkfile(file_out,overwrite)
 							if filewrite==True:
 								dvar,dtime=coms.compute_daily(var,time,stat)
-								dtime_nc=nc.date2num(dtime,units=time_units)
+								dtime_nc=pm.date2hours(dtime,ref_date)
 								time_bnds_inf=dtime_nc-12
 								time_bnds_sup=dtime_nc+12
-								time_bnds=np.reshape(np.concatenate([time_bnds_inf,time_bnds_sup]), (len(dtime),2))
+								time_bnds=np.reshape(np.concatenate([time_bnds_inf,time_bnds_sup]), (len(dtime),2),order='F')
 								varatt={}
 								for att in fileref.variables[varname].ncattrs():
 									varatt[att]=getattr(fileref.variables[varname],att)
 
 								# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-								netcdf_info=[file_out, varstat, varatt, calendar, domain, GCM, RCM, True]
+								netcdf_info=[file_out, varstat, varatt, domain, GCM, RCM, True]
 
 								# CREATE NETCDF FILE
-								pm.create_netcdf(netcdf_info, dvar, dtime_nc, time_bnds, sch_info,time_units)
+								print 'yes'
+								pm.create_netcdf(netcdf_info, dvar, dtime_nc, time_bnds, sch_info,ref_date)
 								ctime=pm.checkpoint(ctime_var)
 								print '=====================================================', '\n', '\n', '\n'
 					syp=eyp
@@ -403,10 +341,10 @@ for filet in file_type:
 					filewrite=pm.checkfile(file_out,overwrite)
 					if filewrite==True:
 						mvar,mtime=coms.compute_monthly(var,time,stat)
-						mtime_nc=nc.date2num(mtime,units=time_units)
-						mtime_bnds_inf=nc.date2num([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0) for i in xrange(len(mtime))],units=time_units)
-						mtime_bnds_sup=nc.date2num([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0)+relativedelta(months=1) for i in xrange(len(mtime))],units=time_units)
-						mtime_bnds=np.reshape(np.concatenate([mtime_bnds_inf,mtime_bnds_sup],axis=0), (len(mtime),2))
+						mtime_nc=pm.date2hours(mtime,ref_date)
+						mtime_bnds_inf=pm.date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0) for i in xrange(len(mtime))],ref_date)
+						mtime_bnds_sup=pm.date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0)+relativedelta(months=1) for i in xrange(len(mtime))],ref_date)
+						mtime_bnds=np.reshape(np.concatenate([mtime_bnds_inf,mtime_bnds_sup],axis=0), (len(mtime),2),order='F')
 						print mtime_bnds
 						varatt={}
 		
@@ -414,10 +352,10 @@ for filet in file_type:
 							varatt[att]=getattr(fileref.variables[varstat],att)
 						
 							# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-							netcdf_info=[file_out, varstat, varatt, calendar, domain, GCM, RCM, True]
+							netcdf_info=[file_out, varstat, varatt, domain, GCM, RCM, True]
 
 							# CREATE NETCDF FILE
-							pm.create_netcdf(netcdf_info, mvar, mtime_nc, mtime_bnds, sch_info,time_units)
+							pm.create_netcdf(netcdf_info, mvar, mtime_nc, mtime_bnds, sch_info,ref_date)
 							ctime=pm.checkpoint(ctime_var)
 							print '=====================================================', '\n', '\n', '\n'
 					syp=eyp    

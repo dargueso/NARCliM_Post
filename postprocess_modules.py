@@ -2,6 +2,7 @@ import re
 import sys
 import os
 import netCDF4 as nc
+from collections import OrderedDict
 
 class const:
   """Class that contains most used atmospheric constant values
@@ -24,6 +25,86 @@ class const:
   rcp = Rd/cp
   tkelvin = 273.15
   missingval = 1.e+20
+
+def create_outdir(inputinf):
+	fullpathout='%s%s/%s/%s-%s/%s/' %(inputinf['pathout'],inputinf['GCM'],inputinf['RCM'],inputinf['syear'],inputinf['eyear'],inputinf['domain'])
+
+	#CREATE OUTPUT DIR IF IT DOESN'T EXIST
+	if not os.path.exists(fullpathout):
+		os.makedirs(fullpathout)
+
+	#CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
+	if not os.path.exists("%stemp/" %(fullpathout)):
+		os.makedirs("%stemp/" %(fullpathout))
+		
+	return fullpathout
+	
+def create_outtime(dates):
+	
+	datehours=date2hours(dates,ref_date)
+	time=np.zeros(len(datehours),dtype=np.float64)
+	
+	time[0]=datehours[0]-(datehours[1]-datehours[0])
+	time[1:]=datehours[:-1]+np.diff(datehours)/2
+	
+	return time
+
+def create_timebnds(time):
+	
+	time_bnds=np.zeros((len(time),2),dtype=np.float64)
+	
+	time_bnds[1:,0]=timehours[:-1]+np.diff(timehours)/2
+	time_bnds[0:,1]=time_bnds[1:,0]
+	
+	time_bnds[0,0]=timehours[0]-(timehours[1]-timehours[0])
+	time_bnds[1,1]=timehours[-1]+(timehours[-1]+timehours[-2])
+	
+	return time_bnds
+
+	
+def add_timestep_acc(wrfvar,varval,year,eyear):
+	accvar=[]
+	filet='wrfhrly'
+	for cv,wrfv in enumerate(wrfvar):
+		if year<eyear:
+			next_file=pathin+'%s_%s_%s-01-01_00:00:00' % (filet,domain,year+1)
+			ncfile=nc.Dataset(next_file,'r')
+			accvar[]=np.concatenate((varvals[cv],ncfile.variables[wrfv][:]),axis=0)
+	
+		else:
+			fillvar=np.ones((1,)+var.shape[1:],dtype=np.float64)*const.missingval
+			accvar[cv]=np.concatenate((varvals[cv],fillvar),axis=0)
+	
+	return accvar
+	
+def get_wrfvars(wrfvar,fin):
+	variabs=[]
+	for cv,wrfv in enumerate(wrfvar):
+		xFragment=fin.variables[wrfv][:].astype('float64')
+		variabs.append(xFragment)
+		
+	return  variabs
+	
+
+def add_leapdays(varvals):
+	
+	months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
+	days_all=np.asarray([date[i].day for i in xrange(len(date))])
+	index=np.where(np.logical_and(months_all==2,days_all==29))
+
+	for cv,wrfv in enumerate(wrfvar):
+		varvals[cv]=add_leap(varvals[0],index)
+	fin.close() # CLOSE FILES
+	
+	return varvals
+
+
+
+
+
+
+
+
 
 
 # *************************************************************************************
@@ -206,7 +287,7 @@ def read_schemes(filename):
 
 # *************************************************************************************
 def get_varatt(sn,ln,un,ts,hg=None):
-    att={}
+    att=OrderedDict()
     att['standard_name'] = sn
     att['long_name'] = ln
     att['units']=un
@@ -275,8 +356,7 @@ def get_globatt(GCM,RCM,sch_info,perturb=None):
     sch_info: dictionary containing the kind of schemes as keys, and the name and references as values
     e.g.: global_attributes=ga.globalatt("MIROC3.2","R1",sch_info,"d1")
     """
-    
-    glatt={}
+    glatt=OrderedDict()
     glatt['institution']				= "University of New South Wales (Australia)" 
     glatt['contact']					= "jason.evans@unsw.edu.au"
     glatt['institute_id']				= "CCRC"
@@ -342,7 +422,7 @@ def dictionary2entries(vals1, vals2, vals3):
 
 
 # *************************************************************************************
-def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
+def create_netcdf(info, varval, time, time_bnds, sch_info,date_ref):
         
 
 	""" Create a netcdf file for the post-processed variables of NARCliM simulations
@@ -365,11 +445,10 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
 	file_out=info[0]
 	varname=info[1]
 	varatt=info[2]
-	calendar=info[3]
-	domain=info[4]
-	GCM=info[5]
-	RCM=info[6]
-	time_bounds=info[7]
+	domain=info[3]
+	GCM=info[4]
+	RCM=info[5]
+	time_bounds=info[6]
 
 	# **********************************************************************
 	# Read attributes from the geo_file of the corresponding domain
@@ -431,8 +510,8 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
         setattr(varout, 'standard_name','time')
         setattr(varout, 'long_name','time')
         setattr(varout, 'bounds','time_bnds')
-        setattr(varout, 'units',time_units)
-        setattr(varout, 'calendar',calendar)
+        setattr(varout, 'units','hours since %s' %(date_ref.strftime("%Y-%m-%d %H:%M:%S")))
+        setattr(varout, 'calendar','standard')
 
         # VARIABLE: variable
         print '    ---   ',varname, ' VARIABLE CREATED ' 
@@ -448,8 +527,8 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
           print '    ---   TIME_BNDS VARIABLE CREATED ' 
           varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
           varout[:]=time_bnds[:]
-          setattr(varout, 'units', time_units)
-          setattr(varout, 'calendar',calendar)
+          setattr(varout, 'units','hours since %s' %(date_ref.strftime("%Y-%m-%d %H:%M:%S")))
+          setattr(varout, 'calendar','standard')
         
        # VARIABLE: Rotated_Pole 
         print '    ---   Rotated_pole VARIABLE CREATED ' 
@@ -466,6 +545,7 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
         # WRITE GLOBAL ATTRIBUTES
         print '\n', '   CREATING AND WRITING GLOBAL ATTRIBUTES:'
         gblatt = get_globatt(GCM,RCM,sch_info)
+        print gblatt.keys()
         for att in gblatt.keys():
           setattr(fout, att, gblatt[att])
         
@@ -539,4 +619,10 @@ def get_dates(year,month,day,hour,mins,time_step,n_timesteps):
 
   # ***********************************************************
   return dates
+  
+def date2hours(datelist,ref_date):
+    hourssince=[(datelist[i]-ref_date).days*24. + (datelist[i]-ref_date).seconds/3600. for i in xrange(len(datelist))]
+    return hourssince
+    
+    
 
