@@ -51,7 +51,7 @@ syear=int(inputinf['syear'])
 eyear=int(inputinf['eyear'])
 domain=inputinf['domain']
 outfile_patt=inputinf['outfile_patt']
-overwrite=False
+overwrite=True
 
 
 ### Reference file (attributes and other) #########
@@ -75,7 +75,7 @@ if not os.path.exists("%stemp/" %(fullpathout)):
 
 #CREATE A LOG IFLE TO PUT OUTPUT FROM THE MAIN SCRIPT
 datenow=dt.datetime.now().strftime("%Y-%m-%d_%H:%M")
-logfile = '%s/postprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,GCM,RCM,syear,eyear,domain,datenow)
+logfile = '%spostprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,GCM,RCM,syear,eyear,domain,datenow)
 print 'The output messages are written to %s' %(logfile)
 #sys.stdout = open('%s' %(logfile), "w") 
 
@@ -97,6 +97,7 @@ for filet in file_type:
 	ctime_filet=pm.checkpoint(0)
 	filet='wrfout'
 	filet='wrfhrly'
+	#filet='wrfxtrm'
 	
 	print '\n','\n', '*************************************'
 	print '  PROCESSING ', filet, ' FILE OUTPUTS'
@@ -114,6 +115,7 @@ for filet in file_type:
 		time_step=3 #hours between two time steps
 		file_freq='03H'
 		tbounds=False
+		fullpathout=fullpathout+'temp/'
 
 	if filet=='wrfxtrm':
 		n_files=12	
@@ -162,7 +164,7 @@ for filet in file_type:
 				# BEFORE READING AND PROCESSING THE VARIABLE OF INTEREST CHECK 
 				# IF THE FILE ALREADY EXISTS
 				# If it does then go to the next one...
-				file_out=fullpathout+'/%s%s_%s-%s_%s.nc' % (outfile_patt,file_freq,year,year,var) # Specify output file
+				file_out=fullpathout+'%s%s_%s-%s_%s.nc' % (outfile_patt,file_freq,year,year,var) # Specify output file
 				filewrite=pm.checkfile(file_out,overwrite)
 				if filewrite==True:
 
@@ -233,19 +235,30 @@ for filet in file_type:
 					# ***********************************************
 					# ACCUMULATED VARIABLES NEED ONE TIME STEP MORE TO COMPUTE DIFFERENCES
 					if var=='pracc' or var=='potevp' or var=='evspsbl':
+						time_bounds=True # if true will write time_bnds in the netcdf file
 
-						# DEFINE TIME BOUNDS FOR ACCUMULATED VARIABLES
-						time_bounds=True
-						if filet=='wrfhrly' or filet=='wrfout':
-							date_inf=date
-							time_inf=nc.date2num(date_inf[:],units=time_units)
-							date_sup=pm.get_dates(year,month_i,day_i,hour_i+time_step,mins,time_step,n_timesteps)
-							time_sup=nc.date2num(date_sup[:],units=time_units)
-							time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
+						# REDEFINE DATES
+						mins=30
+						dhours=int(np.floor(float(time_step)/2.))
+						date=pm.get_dates(year,month_i,day_i,hour_i-dhours,mins,time_step,n_timesteps)
+						time=nc.date2num(date[:],units=time_units)
 
-							# Time variable is defined in the middle of time bounds
-							date=pm.get_dates(year,month_i,day_i,hour_i,30,time_step,n_timesteps)
-							time=nc.date2num(date[:],units=time_units)
+						# CALCULATES TIME BOUNDS LIMIT INFERIOR 
+						n_seconds=int(time_step*3600./2.)
+						datei=date[0]-dt.timedelta(seconds=n_seconds)
+						date_inf=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
+						time_inf=nc.date2num(date_inf[:],units=time_units)
+
+						# CALCULATES TIME BOUNDS LIMIT SUPERIOR 
+						datei=date[0]+dt.timedelta(seconds=n_seconds) # 1740 is the number of seconds in 29 minutes
+						date_sup=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
+						time_sup=nc.date2num(date_sup[:],units=time_units)
+						
+						# ROUND TO THE FIRST DECIMAL
+						time_inf=np.round(time_inf,0)
+						time=np.round(time,1)
+						time_sup=np.round(time_sup,0)
+						time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
 
 						# READ ONE MORE TIME STEP FOR ACCUMULATED COMPUTATIONS
 						if year<2009:
@@ -270,19 +283,64 @@ for filet in file_type:
 								if cv==1:
 									varval1=np.concatenate((varval1,last_varval))
 						
-
+									
 					# ***********************************************
 					# DEFINE TIME BOUNDS FOR XTRM AND DAILY VARIABLES
 					if filet=='wrfxtrm' or filet=='wrfdly':
+
+						# REDEFINE DATES
+						date=pm.get_dates(year,month_i,day_i,12,0,time_step,n_timesteps)
+						time=nc.date2num(date[:],units=time_units)
+
+						# CALCULATES TIME BOUNDS LIMIT INFERIOR 
 						datei=date[0]-dt.timedelta(hours=int(float(time_step)/2.))
 						date_inf=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
 						time_inf=nc.date2num(date_inf[:],units=time_units)
-						datei=date[0]+dt.timedelta(hours=int(float(time_step)/2.))
+
+						# CALCULATES TIME BOUNDS LIMIT SUPERIOR 
+						datei=date[0]+dt.timedelta(seconds=43140) # 43140 is the number of seconds in 11 hours and 59 minutes
 						date_sup=[datei+dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
 						time_sup=nc.date2num(date_sup[:],units=time_units)
 						time_bnds=np.reshape(np.concatenate([time_inf,time_sup]), (time.shape[0],2))
 
+						# THE FIRST TIME STEP MUST BE DELETED (CORRESPONDS TO THE ACCUMULATED OF THE LAST DAY OF THE YEAR BEFORE)
+						# AND WE NEED THE FRIST TIME STEP OF THE FOLLOWING YEAR TO GET THE ACCUMULATED ON THE LAST DAY OF THE YEAR
+						# OF INTEREST.
+						if year<2009:
+							last_file = sorted(glob.glob(pathin+'%s_%s_%s-01-01_*' % (filet,domain,year+1)))
+							fin2=nc.Dataset(last_file[0],mode='r')
+							for cv,wrfv in enumerate(wrfvar):
+								if cv==0:
+									last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
+														dtype='d'),(1,varval.shape[1],varval.shape[2]))
+									varval=np.concatenate((varval,last_varval))
+									varval=varval[1:,:,:]
 
+								if cv==1:
+									last_varval=np.reshape(np.array(fin2.variables[wrfv][0,:,:], \
+														dtype='d'),(1,varval.shape[1],varval.shape[2]))
+									varval1=np.concatenate((varval1,last_varval))
+									varval1=varval1[1:,:,:]
+									fin2.close()
+						else:
+							# FOR THE LAST YEAR THE LAST TIME STEP CANNOT BE COMPUTED SO MISSING VALUES
+							# ARE ASSIGNED
+							last_varval=np.zeros((1,varval.shape[1],varval.shape[2]))
+							last_varval[:]=pm.const.missingval
+							for cv,wrfv in enumerate(wrfvar):
+								if cv==0:
+									varval=np.concatenate((varval,last_varval))
+									varval=varval[1:,:,:]
+								if cv==1:
+									varval1=np.concatenate((varval1,last_varval))
+									varval1=varval1[1:,:,:]
+
+									
+					print date_inf[0],date[0], date_sup[0]
+					print time_inf[0],time[0], time_sup[0]
+					print date_inf[1],date[1], date_sup[1]
+					print time_inf[1],time[1], time_sup[1]
+					# ***********************************************
 					# CALL COMPUTE_VAR MODULE
 					compute=getattr(comv,'compute_'+var) # FROM STRING TO ATTRIBUTE
 					if len(wrfvar)==1:
@@ -292,12 +350,15 @@ for filet in file_type:
 					if len(wrfvar)==3:
 						varval, varatt=compute(varval,varval1,varval2,date)
 
+
+					# ***********************************************
 					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
 					netcdf_info=[file_out, var, varatt, 'standard', domain, GCM, RCM, time_bounds]
 
 					# CREATE NETCDF FILE
 					pm.create_netcdf(netcdf_info, varval, time, time_bnds, sch_info,time_units)
 					ctime=pm.checkpoint(ctime_var)
+					sys.exit(0)
 					print '=====================================================', '\n', '\n', '\n'
 	print ' =======================  YEAR:',year, ' FINISHED ==============', '\n', '\n',
 	ctime=pm.checkpoint(ctime_year)

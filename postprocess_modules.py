@@ -342,7 +342,7 @@ def dictionary2entries(vals1, vals2, vals3):
 
 
 # *************************************************************************************
-def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
+def create_netcdf(info,varval,time,time_bnds,sch_info,time_units):
         
 
 	""" Create a netcdf file for the post-processed variables of NARCliM simulations
@@ -426,7 +426,7 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
            
         # VARIABLE: time 
         print '    ---   TIME VARIABLE CREATED ' 
-        varout=fout.createVariable('time','f',['time'])
+        varout=fout.createVariable('time','d',['time'])
         varout[:]=time[:]
         setattr(varout, 'standard_name','time')
         setattr(varout, 'long_name','time')
@@ -434,6 +434,14 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
         setattr(varout, 'units',time_units)
         setattr(varout, 'calendar',calendar)
 
+        # VARIABLE: time_bnds 
+        if time_bounds==True:
+          print '    ---   TIME_BNDS VARIABLE CREATED ' 
+          varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
+          varout[:]=time_bnds[:]
+          setattr(varout, 'units', time_units)
+          setattr(varout, 'calendar',calendar)
+        
         # VARIABLE: variable
         print '    ---   ',varname, ' VARIABLE CREATED ' 
         varout=fout.createVariable(varname,'f',['time', 'y', 'x'], fill_value=varatt['_FillValue'])
@@ -443,14 +451,6 @@ def create_netcdf(info, varval, time, time_bnds, sch_info,time_units):
             if varatt[att]!=None:
               setattr(varout, att, varatt[att])
             
-        # VARIABLE: time_bnds 
-        if time_bounds==True:
-          print '    ---   TIME_BNDS VARIABLE CREATED ' 
-          varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
-          varout[:]=time_bnds[:]
-          setattr(varout, 'units', time_units)
-          setattr(varout, 'calendar',calendar)
-        
        # VARIABLE: Rotated_Pole 
         print '    ---   Rotated_pole VARIABLE CREATED ' 
         varout=fout.createVariable('Rotated_pole','c',[])
