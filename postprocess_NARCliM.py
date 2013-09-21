@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """postprocess_NARCliM.py script
    Script to postprocess WRF outputs from NARCliM project
    It reads an input file (NARClIM_post.input), where the input arguments are provided
