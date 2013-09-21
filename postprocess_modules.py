@@ -73,25 +73,21 @@ def create_outtime(dates,gvars):
 	time=np.zeros(len(datehours),dtype=np.float64)
 	time[:-1]=datehours[:-1]+np.diff(datehours)/2
 	time[-1]=datehours[-1]+(datehours[-1]-datehours[-2])/2
-
 	return time
 
 def create_timebnds(time):
 	
 	time_bnds=np.zeros((len(time),2),dtype=np.float64)
 	
-
 	time_bnds[:-1,1]=time[:-1]+np.diff(time)/2
 	time_bnds[:-1,0]=time[:-1]-np.diff(time)/2
 	
 	time_bnds[-1,0]=time[-1]-(time[-1]-time[-2])/2
 	time_bnds[-1,1]=time[-1]+(time[-1]-time[-2])/2
-
 	
 	return time_bnds
 
 	
-
 def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
 	accvar={}
 	for wrfv in wrfvar:
@@ -106,42 +102,31 @@ def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
 	
 	return accvar
 	
+        
+def mv_timestep(wrfvar,varvals,year,gvars,filet):
+        accvar={}
+        for wrfv in wrfvar:
+                if year<gvars.eyear:
+                        next_file='%s%s_%s_%s-01-01_00:00:00' % (gvars.pathin,filet,gvars.domain,year+1)
+                        ncfile=nc.Dataset(next_file,'r')
+                        print next_file
+                        next_tstep=np.squeeze(ncfile.variables[wrfv][:])
+                        accvar[wrfv]=np.concatenate((varvals[wrfv],next_tstep[0:1,:,:]),axis=0)
+                        accvar[wrfv]=accvar[wrfv][1:,:,:]
 
-def get_wrfvars(wrfvar,file_list):
-	
+                else:
+                        fillvar=np.ones((1,)+varvals[wrfv].shape[1:],dtype=np.float64)*const.missingval
+                        accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
+                        accvar[wrfv]=accvar[wrfv][1:,:,:]
+
+        return accvar
+ 
+def get_wrfvars(wrfvar,fin):
 	variabs={}
-	x=[0]*len(file_list)
-	y=[0]*len(file_list)
-	z=[0]*len(file_list)
-	t=[0]*len(file_list)
-	xFragment={}
-	for ii,file in enumerate(file_list):
-		ncfile=nc.Dataset(file,'r')
-		for wrfv in wrfvar:
-			xFragment[wrfv]= ncfile.variables[wrfv][:].astype('float64')
-			tFragment= ncfile.variables['Times'][:]
-			ncfile.close()
-			
-		t[ii]=tFragment
-		x[ii]=xFragment[wrfvar[0]][:]
-		if len(wrfvar)>=2:
-			y[ii]=xFragment[wrfvar[1]][:]
-		if len(wrfvar)>=3:
-			z[ii]=xFragment[wrfvar[3]][:]
-	
+	for wrfv in wrfvar:
+		variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
 		
-	variabs[wrfvar[0]]=np.concatenate(x,axis=0)	
-	if len(wrfvar)>=2:
-		variabs[wrfvar[1]]=np.concatenate(y,axis=0)
-	if len(wrfvar)>=3:
-		variabs[wrfvar[2]]=np.concatenate(z,axis=0)
-	
-	time=np.concatenate(t,axis=0)
-	
-	#	variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
-		
-	return  variabs,time
-
+	return  variabs
 	
 
 def add_leapdays(varvals):
@@ -567,6 +552,14 @@ def create_netcdf(info,gvars, varval, time, time_bnds):
         setattr(varout, 'units','hours since %s' %(gvars.ref_date.strftime("%Y-%m-%d %H:%M:%S")))
         setattr(varout, 'calendar','standard')
 
+        # VARIABLE: time_bnds 
+        if time_bounds==True:
+          print '    ---   TIME_BNDS VARIABLE CREATED ' 
+          varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
+          varout[:]=time_bnds[:]
+          setattr(varout, 'units','hours since %s' %(gvars.ref_date.strftime("%Y-%m-%d %H:%M:%S")))
+          setattr(varout, 'calendar','standard')
+        
         # VARIABLE: variable
         print '    ---   ',varname, ' VARIABLE CREATED ' 
         varout=fout.createVariable(varname,'f',['time', 'y', 'x'], fill_value=varatt['_FillValue'])
@@ -576,14 +569,6 @@ def create_netcdf(info,gvars, varval, time, time_bnds):
             if varatt[att]!=None:
               setattr(varout, att, varatt[att])
             
-        # VARIABLE: time_bnds 
-        if time_bounds==True:
-          print '    ---   TIME_BNDS VARIABLE CREATED ' 
-          varout=fout.createVariable('time_bnds','f8',['time', 'bnds'])
-          varout[:]=time_bnds[:]
-          setattr(varout, 'units','hours since %s' %(gvars.ref_date.strftime("%Y-%m-%d %H:%M:%S")))
-          setattr(varout, 'calendar','standard')
-        
        # VARIABLE: Rotated_Pole 
         print '    ---   Rotated_pole VARIABLE CREATED ' 
         varout=fout.createVariable('Rotated_pole','c',[])
@@ -757,7 +742,6 @@ def create_monthlyfiles(gvars,varname,stat_all):
 		else:
 			varstat=varname+stat
 		
-
 		fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,varstat)))
 		fileref=nc.Dataset(fileall[0],'r')
 		syfile,eyfile=get_yearsfile(fileall,varstat)
@@ -767,7 +751,6 @@ def create_monthlyfiles(gvars,varname,stat_all):
 			ctime_var=checkpoint(0)
 			eyp=((int(syp)/10)+1)*10
 			print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varstat)
-
 			sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
 			files=nc.MFDataset(sel_files)
 			time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
@@ -781,13 +764,11 @@ def create_monthlyfiles(gvars,varname,stat_all):
 				mtime_bnds_inf=date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0) for i in xrange(len(mtime))],gvars.ref_date)
 				mtime_bnds_sup=date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0)+relativedelta(months=1) for i in xrange(len(mtime))],gvars.ref_date)
 				mtime_bnds=np.reshape(np.concatenate([mtime_bnds_inf,mtime_bnds_sup],axis=0), (len(mtime),2),order='F')
-
 				varatt={}
 
 				for att in fileref.variables[varstat].ncattrs():
 					varatt[att]=getattr(fileref.variables[varstat],att)
 				
-
 				# INFO NEEDED TO WRITE THE OUTPUT NETCDF
 				netcdf_info=[file_out, varstat, varatt, True]
 
@@ -795,5 +776,156 @@ def create_monthlyfiles(gvars,varname,stat_all):
 				create_netcdf(netcdf_info,gvars,mvar, mtime_nc, mtime_bnds)
 				ctime=checkpoint(ctime_var)
 				print '=====================================================', '\n', '\n', '\n'
-
 			syp=eyp
+
+
+
+# ***********************************************************
+def intersect(a, b):
+     return list(set(a) & set(b))
+
+
+# ***********************************************************
+def file_list(gvars, per, per_f, filet,n_files):
+  tot_files=0
+
+  print '\n', ' -> PROCESSING PERIOD: ', str(per)+' - '+str(per_f)
+#  files_in=[]
+#  for pp,pper in enumerate(np.arange(per,per_f+1)):
+#    loadfiles = gvars.pathin+'%s_%s_%s*' % (filet,gvars.domain,pper) # Specify path
+#    files_in.append(sorted(glob.glob(loadfiles)))
+#    tot_files=len(files_in[pp])+tot_files
+#  print '  -->  Number of files to read:', tot_files	
+  
+                                
+  loadfiles = sorted(glob.glob(gvars.pathin+'%s_%s_%s*' % (filet,gvars.domain,per))) # Specify path
+  files_in=loadfiles
+  for pp,pper in enumerate(np.arange(per+1,per_f+1)):
+    loadfiles = sorted(glob.glob(gvars.pathin+'%s_%s_%s*' % (filet,gvars.domain,pper))) # Specify path
+    files_in=np.concatenate((files_in,loadfiles))
+    
+  print '  -->  Number of files to read:', len(files_in)	
+  
+  # CHECKING: Check if the number of files is right
+  if len(files_in)!=n_files:
+    print '\n', 'ERROR: the number of ',filet, ' files in period ', per,' is INCORRECT'
+    print ' ---- SOME FILES ARE MISSING ---'
+    print 'SCRIPT stops running ','\n' 
+    sys.exit(0)
+    
+  return list(files_in)
+  
+# ***********************************************************
+def read_list(files_list,var):
+  from joblib import Parallel, delayed
+  ctime_read=checkpoint(0)
+
+  print '    -->  READING FILES '
+  wrfvar=(getwrfname(var)[0]).split('-')
+
+                   
+  if len(files_list)<=15:
+    method='MFDataset'
+  else:
+    method='Dataset'
+
+
+  # ---------------------
+  if method=='MFDataset':
+    print files_list
+    fin=nc.MFDataset(files_list) # Read all files
+    print '     -->   EXTRACTING VARIABLE Time'
+    time = fin.variables['Times'][:] # Get time variable
+    
+    print '     -->   EXTRACTING VARIABLE ',var
+    varvals=get_wrfvars(wrfvar,fin)
+    fin.close()
+   # ---------------------
+
+
+  # ---------------------
+  if method=='Dataset':
+    varvals={}
+
+    njobs=10
+    nlen = len(files_list)/njobs #time step block length
+    a=len(files_list)-njobs*nlen 
+    nt_v=np.zeros(njobs)
+    nt_v[:]=nlen
+    nt_v[njobs-1]=nlen+a #block length for each job
+    nt_v=nt_v.cumsum()
+	
+    files_in = [(files_list[0:int(nt_v[0])],wrfvar)]
+    for tt in np.arange(1,njobs):
+      files_in.append((files_list[int(nt_v[tt-1]):int(nt_v[tt])], wrfvar))
+    
+    
+    var_v = Parallel(n_jobs=njobs)(delayed(read_block)(*files_in[i]) for i in xrange(len(files_in)))
+
+    for i in np.arange(0,njobs):
+      
+      if i==0:
+        time=var_v[i][0]
+        for ii,wrfv in enumerate(wrfvar):
+          varvals[wrfv]=var_v[i][1][wrfv]
+      else:
+        time=np.concatenate((time,var_v[i][0]))
+        for ii,wrfv in enumerate(wrfvar):
+          varvals[wrfv]=np.concatenate((varvals[wrfv],var_v[i][1][wrfv]))
+  # ---------------------
+
+
+  # ---------------------
+  if method=='Dataset1':
+    varvals={}
+
+    step=int(float(len(files_list))/5.)
+    vec=np.arange(0,len(files_list)+step,step)
+    varvals={}
+    for i in np.arange(0,5):
+      ctime=checkpoint(0)
+      print files_list[vec[i]:vec[i+1]]
+      
+      fin=nc.MFDataset(files_list[vec[i]:vec[i+1]]) # Read all files
+      print '     -->   EXTRACTING VARIABLE Time'
+      temptime = fin.variables['Times'][:] # Get time variable
+      
+      print '     -->   EXTRACTING VARIABLE ',var
+      tempvar=get_wrfvars(wrfvar,fin)
+      fin.close()
+      
+      if i==0:
+        time=temptime
+        for ii,wrfv in enumerate(wrfvar):
+          varvals[wrfv]=tempvar[wrfv]
+      else:
+        time=np.concatenate((time,temptime))
+        for ii,wrfv in enumerate(wrfvar):
+          varvals[wrfv]=np.concatenate((varvals[wrfv],tempvar[wrfv]))
+   # ---------------------
+
+ 
+  # ---------------------
+  if method=='CDO':
+    time=[]
+    varvals=[]
+    
+    for ff in files_list:
+      command = 'cdo selname,%s %s %s' % (vname, file, out_file)
+      sub.call(command, shell=True)
+      sub.call('cdo mergetime %s output.%s.nc' % (file_mask, vname), shell=True)
+   # ---------------------
+
+     
+  ctime=checkpoint(ctime_read)
+  return np.asarray(time), varvals
+
+#**************************************************************************************
+def read_block(files_in,wrfvar):
+  
+  fin=nc.MFDataset(files_in) # Read all files
+  temptime = fin.variables['Times'][:] # Get time variable
+  tempvar=get_wrfvars(wrfvar,fin)
+  fin.close()
+
+  return temptime, tempvar
