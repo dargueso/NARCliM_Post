@@ -55,11 +55,11 @@ def compute_monthly(var,time,stat):
 		sys.exit("ERROR the requested monthly statistic %s does not exist. Please choose between 'acc', 'mean', 'min' or 'max'" %(stat))
 	if len(time)!=var.shape[0]:
 		sys.exit('ERROR in compute_monthly: The lenght of time variable does not correspond to var first dimension')
-
 	#Remove hours from time list, keep only dates
 	years=np.asarray([time[i].year for i in xrange(len(time))])-time[0].year
 	climmonths=np.asarray([time[i].month for i in xrange(len(time))])
 	months=years*12+climmonths
+	
 
 	var=np.squeeze(var)
 	mvar=np.zeros((max(months),)+var.shape[1:],dtype=np.float64)*pm.const.missingval
@@ -67,9 +67,9 @@ def compute_monthly(var,time,stat):
 	#Calculating the middle of each month. Data is provided in the mid point between the time_bounds
 	mtime=[0]*max(months)
 	for mo in xrange(max(months)):
-	    time_m=time[months==mo+1]
-	    tdiference=(time_m[-1]-time_m[0]).total_seconds()/2
-	    mtime[mo]=time_m[0]+dt.timedelta(seconds=tdiference)
+		time_m=time[months==mo+1]
+		tdiference=(time_m[-1]-time_m[0]).total_seconds()/2
+		mtime[mo]=time_m[0]+dt.timedelta(seconds=tdiference)
 
 
 	if stat == 'acc':

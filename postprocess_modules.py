@@ -7,6 +7,7 @@ import datetime as dt
 import glob as glob
 import compute_stats as coms
 import compute_vars as comv
+from dateutil.relativedelta import relativedelta
 from collections import OrderedDict
 class const:
   """Class that contains most used atmospheric constant values
@@ -70,28 +71,29 @@ def create_outtime(dates,gvars):
 	
 	datehours=date2hours(dates,gvars.ref_date)
 	time=np.zeros(len(datehours),dtype=np.float64)
-	
-	time[0]=datehours[0]-(datehours[1]-datehours[0])
-	time[1:]=datehours[:-1]+np.diff(datehours)/2
-	
+	time[:-1]=datehours[:-1]+np.diff(datehours)/2
+	time[-1]=datehours[-1]+(datehours[-1]-datehours[-2])/2
+
 	return time
 
 def create_timebnds(time):
 	
 	time_bnds=np.zeros((len(time),2),dtype=np.float64)
 	
-	time_bnds[1:,0]=time[:-1]+np.diff(time)/2
-	time_bnds[:-1,1]=time_bnds[1:,0]
+
+	time_bnds[:-1,1]=time[:-1]+np.diff(time)/2
+	time_bnds[:-1,0]=time[:-1]-np.diff(time)/2
 	
-	time_bnds[0,0]=time[0]-(time[1]-time[0])
-	time_bnds[1,1]=time[-1]+(time[-1]+time[-2])
+	time_bnds[-1,0]=time[-1]-(time[-1]-time[-2])/2
+	time_bnds[-1,1]=time[-1]+(time[-1]-time[-2])/2
+
 	
 	return time_bnds
 
 	
-def add_timestep_acc(wrfvar,varvals,year,gvars):
+
+def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
 	accvar={}
-	filet='wrfhrly'
 	for wrfv in wrfvar:
 		if year<gvars.eyear:
 			next_file='%s%s_%s_%s-01-01_00:00:00' % (gvars.pathin,filet,gvars.domain,year+1)
@@ -104,12 +106,42 @@ def add_timestep_acc(wrfvar,varvals,year,gvars):
 	
 	return accvar
 	
-def get_wrfvars(wrfvar,fin):
+
+def get_wrfvars(wrfvar,file_list):
+	
 	variabs={}
-	for wrfv in wrfvar:
-		variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
+	x=[0]*len(file_list)
+	y=[0]*len(file_list)
+	z=[0]*len(file_list)
+	t=[0]*len(file_list)
+	xFragment={}
+	for ii,file in enumerate(file_list):
+		ncfile=nc.Dataset(file,'r')
+		for wrfv in wrfvar:
+			xFragment[wrfv]= ncfile.variables[wrfv][:].astype('float64')
+			tFragment= ncfile.variables['Times'][:]
+			ncfile.close()
+			
+		t[ii]=tFragment
+		x[ii]=xFragment[wrfvar[0]][:]
+		if len(wrfvar)>=2:
+			y[ii]=xFragment[wrfvar[1]][:]
+		if len(wrfvar)>=3:
+			z[ii]=xFragment[wrfvar[3]][:]
+	
 		
-	return  variabs
+	variabs[wrfvar[0]]=np.concatenate(x,axis=0)	
+	if len(wrfvar)>=2:
+		variabs[wrfvar[1]]=np.concatenate(y,axis=0)
+	if len(wrfvar)>=3:
+		variabs[wrfvar[2]]=np.concatenate(z,axis=0)
+	
+	time=np.concatenate(t,axis=0)
+	
+	#	variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
+		
+	return  variabs,time
+
 	
 
 def add_leapdays(varvals):
@@ -725,15 +757,17 @@ def create_monthlyfiles(gvars,varname,stat_all):
 		else:
 			varstat=varname+stat
 		
-		fileall=sorted(glob.glob('%s/%s0?H_*_%s.nc' %(fullpathout,gvars.outfile_patt,varname)))
-		fileref=nc.Dataset(fileall[0],'r')
-		syfile,eyfile=get_yearsfile(fileall,varname)
 
+		fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,varstat)))
+		fileref=nc.Dataset(fileall[0],'r')
+		syfile,eyfile=get_yearsfile(fileall,varstat)
 		syp=gvars.syear
 		while syp<gvars.eyear:
+			print 'start period year:', syp
 			ctime_var=checkpoint(0)
 			eyp=((int(syp)/10)+1)*10
-			print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varname)
+			print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varstat)
+
 			sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
 			files=nc.MFDataset(sel_files)
 			time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
@@ -747,17 +781,19 @@ def create_monthlyfiles(gvars,varname,stat_all):
 				mtime_bnds_inf=date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0) for i in xrange(len(mtime))],gvars.ref_date)
 				mtime_bnds_sup=date2hours([dt.datetime(mtime[i].year,mtime[i].month,1,0,0,0)+relativedelta(months=1) for i in xrange(len(mtime))],gvars.ref_date)
 				mtime_bnds=np.reshape(np.concatenate([mtime_bnds_inf,mtime_bnds_sup],axis=0), (len(mtime),2),order='F')
-				print mtime_bnds
+
 				varatt={}
 
 				for att in fileref.variables[varstat].ncattrs():
 					varatt[att]=getattr(fileref.variables[varstat],att)
 				
-					# INFO NEEDED TO WRITE THE OUTPUT NETCDF
-					netcdf_info=[file_out, varstat, varatt, True]
 
-					# CREATE NETCDF FILE
-					create_netcdf(netcdf_info,gvars,mvar, mtime_nc, mtime_bnds)
-					ctime=checkpoint(ctime_var)
-					print '=====================================================', '\n', '\n', '\n'
+				# INFO NEEDED TO WRITE THE OUTPUT NETCDF
+				netcdf_info=[file_out, varstat, varatt, True]
+
+				# CREATE NETCDF FILE
+				create_netcdf(netcdf_info,gvars,mvar, mtime_nc, mtime_bnds)
+				ctime=checkpoint(ctime_var)
+				print '=====================================================', '\n', '\n', '\n'
+
 			syp=eyp

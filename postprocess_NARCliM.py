@@ -126,24 +126,56 @@ for filet in file_type:
 				file_out='%s/%s%s_%s-%s_%s.nc' % (fullpathout,gvars.outfile_patt,file_freq,year,year,var) # Specify output file
 				filewrite=pm.checkfile(file_out,overwrite)
 				if filewrite==True:
+					
+					
+					
+					# # READ FILES FROM THE CORRESPONDING PERIOD
+					# print '    -->  READING FILES '
+					# fin=nc.MFDataset(files_list) # Read all files
+					# print '    -->  EXTRACTING VARIABLE Time'
+					# time_old = fin.variables['Times'][:] # Get time variable
 
-					# READ FILES FROM THE CORRESPONDING PERIOD
-					print '    -->  READING FILES '
-					fin=nc.MFDataset(files_list) # Read all files
-					print '    -->  EXTRACTING VARIABLE Time'
-					time_old = fin.variables['Times'][:] # Get time variable
+					# # FIRST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
+					# year_i, month_i, day_i, hour_i = pm.get_wrfdate(time_old[0,:])
+					# mins=0
 
+					# # LAST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
+					# year_f, month_f, day_f, hour_f = pm.get_wrfdate(time_old[-1,:])
+
+					# # DEFINE TIME BOUNDS VARIABLES 
+					# time_bounds=tbounds
+					# time_bnds=pm.const.missingval
+
+					# # DEFINE DATES USING STANDARD CALENDAR
+					# n_days = dt.datetime(year+1,month_i,day_i,hour_i)-dt.datetime(year,month_i,day_i,hour_i)
+					# n_timesteps=n_days.days*int(24./time_step)
+					# date = pm.get_dates(year,month_i,day_i,hour_i,mins,time_step,n_timesteps)
+					# time=pm.date2hours(date,gvars.ref_date)
+
+					# # -------------------
+					# # CHECKING: Check if the of time steps is right
+					# if n_timesteps!=time_old.shape[0]:
+					# 	print '\n', 'ERROR: the number of timesteps in period ', year,' is INCORRECT'
+					# 	print 'There should be: ', n_timesteps
+					# 	print 'There are: ', time_old.shape[0]
+					# 	print 'SCRIPT stops running ','\n'
+					# 	sys.exit(0)
+
+
+					# ***********************************************
+					# LOOP over wrf variables need to compute the variable of interest
+					print '    -->  EXTRACTING VARIABLE ', var
+					wrfvar=(pm.getwrfname(var)[0]).split('-')
+					
+					varvals,time_old=pm.get_wrfvars(wrfvar,files_list)
 					# FIRST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
 					year_i, month_i, day_i, hour_i = pm.get_wrfdate(time_old[0,:])
 					mins=0
-
 					# LAST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
 					year_f, month_f, day_f, hour_f = pm.get_wrfdate(time_old[-1,:])
-
 					# DEFINE TIME BOUNDS VARIABLES 
 					time_bounds=tbounds
 					time_bnds=pm.const.missingval
-
 					# DEFINE DATES USING STANDARD CALENDAR
 					n_days = dt.datetime(year+1,month_i,day_i,hour_i)-dt.datetime(year,month_i,day_i,hour_i)
 					n_timesteps=n_days.days*int(24./time_step)
@@ -158,8 +190,9 @@ for filet in file_type:
 						print 'There are: ', time_old.shape[0]
 						print 'SCRIPT stops running ','\n'
 						sys.exit(0)
-
-
+					
+					if gvars.GCM_calendar=='noleap' and cal.isleap(year)==True:
+						varvals=add_leapdays(varvals)
 					# ***********************************************
 					# LOOP over wrf variables need to compute the variable of interest
 					print '    -->  EXTRACTING VARIABLE ', var
@@ -169,7 +202,6 @@ for filet in file_type:
 					
 					if gvars.GCM_calendar=='noleap' and cal.isleap(year)==True:
 						varvals=add_leapdays(varvals)
-
 					
 					
 					# ***********************************************
@@ -181,7 +213,9 @@ for filet in file_type:
 						if filet=='wrfhrly' or filet=='wrfout':
 							time=pm.create_outtime(date,gvars)
 							time_bnds=pm.create_timebnds(time)
-							varvals=pm.add_timestep_acc(wrfvar,varvals,year,gvars)
+
+							varvals=pm.add_timestep_acc(wrfvar,varvals,year,gvars,filet)
+
 
 					# ***********************************************
 					# DEFINE TIME BOUNDS FOR XTRM AND DAILY VARIABLES
