@@ -9,7 +9,7 @@ import datetime as dt
 import sys
 import postprocess_modules as pm
 
-def compute_tas(t2,time):
+def compute_tas(varvals,time):
     """Method to compute 2-m temperature
     t2: T2 from wrf files [K]
     time: list of times corresponding to t2 1st dimension
@@ -17,6 +17,7 @@ def compute_tas(t2,time):
     tas: output temperature tas [K]
     atts: attributes of the output variable to be used in the output netcdf 
     """
+    t2=varvals['T2'][:]
     if len(time)!=t2.shape[0]:
         sys.exit('ERROR in compute_tas: The lenght of time variable does not correspond to t2 first dimension')     
     
@@ -28,7 +29,7 @@ def compute_tas(t2,time):
     return tas,atts
     
     
-def compute_ps(psfc,time):
+def compute_ps(varvals,time):
     """Method to compute surface pressure
     psfc: psfc from wrf files [Pa]
     time: list of times corresponding to t2 1st dimension
@@ -36,6 +37,7 @@ def compute_ps(psfc,time):
     ps: output surface pressure [Pa]
     atts: attributes of the output variable to be used in the output netcdf 
     """
+    psfc=varvals['PSFC'][:]
     if len(time)!=psfc.shape[0]:
         sys.exit('ERROR in compute_ps: The lenght of time variable does not correspond to psfc first dimension')     
 
@@ -47,7 +49,7 @@ def compute_ps(psfc,time):
     return ps,atts
 
 
-def compute_pracc(rainc,rainnc,time):
+def compute_pracc(varvals,time):
     """Method to compute precipitation
     The original variable was accumulated throughout the simulation. Accumulation must be removed (But it is not converted to flux)
     rainc: convective rainfall accumulated. Including the timestep previous to the first one in this period [kg m-2]
@@ -57,6 +59,8 @@ def compute_pracc(rainc,rainnc,time):
     pracc: accumulated rainfall (pracc) since last record [kg m-2]
     atts: attributes of the output variable to be used in the output netcdf
     """
+    rainc=varvals['RAINC'][:]
+    rainnc=varvals['RAINNC'][:]
     #rainc and rainnc includes the timestep previous to the first one to remove the accumulation.
     if (len(time)!=rainc.shape[0]-1) or (len(time)!=rainnc.shape[0]-1):
         sys.exit('ERROR in compute_pracc: The lenght of time variable does not correspond to rainc or rainnc first dimension')
@@ -72,7 +76,7 @@ def compute_pracc(rainc,rainnc,time):
     
     return pracc,atts
     
-def compute_huss(q2,time):
+def compute_huss(varvals,time):
     """Method to compute specific humidity
     q2: mixing ratio [kg kg-2]
     time: list of times corresponding to q2 1st dimension
@@ -80,6 +84,7 @@ def compute_huss(q2,time):
     huss: specific humidity []
     atts: attributes of the output variable to be used in the output netcdf
     """
+    q2=varvals['Q2'][:]
     if len(time)!=q2.shape[0]:
         sys.exit('ERROR in compute_huss: The lenght of time variable does not correspond to var first dimension')
     
@@ -90,7 +95,7 @@ def compute_huss(q2,time):
     
     return huss,atts
 
-def compute_wss(u10,v10,time):
+def compute_wss(varvals,time):
     """Method to compute wind speed
     u10: zonal wind [m s-1]
     v10: meridional wind [m s-1]
@@ -99,6 +104,8 @@ def compute_wss(u10,v10,time):
     wss: wind speed [m s-1]
     atts: attributes of the output variable to be used in the output netcdf
     """
+    u10=varvals['U10'][:]
+    v10=varvals['V10'][:]
     if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
         sys.exit('ERROR in compute_wss: The lenght of time variable does not correspond to u10 or v10 first dimension')
     
@@ -113,7 +120,7 @@ def compute_wss(u10,v10,time):
     
     return wss,atts
 
-def compute_uas(u10,time):
+def compute_uas(varvals,time):
     """Method to compute eastward wind
     u10: zonal wind [m s-1]
     time: list of times corresponding to u10 1st dimension
@@ -121,6 +128,7 @@ def compute_uas(u10,time):
     uas: eastward wind [m s-1]
     atts: attributes of the output variable to be used in the output netcdf
     """
+    u10=varvals['U10'][:]
     if len(time)!=u10.shape[0]:
         sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to uas first dimension')
         
@@ -134,7 +142,7 @@ def compute_uas(u10,time):
     return uas,atts
 
 
-def compute_vas(v10,time):
+def compute_vas(varvals,time):
     """Method to compute northward wind
     v10: meridional wind [m s-1]
     time: list of times corresponding to v10 dimension
@@ -142,6 +150,7 @@ def compute_vas(v10,time):
     vas: northward wind [m s-1]
     atts: attributes of the output variable to be used in the output netcdf
     """
+    v10=varvals['V10'][:]
     if len(time)!=v10.shape[0]:
         sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to vas first dimension')
 
@@ -154,7 +163,7 @@ def compute_vas(v10,time):
 
     return vas,atts
 
-def compute_evspsbl(sfcevp,time):
+def compute_evspsbl(varvals,time):
     """Method to compute surface evaporation flux
        The original variable was accumulated throughout the simulation. Accumulation must be removed.
        sfcevp: accumulated surface evaporation. Including the timestep previous to the first one in this period [kg m-2]
@@ -163,6 +172,7 @@ def compute_evspsbl(sfcevp,time):
        evspsbl: Surface evaporation flux [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    sfcevp=varvals['SFCEVP'][:]
     #sfcevp includes the timestep previous to the first one to remove the accumulation. 
     if len(time)!=sfcevp.shape[0]-1:
         sys.exit('ERROR in compute_evspsbl: The lenght of time variable does not correspond to var first dimension')
@@ -188,6 +198,8 @@ def compute_mrso(smstot,dzs,time):
        mrso: total soil moisture content [kg m-2]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    smstot=varvals['SMSTOT'][:]
+    dzs=varvals['DSZ'][:]
     if len(time)!=smstot.shape[0]:
         sys.exit('ERROR in compute_mrso: The lenght of time variable does not correspond to var first dimension')
     
@@ -198,7 +210,7 @@ def compute_mrso(smstot,dzs,time):
     
     return mrso,atts
 
-def compute_sst(sst_in,time):
+def compute_sst(varvals,time):
     """Method to compute the sea surface temperature
        sst_in: sea surface temperature [K]
        time: list of times corresponding to sst 1st dimension
@@ -206,6 +218,7 @@ def compute_sst(sst_in,time):
        sst_out: sea surface temperature [K]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    sst_in=varvals['SST'][:]
     if len(time)!=sst_in.shape[0]:
         sys.exit('ERROR in compute_sst: The lenght of time variable does not correspond to var first dimension')
     
@@ -216,7 +229,7 @@ def compute_sst(sst_in,time):
     
     return sst_out,atts
     
-def compute_potevp(potevp_in,time):
+def compute_potevp(varvals,time):
     """Method to compute surface potential evaporation flux
        The original variable was accumulated throughout the simulation. Accumulation must be removed.
        potevp_in: accumulated surface potential evaporation. Including the timestep previous to the first one in this period [kg m-2]
@@ -225,6 +238,7 @@ def compute_potevp(potevp_in,time):
        potevp_out: Surface evaporation flux [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    potevp_in=varvals['POTEVP'][:]
     #potevp includes the timestep previous to the first one to remove the accumulation. 
     if len(time)!=potevp_in.shape[0]-1:
         sys.exit('ERROR in compute_potevp: The lenght of time variable does not correspond to var first dimension')    
@@ -239,14 +253,15 @@ def compute_potevp(potevp_in,time):
     
     return potevp_out,atts
 
-def compute_rsds(swdown,time):
+def compute_rsds(varvals,time):
     """Method to compute downward shortwave surface radiation
        swdown: downward short wave flux at ground surface [W m-2]
        time: list of times corresponding to swdown 1st dimension
        ---
        rsds: downward shortwave surface radiation [W m-2]
        atts: attributes of the output variable to be used in the output netcdf
-    """  
+    """ 
+    swdown=varvals['SWDOWN'][:]
     if len(time)!=swdown.shape[0]:
         sys.exit('ERROR in compute_rsds: The lenght of time variable does not correspond to var first dimension')
     
@@ -257,14 +272,15 @@ def compute_rsds(swdown,time):
     
     return rsds,atts
 
-def compute_rlds(glw,time):
+def compute_rlds(varvals,time):
     """Method to compute downward longwave surface radiation
        glw: downward long wave flux at ground surface [W m-2]
        time: list of times corresponding to glw 1st dimension
        ---
        rlds: downward shortwave surface radiation [W m-2]
        atts: attributes of the output variable to be used in the output netcdf
-    """  
+    """
+    glw=varvals['GLW'][:]
     if len(time)!=glw.shape[0]:
         sys.exit('ERROR in compute_rlds: The lenght of time variable does not correspond to var first dimension')
 
@@ -275,14 +291,15 @@ def compute_rlds(glw,time):
 
     return rlds,atts
     
-def compute_hfls(lh,time):
+def compute_hfls(varvals,time):
     """Method to compute surface latent heat flux
        lh: latent heat flux at the surface [W m-2]
        time: list of times corresponding to lh 1st dimension
        ---
        hfls: upward latent heat flux at the surface [W m-2]
        atts: attributes of the output variable to be used in the output netcdf
-    """  
+    """
+    lh=varvals['LH'][:]
     if len(time)!=lh.shape[0]:
         sys.exit('ERROR in compute_hfls: The lenght of time variable does not correspond to var first dimension')
 
@@ -293,14 +310,15 @@ def compute_hfls(lh,time):
 
     return hfls,atts
     
-def compute_hfss(hfx,time):
+def compute_hfss(varvals,time):
     """Method to compute surface sensible heat flux
        hfx: upward heat flux at the surface [W m-2]
        time: list of times corresponding to emiss 1st dimension
        ---
        hfss: upward sensible heat flux at the surface [W m-2]
        atts: attributes of the output variable to be used in the output netcdf
-    """  
+    """
+    hfx=varvals['HFX'][:]
     if len(time)!=hfx.shape[0]:
         sys.exit('ERROR in compute_hfss: The lenght of time variable does not correspond to var first dimension')
 
@@ -311,14 +329,15 @@ def compute_hfss(hfx,time):
 
     return hfss,atts
 
-def compute_emiss(emiss_in,time):
+def compute_emiss(varvals,time):
     """Method to compute surface emissivity
        emiss_in: surface emissivity
        time: list of times corresponding to emiss 1st dimension
        ---
        emiss_out: surface emissivity
        atts: attributes of the output variable to be used in the output netcdf
-    """  
+    """
+    emiss_in=varvals['EMISS'][:]
     if len(time)!=emiss_in.shape[0]:
         sys.exit('ERROR in compute_emiss: The lenght of time variable does not correspond to var first dimension')
 
@@ -329,14 +348,15 @@ def compute_emiss(emiss_in,time):
 
     return emiss_out,atts
 
-def compute_albedo(albedo_in,time):
+def compute_albedo(varvals,time):
     """Method to compute surface albedo
     albedo_in: surface albedo
     time: list of times corresponding to emiss 1st dimension
     ---
     albedo_out: surface albedo
     atts: attributes of the output variable to be used in the output netcdf
-    """  
+    """
+    albedo_in=varvals['ALBEDO'][:]  
     if len(time)!=albedo_in.shape[0]:
         sys.exit('ERROR in compute_albedo: The lenght of time variable does not correspond to var first dimension')
 
@@ -347,7 +367,7 @@ def compute_albedo(albedo_in,time):
 
     return albedo_out,atts
 
-def compute_rlus(tsk,emiss,time):
+def compute_rlus(varvals,time):
     """Method to compute upward longwave surface radiation
 
     tsk: surface skin temperature [K]
@@ -356,7 +376,9 @@ def compute_rlus(tsk,emiss,time):
     ---
     rlus: upward longwave surface radiation [W m-2]
     atts: attributes of the output variable to be used in the output netcdf
-    """  
+    """
+    tsk=varvals['TSK'][:]
+    emiss=varvals['EMISS'][:]  
     if (len(time)!=tsk.shape[0]) or(len(time)!=emiss.shape[0]) :
         sys.exit('ERROR in compute_rlus: The lenght of time variable does not correspond to emiss or tsk first dimension')
 
@@ -368,7 +390,7 @@ def compute_rlus(tsk,emiss,time):
 
     return rlus,atts
     
-def compute_tasmeantstep(t2mean,time):
+def compute_tasmeantstep(varvals,time):
     """Method to compute the daily mean 2-m temperature using all timesteps of the model
        t2mean: mean 2-m temperature over all timesteps [K]
        time: list of times corresponding to swdown 1st dimension
@@ -376,6 +398,7 @@ def compute_tasmeantstep(t2mean,time):
        tasmeantstep:mean 2-m temperature over all timesteps [K]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    t2mean=varvals['T2MEAN'][:]
     if len(time)!=t2mean.shape[0]:
         sys.exit('ERROR in compute_tasmeantstep: The lenght of time variable does not correspond to var first dimension')
     
@@ -386,7 +409,7 @@ def compute_tasmeantstep(t2mean,time):
     
     return tasmeantstep,atts
     
-def compute_tasmintstep(t2min,time):
+def compute_tasmintstep(varvals,time):
     """Method to compute the daily min 2-m temperature using all timesteps of the model
        t2min: min 2-m temperature over all timesteps [K]
        time: list of times corresponding to swdown 1st dimension
@@ -394,6 +417,7 @@ def compute_tasmintstep(t2min,time):
        tasmintstep:min 2-m temperature over all timesteps [K]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    t2min=varvals['T2MIN'][:]
     if len(time)!=t2min.shape[0]:
         sys.exit('ERROR in compute_tasmintstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -404,7 +428,7 @@ def compute_tasmintstep(t2min,time):
 
     return tasmintstep,atts
     
-def compute_tasmaxtstep(t2max,time):
+def compute_tasmaxtstep(varvals,time):
     """Method to compute the daily max 2-m temperature using all timesteps of the model
        t2max: max 2-m temperature over all timesteps [K]
        time: list of times corresponding to swdown 1st dimension
@@ -412,6 +436,7 @@ def compute_tasmaxtstep(t2max,time):
        tasmaxtstep:max 2-m temperature over all timesteps [K]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    t2max=varvals['T2MAX'][:]
     if len(time)!=t2max.shape[0]:
         sys.exit('ERROR in compute_tasmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -422,7 +447,7 @@ def compute_tasmaxtstep(t2max,time):
 
     return tasmaxtstep,atts
 
-def compute_wssmaxtstep(spduv10max,time):
+def compute_wssmaxtstep(varvals,time):
     """Method to compute the daily max wind speed using all timesteps of the model
        spduv10max: daily max wind speed over all timesteps [m s-1]
        time: list of times corresponding to uv10max5 1st dimension
@@ -430,6 +455,7 @@ def compute_wssmaxtstep(spduv10max,time):
        wssmaxtstep:maximum daily max wind speed over all timesteps [m s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    spduv10max=varvals['SPDUV10MAX'][:]
     if len(time)!=spduv10max.shape[0]:
         sys.exit('ERROR in compute_wssmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -440,7 +466,7 @@ def compute_wssmaxtstep(spduv10max,time):
 
     return wssmaxtstep,atts
 
-def compute_pr5maxtstep(prmax5,time):
+def compute_pr5maxtstep(varvals,time):
     """Method to compute the max 5-minute precipitationusing all timesteps of the model
        prmax5: maximum 5-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -448,6 +474,7 @@ def compute_pr5maxtstep(prmax5,time):
        pr5maxtstep:maximum 5-minute precipitation using all timesteps [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    prmax5=varvals['PRMAX5'][:]
     if len(time)!=prmax5.shape[0]:
         sys.exit('ERROR in compute_pr5maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -458,7 +485,7 @@ def compute_pr5maxtstep(prmax5,time):
 
     return pr5maxtstep,atts
 
-def compute_pr10maxtstep(prmax10,time):
+def compute_pr10maxtstep(varvals,time):
     """Method to compute the max 10-minute precipitationusing all timesteps of the model
        prmax10: maximum 10-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -466,6 +493,7 @@ def compute_pr10maxtstep(prmax10,time):
        pr10maxtstep:maximum 10-minute precipitation using all timesteps [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    prmax10=varvals['PRMAX10'][:]
     if len(time)!=prmax10.shape[0]:
         sys.exit('ERROR in compute_pr10maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -476,7 +504,7 @@ def compute_pr10maxtstep(prmax10,time):
 
     return pr10maxtstep,atts
 
-def compute_pr20maxtstep(prmax20,time):
+def compute_pr20maxtstep(varvals,time):
     """Method to compute the max 20-minute precipitationusing all timesteps of the model
        prmax20: maximum 20-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -484,6 +512,7 @@ def compute_pr20maxtstep(prmax20,time):
        pr20maxtstep:maximum 20-minute precipitation using all timesteps [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    prmax20=varvals['PRMAX20'][:]
     if len(time)!=prmax20.shape[0]:
         sys.exit('ERROR in compute_pr20maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -494,7 +523,7 @@ def compute_pr20maxtstep(prmax20,time):
 
     return pr20maxtstep,atts
     
-def compute_pr30maxtstep(prmax30,time):
+def compute_pr30maxtstep(varvals,time):
     """Method to compute the max 30-minute precipitationusing all timesteps of the model
        prmax30: maximum 30-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -502,6 +531,7 @@ def compute_pr30maxtstep(prmax30,time):
        pr30maxtstep:maximum 30-minute precipitation using all timesteps [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    prmax30=varvals['PRMAX30'][:]
     if len(time)!=prmax30.shape[0]:
         sys.exit('ERROR in compute_pr30maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -513,7 +543,7 @@ def compute_pr30maxtstep(prmax30,time):
     return pr30maxtstep,atts
     
 
-def compute_pr1Hmaxtstep(prmax1H,time):
+def compute_pr1Hmaxtstep(varvals,time):
     """Method to compute the max 1-hour precipitationusing all timesteps of the model
        prmax1H: maximum 1-hour precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -521,6 +551,7 @@ def compute_pr1Hmaxtstep(prmax1H,time):
        pr1Hmaxtstep:maximum 1-hour precipitation using all timesteps [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    prmax1H=varvals['PRMAX1H'][:]
     if len(time)!=prmax1H.shape[0]:
         sys.exit('ERROR in compute_pr1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -531,7 +562,7 @@ def compute_pr1Hmaxtstep(prmax1H,time):
 
     return pr1Hmaxtstep,atts
     
-def compute_wss5maxtstep(uv10max5,time):
+def compute_wss5maxtstep(varvals,time):
     """Method to compute the max 5-minute wind speed using all timesteps of the model
        uv10max5: maximum 5-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max5 1st dimension
@@ -539,6 +570,7 @@ def compute_wss5maxtstep(uv10max5,time):
        wss5maxtstep:maximum 5-mimute wind speed using all timesteps [m s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    uv10max5=varvals['UV10MAX5'][:]
     if len(time)!=uv10max5.shape[0]:
         sys.exit('ERROR in compute_wss5maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -549,7 +581,7 @@ def compute_wss5maxtstep(uv10max5,time):
 
     return wss5maxtstep,atts
 
-def compute_wss10maxtstep(uv10max10,time):
+def compute_wss10maxtstep(varvals,time):
     """Method to compute the max 10-minute wind speed using all timesteps of the model
        uv10max10: maximum 10-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max10 1st dimension
@@ -557,6 +589,7 @@ def compute_wss10maxtstep(uv10max10,time):
        wss10maxtstep:maximum 10-mimute wind speed using all timesteps [m s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    uv10max10=varvals['UV10MAX10'][:]
     if len(time)!=uv10max10.shape[0]:
         sys.exit('ERROR in compute_wss10maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -567,7 +600,7 @@ def compute_wss10maxtstep(uv10max10,time):
 
     return wss10maxtstep,atts
 
-def compute_wss20maxtstep(uv10max20,time):
+def compute_wss20maxtstep(varvals,time):
     """Method to compute the max 20-minute wind speed using all timesteps of the model
        uv10max20: maximum 20-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max20 1st dimension
@@ -575,6 +608,7 @@ def compute_wss20maxtstep(uv10max20,time):
        wss20maxtstep:maximum 20-mimute wind speed using all timesteps [m s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    uv10max20=varvals['UV10MAX20'][:]
     if len(time)!=uv10max20.shape[0]:
         sys.exit('ERROR in compute_wss20maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -585,7 +619,7 @@ def compute_wss20maxtstep(uv10max20,time):
 
     return wss20maxtstep,atts
 
-def compute_wss30maxtstep(uv10max30,time):
+def compute_wss30maxtstep(varvals,time):
     """Method to compute the max 30-minute wind speed using all timesteps of the model
        uv10max30: maximum 30-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max30 1st dimension
@@ -593,6 +627,7 @@ def compute_wss30maxtstep(uv10max30,time):
        wss30maxtstep:maximum 30-mimute wind speed using all timesteps [m s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    uv10max30=varvals['UV10MAX30'][:]
     if len(time)!=uv10max30.shape[0]:
         sys.exit('ERROR in compute_wss30maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -603,7 +638,7 @@ def compute_wss30maxtstep(uv10max30,time):
 
     return wss30maxtstep,atts
 
-def compute_wss1Hmaxtstep(uv10max1H,time):
+def compute_wss1Hmaxtstep(varvals,time):
     """Method to compute the max 1-hour wind speed using all timesteps of the model
     uv10max1H: maximum 1-hour wind speed using all timesteps [m s-1]
     time: list of times corresponding to uv10max1H 1st dimension
@@ -611,6 +646,7 @@ def compute_wss1Hmaxtstep(uv10max1H,time):
     wss1Hmaxtstep:maximum 1-hour wind speed using all timesteps [m s-1]
     atts: attributes of the output variable to be used in the output netcdf
     """
+    uv10max1H=varvals['UV10MAX1H'][:]
     if len(time)!=uv10max1H.shape[0]:
         sys.exit('ERROR in compute_wss1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
