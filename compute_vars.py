@@ -188,7 +188,7 @@ def compute_evspsbl(varvals,time):
     
     return evspsbl,atts
 
-def compute_mrso(smstot,dzs,time):
+def compute_mrso(varvals,time):
     """Method to compute the total soil moisture content
        Integrates through all soil layers
        smstot: total soil moisture in each layer [m3 m-3]
@@ -199,7 +199,7 @@ def compute_mrso(smstot,dzs,time):
        atts: attributes of the output variable to be used in the output netcdf
     """
     smstot=varvals['SMSTOT'][:]
-    dzs=varvals['DSZ'][:]
+    dzs=varvals['DZS'][:]
     if len(time)!=smstot.shape[0]:
         sys.exit('ERROR in compute_mrso: The lenght of time variable does not correspond to var first dimension')
     
