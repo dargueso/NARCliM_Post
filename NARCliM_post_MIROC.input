@@ -14,15 +14,15 @@ overwrite=True
 
 #### Requested output variables (DO NOT CHANGE THIS LINE) ####
 
-# tas
-# pracc
-# ps
-# huss
-# wss
-# uas
-# vas
-# evspsbl
-# mrso
+tas
+pracc
+ps
+huss
+wss
+uas
+vas
+evspsbl
+mrso
 sst
 potevp
 rsds	

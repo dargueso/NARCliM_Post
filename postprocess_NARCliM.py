@@ -62,17 +62,16 @@ for filet in file_type:
 	print '\n','\n', '*************************************'
 	print '  PROCESSING ', filet, ' FILE OUTPUTS'
 	print '*************************************'
-	filet='wrfxtrm'
 	sper=gvars.syear
 	eper=gvars.eyear
 	perstep=1
-
+	
 	if filet=='wrfhrly':
 		n_files=12      
 		time_step=1 #hours between two time steps
 		file_freq='01H'
 		tbounds=False
-
+	
 	if filet=='wrfout':
 		time_step=3 #hours between two time steps
 		file_freq='03H'
@@ -108,8 +107,8 @@ for filet in file_type:
 		# SELECTING FILES TO READ
 		files_list=pm.file_list(gvars, per, per_f, filet, n_files)
 
-                # LOOP OVER VARIABLES IN THE GIVEN KIND OF FILE
-                for var in pm.intersect(varinfo[filet].keys(),out_variables):
+		# LOOP OVER VARIABLES IN THE GIVEN KIND OF FILE
+		for var in pm.intersect(varinfo[filet].keys(),out_variables):
 			ctime_var=pm.checkpoint(0)
 			
 			# CHECK IF THE FILE ALREADY EXISTS
@@ -162,11 +161,9 @@ for filet in file_type:
 				# ***********************************************
 				# DEFINE TIME BOUNDS FOR XTRM AND DAILY VARIABLES
 				if filet=='wrfxtrm' or filet=='wrfdly':
-
 					time=pm.date2hours(date,gvars.ref_date)
 					time=[time[i]+time_step/2 for i in xrange(len(time))]
 					time_bnds=pm.create_timebnds(time)
-
 					varvals=pm.mv_timestep(wrfvar,varvals,per_f,gvars,filet)
 
 				# CALL COMPUTE_VAR MODULE
@@ -180,10 +177,10 @@ for filet in file_type:
 				pm.create_netcdf(netcdf_info, gvars, varval, time, time_bnds)
 				ctime=pm.checkpoint(ctime_var)
 				print '=====================================================', '\n', '\n', '\n'
-	print ' =======================  PERIOD: ',per, ' - ', per_f, ' FINISHED ==============', '\n', '\n',
-        ctime=pm.checkpoint(ctime_year)
-print ' =======================  FILE TYPE :',filet, ' FINISHED ==============', '\n', '\n',
-ctime=pm.checkpoint(ctime_filet)
+			print ' =======================  PERIOD: ',per, ' - ', per_f, ' FINISHED ==============', '\n', '\n',
+			ctime=pm.checkpoint(ctime_year)
+	print ' =======================  FILE TYPE :',filet, ' FINISHED ==============', '\n', '\n',
+	ctime=pm.checkpoint(ctime_filet)
 
 #***********************************************
 # DAILY STATISTICS
