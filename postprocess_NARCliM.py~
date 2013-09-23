@@ -167,7 +167,6 @@ for filet in file_type:
 					time=pm.date2hours(date,gvars.ref_date)
 					varvals=pm.mv_timestep(wrfvar,varvals,per_f,gvars,filet)
 					time_bnds=pm.create_timebnds(time)
-					sys.exit(0)
 
 				# CALL COMPUTE_VAR MODULE
 				compute=getattr(comv,'compute_'+var) # FROM STRING TO ATTRIBUTE
