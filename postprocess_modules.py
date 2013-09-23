@@ -232,6 +232,7 @@ def read_varinfo(filename):
     filein=open(filename,"r")
     lines=filein.readlines()
     varinfo={}
+   
     varname=[]
     filetype=[]
     freqreq=[]
@@ -253,6 +254,7 @@ def read_varinfo(filename):
 
 
     varinfo=dictionary2entries(filetype,varname,statsreq)
+
     return varinfo
 
  
@@ -737,12 +739,12 @@ def create_monthlyfiles(gvars,varname,stat_all):
 	syp=gvars.syear
 	fullpathout=create_outdir(gvars)
 	for stat in stat_all:
-		if varname=='pracc':
-			varstat=varname
+		if varname=='pracc' or varname[-4:]=='step':
+		    varstat=varname
 		else:
 			varstat=varname+stat
-		
 		fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,varstat)))
+		print '%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,varstat)
 		fileref=nc.Dataset(fileall[0],'r')
 		syfile,eyfile=get_yearsfile(fileall,varstat)
 		syp=gvars.syear
