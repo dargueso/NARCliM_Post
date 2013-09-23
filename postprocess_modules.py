@@ -54,7 +54,7 @@ class gvar:
     self.overwrite=inputinf['overwrite']
     self.outfile_patt=inputinf['outfile_patt']
     
-    self.fileref_att='%s/wrfhrly_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
+    self.fileref_att='%s/wrfout_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
 
 
 # *************************************************************************************
@@ -501,8 +501,8 @@ def create_netcdf(info,gvars, varval, time, time_bnds):
 	# **********************************************************************
 	# Read attributes from the geo_file of the corresponding domain
 	fin1=nc.Dataset(gvars.fileref_att,mode='r')
-	lon=np.squeeze(fin1.variables['XLONG'][0,:,:]) # Getting longitude
-	lat=np.squeeze(fin1.variables['XLAT'][0,:,:]) # Getting latitude
+	lon=np.squeeze(fin1.variables['XLONG'][:]) # Getting longitude
+	lat=np.squeeze(fin1.variables['XLAT'][:]) # Getting latitude
 	dx=getattr(fin1, 'DX')
 	dy=getattr(fin1, 'DY')
 	cen_lat=getattr(fin1, 'CEN_LAT')

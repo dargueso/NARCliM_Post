@@ -201,7 +201,7 @@ def compute_mrso(varvals,time,gvars):
     smstot=varvals['SMSTOT'][:]
     dzs=varvals['DZS'][:]
     filemask=nc.Dataset(gvars.fileref_att,'r')
-    mask=filemask.variables['LANDMASK'][0,:,:]
+    mask=filemask.variables['LANDMASK'][:]
 
     filemask.close()
 
@@ -225,7 +225,7 @@ def compute_sst(varvals,time,gvars):
     """
     sst_in=varvals['SST'][:]
     filemask=nc.Dataset(gvars.fileref_att,'r')
-    mask=filemask.variables['LANDMASK'][0,:,:]
+    mask=filemask.variables['LANDMASK'][:]
 
     filemask.close()
 
