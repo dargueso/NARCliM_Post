@@ -31,124 +31,129 @@ class const:
   tkelvin = 273.15
   missingval = 1.e+20
 
+
+# *************************************************************************************
 class gvar:
 
   def __init__(self,inputinf):
-      if inputinf['GCM']=='CCCMA3.1':
-          self.GCM_calendar='no_leap'
-      else:
-          self.GCM_calendar='standard'
+    if inputinf['GCM']=='CCCMA3.1':
+      self.GCM_calendar='no_leap'
+    else:
+      self.GCM_calendar='standard'
 
 
-      self.ref_date=dt.datetime(1949,12,1,00,00,00)
+    self.ref_date=dt.datetime(1949,12,1,00,00,00)
 
-      self.pathin=inputinf['pathin']
-      self.pathout=inputinf['pathout']
-      self.GCM=inputinf['GCM']
-      self.RCM=inputinf['RCM']
-      self.syear=int(inputinf['syear'])
-      self.eyear=int(inputinf['eyear'])
-      self.domain=inputinf['domain']
-      self.overwrite=inputinf['overwrite']
-      self.outfile_patt=inputinf['outfile_patt']
+    self.pathin=inputinf['pathin']
+    self.pathout=inputinf['pathout']
+    self.GCM=inputinf['GCM']
+    self.RCM=inputinf['RCM']
+    self.syear=int(inputinf['syear'])
+    self.eyear=int(inputinf['eyear'])
+    self.domain=inputinf['domain']
+    self.overwrite=inputinf['overwrite']
+    self.outfile_patt=inputinf['outfile_patt']
+    
+    self.fileref_att='%s/wrfhrly_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
 
-      self.fileref_att='%s/wrfhrly_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
 
+# *************************************************************************************
 def create_outdir(gvars):
-	fullpathout='%s%s/%s/%s-%s/%s/' %(gvars.pathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain)
+  fullpathout='%s%s/%s/%s-%s/%s/' %(gvars.pathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain)
+  
+  # CREATE OUTPUT DIR IF IT DOESN'T EXIST
+  if not os.path.exists(fullpathout):
+    os.makedirs(fullpathout)
+    
+    # CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
+  if not os.path.exists("%stemp/" %(fullpathout)):
+    os.makedirs("%stemp/" %(fullpathout))
+    
+  return fullpathout
+    
 
-	#CREATE OUTPUT DIR IF IT DOESN'T EXIST
-	if not os.path.exists(fullpathout):
-		os.makedirs(fullpathout)
-
-	#CREATE A TEMPORAL DIR WITHIN THE OUTPUT DIR IF IT DOESN'T EXIST
-	if not os.path.exists("%stemp/" %(fullpathout)):
-		os.makedirs("%stemp/" %(fullpathout))
-		
-	return fullpathout
-	
+# *************************************************************************************
 def create_outtime(dates,gvars):
-	
-	datehours=date2hours(dates,gvars.ref_date)
-	time=np.zeros(len(datehours),dtype=np.float64)
-	time[:-1]=datehours[:-1]+np.diff(datehours)/2
-	time[-1]=datehours[-1]+(datehours[-1]-datehours[-2])/2
-	return time
+  
+  datehours=date2hours(dates,gvars.ref_date)
+  time=np.zeros(len(datehours),dtype=np.float64)
+  time[:-1]=datehours[:-1]+np.diff(datehours)/2
+  time[-1]=datehours[-1]+(datehours[-1]-datehours[-2])/2
+  return time
 
+
+# *************************************************************************************
 def create_timebnds(time):
 	
-	time_bnds=np.zeros((len(time),2),dtype=np.float64)
+  time_bnds=np.zeros((len(time),2),dtype=np.float64)
+  
+  time_bnds[:-1,1]=time[:-1]+np.diff(time)/2
+  time_bnds[:-1,0]=time[:-1]-np.diff(time)/2
+  
+  time_bnds[-1,0]=time[-1]-(time[-1]-time[-2])/2
+  time_bnds[-1,1]=time[-1]+(time[-1]-time[-2])/2
 	
-	time_bnds[:-1,1]=time[:-1]+np.diff(time)/2
-	time_bnds[:-1,0]=time[:-1]-np.diff(time)/2
-	
-	time_bnds[-1,0]=time[-1]-(time[-1]-time[-2])/2
-	time_bnds[-1,1]=time[-1]+(time[-1]-time[-2])/2
-	
-	return time_bnds
+  return time_bnds
 
 	
+# *************************************************************************************
 def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
-	accvar={}
-	for wrfv in wrfvar:
-		if year<gvars.eyear:
-			next_file='%s%s_%s_%s-01-01_00:00:00' % (gvars.pathin,filet,gvars.domain,year+1)
-			ncfile=nc.Dataset(next_file,'r')
-			next_tstep=np.squeeze(ncfile.variables[wrfv][:])
-			accvar[wrfv]=np.concatenate((varvals[wrfv],next_tstep[0:1,:,:]),axis=0)
-		else:
-			fillvar=np.ones((1,)+varvals[wrfv].shape[1:],dtype=np.float64)*const.missingval
-			accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
-	
-	return accvar
+  accvar={}
+  for wrfv in wrfvar:
+    if year<gvars.eyear:
+      next_file='%s%s_%s_%s-01-01_00:00:00' % (gvars.pathin,filet,gvars.domain,year+1)
+      ncfile=nc.Dataset(next_file,'r')
+      next_tstep=np.squeeze(ncfile.variables[wrfv][:])
+      accvar[wrfv]=np.concatenate((varvals[wrfv],next_tstep[0:1,:,:]),axis=0)
+    else:
+      fillvar=np.ones((1,)+varvals[wrfv].shape[1:],dtype=np.float64)*const.missingval
+      accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
+      
+  return accvar
 	
         
+# *************************************************************************************
 def mv_timestep(wrfvar,varvals,year,gvars,filet):
-        accvar={}
-        for wrfv in wrfvar:
-                if year<gvars.eyear:
-                        next_file='%s%s_%s_%s-01-01_00:00:00' % (gvars.pathin,filet,gvars.domain,year+1)
-                        ncfile=nc.Dataset(next_file,'r')
-                        print next_file
-                        next_tstep=np.squeeze(ncfile.variables[wrfv][:])
-                        accvar[wrfv]=np.concatenate((varvals[wrfv],next_tstep[0:1,:,:]),axis=0)
-                        accvar[wrfv]=accvar[wrfv][1:,:,:]
+  accvar={}
+  for wrfv in wrfvar:
+    if year<gvars.eyear:
+      next_file='%s%s_%s_%s-01-01_00:00:00' % (gvars.pathin,filet,gvars.domain,year+1)
+      ncfile=nc.Dataset(next_file,'r')
+      print 'READ ONE MORE TIME STEP: ', next_file
+      next_tstep=np.squeeze(ncfile.variables[wrfv][:])
+      accvar[wrfv]=np.concatenate((varvals[wrfv],next_tstep[0:1,:,:]),axis=0)
+      accvar[wrfv]=accvar[wrfv][1:,:,:]
+      
+    else:
+      fillvar=np.ones((1,)+varvals[wrfv].shape[1:],dtype=np.float64)*const.missingval
+      accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
+      accvar[wrfv]=accvar[wrfv][1:,:,:]
+      
+  return accvar
+    
 
-                else:
-                        fillvar=np.ones((1,)+varvals[wrfv].shape[1:],dtype=np.float64)*const.missingval
-                        accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
-                        accvar[wrfv]=accvar[wrfv][1:,:,:]
-
-        return accvar
- 
+# *************************************************************************************
 def get_wrfvars(wrfvar,fin):
-	variabs={}
-	for wrfv in wrfvar:
-		variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
-		
-	return  variabs
-	
-
+  variabs={}
+  for wrfv in wrfvar:
+    variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
+    
+    return  variabs
+  
+  
+# *************************************************************************************
 def add_leapdays(varvals):
-	
-	months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
-	days_all=np.asarray([date[i].day for i in xrange(len(date))])
-	index=np.where(np.logical_and(months_all==2,days_all==29))
-
-	for wrfv in wrfvar:
-		varvals[wrfv]=add_leap(varvals[wrfv],index)
-	fin.close() # CLOSE FILES
-	
-	return varvals
-
-
-
-
-
-
-
-
-
+  
+  months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
+  days_all=np.asarray([date[i].day for i in xrange(len(date))])
+  index=np.where(np.logical_and(months_all==2,days_all==29))
+  
+  for wrfv in wrfvar:
+    varvals[wrfv]=add_leap(varvals[wrfv],index)
+    fin.close() # CLOSE FILES
+    
+    return varvals
+  
 
 # *************************************************************************************
 def read_input(filename):
@@ -296,7 +301,7 @@ def read_schemes(filename):
     schemes['ra_sw_physics']=filein.RA_SW_PHYSICS
     schemes['sf_surface_physics']=filein.SF_SURFACE_PHYSICS
     
-    fileschemes=open("./info_files/WRF_schemes.inf")
+    fileschemes=open("./WRF_schemes.inf")
     lines=fileschemes.readlines()
     sch_infoall={}
     sch_type=[]
@@ -635,30 +640,19 @@ def checkfile(file_out,overwrite):
 	filewrite=False
 	print '  --> OUTPUT FILE:'
 	print '                 ', file_out
-	if (fileexist==True):
-		if (overwrite==False):
-			print '                  +++ FILE ALREADY EXISTS +++'
-			filewrite=False
-		elif overwrite==True:
-			print '                   +++ FILE EXISTS AND WILL BE OVERWRITTEN +++'
-			filewrite=True
+	if fileexist==True:
+          if overwrite==False:
+            print '                  +++ FILE ALREADY EXISTS +++'
+            filewrite=False
+          else:
+            print '                   +++ FILE EXISTS AND WILL BE OVERWRITTEN +++'
+            filewrite=True
 	else:
-		print '                   +++ FILE DOES NOT EXISTS YET +++'
-		filewrite=True
-		
-			
-	# else:
-	# 	if  fileexist==True and overwrite==True:
-	# 		print '                   +++ FILE EXISTS AND WILL BE OVERWRITTEN +++'
-	# 		filewrite=True
-	# 	else:
-	# 		print '                   +++ FILE DOES NOT EXISTS YET +++'
-	# 		filewrite=True
-	# ***********************************************************
+          print '                   +++ FILE DOES NOT EXISTS YET +++'
+          filewrite=True
 	return filewrite
 
 #**************************************************************************************
-
 def get_dates(year,month,day,hour,mins,time_step,n_timesteps):
   import datetime as dt
   """ Gives a dates vector starting on year/month/day/time with a total 
@@ -667,19 +661,23 @@ def get_dates(year,month,day,hour,mins,time_step,n_timesteps):
   dates=[dt.datetime(year,month,day,hour,mins)+ \
            dt.timedelta(hours=x) for x in xrange(0,n_timesteps*time_step,time_step)]
 
-  # ***********************************************************
   return dates
   
+
+# ***********************************************************
 def date2hours(datelist,ref_date):
     hourssince=[(datelist[i]-ref_date).days*24. + (datelist[i]-ref_date).seconds/3600. for i in xrange(len(datelist))]
     return hourssince
     
 
+# ***********************************************************
 def get_yearsfile(fileall,varname):
 	eyfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-4:]) for i in xrange(len(fileall))])
 	syfile=np.asarray([int(fileall[i].split('_%s.nc' %(varname))[0][-9:-5]) for i in xrange(len(fileall))])
 	return syfile,eyfile
 
+
+# ***********************************************************
 def create_dailyfiles(gvars,varname,stat_all):
 	syp=gvars.syear
 	fullpathout=create_outdir(gvars)
@@ -735,6 +733,8 @@ def create_dailyfiles(gvars,varname,stat_all):
 					print '=====================================================', '\n', '\n', '\n'
 		syp=eyp
 
+
+# ***********************************************************
 def create_monthlyfiles(gvars,varname,stat_all):
 	syp=gvars.syear
 	fullpathout=create_outdir(gvars)

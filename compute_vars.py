@@ -202,6 +202,9 @@ def compute_mrso(varvals,time,gvars):
     dzs=varvals['DZS'][:]
     filemask=nc.Dataset(gvars.fileref_att,'r')
     mask=filemask.variables['LANDMASK'][0,:,:]
+
+    filemask.close()
+
     if len(time)!=smstot.shape[0]:
         sys.exit('ERROR in compute_mrso: The lenght of time variable does not correspond to var first dimension')
     
@@ -210,7 +213,6 @@ def compute_mrso(varvals,time,gvars):
     
     mrso=smstot*1000*np.sum(dzs)
     mrso[:,mask==0]=pm.const.missingval
-    
     return mrso,atts
 
 def compute_sst(varvals,time,gvars):
@@ -224,6 +226,9 @@ def compute_sst(varvals,time,gvars):
     sst_in=varvals['SST'][:]
     filemask=nc.Dataset(gvars.fileref_att,'r')
     mask=filemask.variables['LANDMASK'][0,:,:]
+
+    filemask.close()
+
     if len(time)!=sst_in.shape[0]:
         sys.exit('ERROR in compute_sst: The lenght of time variable does not correspond to var first dimension')
     
@@ -232,7 +237,7 @@ def compute_sst(varvals,time,gvars):
     
     sst_out=sst_in
     sst_out[:,mask==1]=pm.const.missingval
-    
+
     return sst_out,atts
     
 def compute_potevp(varvals,time,gvars):
