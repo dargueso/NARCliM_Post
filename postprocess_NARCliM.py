@@ -38,9 +38,15 @@ help="file with the input arguments", metavar="INPUTFILE")
 ###
 
 
+#### Reading input info file ######
 inputinf,out_variables=pm.read_input(opts.infile)
+
+#### Reading variable info file ######
+varinfo=pm.read_varinfo("./info_files/variables.inf")
+file_type=varinfo.keys()
+
+#### Creating global variables ####
 gvars=pm.gvar(inputinf)
-overwrite=True
 fullpathout=pm.create_outdir(gvars)
  
 #CREATE A LOG IFLE TO PUT OUTPUT FROM THE MAIN SCRIPT
@@ -50,9 +56,7 @@ print 'The output messages are written to %s' %(logfile)
 #sys.stdout = open('%s' %(logfile), "w") 
 
 
-#### Reading variable info file ######
-varinfo=pm.read_varinfo("./info_files/variables.inf")
-file_type=varinfo.keys()
+
 
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
@@ -113,7 +117,7 @@ for filet in file_type:
 			
 			# CHECK IF THE FILE ALREADY EXISTS
 			file_out='%s%s%s_%s-%s_%s.nc' % (fullpathout,gvars.outfile_patt,file_freq,per,per_f,var) # Specify output file
-			filewrite=pm.checkfile(file_out,overwrite)
+			filewrite=pm.checkfile(file_out,gvars.overwrite)
 			if filewrite==True:
 				
 				# READ FILES FROM THE CORRESPONDING PERIOD
