@@ -165,7 +165,7 @@ for filet in file_type:
 				# ***********************************************
 				# DEFINE TIME BOUNDS FOR XTRM AND DAILY VARIABLES
 				if filet=='wrfxtrm' or filet=='wrfdly':
-					time=pm.date2hours(date,gvars.ref_date)
+					time=pm.date2hours(date,gvars.ref_date)+time_step/2
 					time_bnds=pm.create_timebnds(time)
 					varvals=pm.mv_timestep(wrfvar,varvals,per_f,gvars,filet)
 

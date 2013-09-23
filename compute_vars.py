@@ -9,7 +9,7 @@ import datetime as dt
 import sys
 import postprocess_modules as pm
 
-def compute_tas(varvals,time):
+def compute_tas(varvals,time,gvars):
     """Method to compute 2-m temperature
     t2: T2 from wrf files [K]
     time: list of times corresponding to t2 1st dimension
@@ -29,7 +29,7 @@ def compute_tas(varvals,time):
     return tas,atts
     
     
-def compute_ps(varvals,time):
+def compute_ps(varvals,time,gvars):
     """Method to compute surface pressure
     psfc: psfc from wrf files [Pa]
     time: list of times corresponding to t2 1st dimension
@@ -49,7 +49,7 @@ def compute_ps(varvals,time):
     return ps,atts
 
 
-def compute_pracc(varvals,time):
+def compute_pracc(varvals,time,gvars):
     """Method to compute precipitation
     The original variable was accumulated throughout the simulation. Accumulation must be removed (But it is not converted to flux)
     rainc: convective rainfall accumulated. Including the timestep previous to the first one in this period [kg m-2]
@@ -76,7 +76,7 @@ def compute_pracc(varvals,time):
     
     return pracc,atts
     
-def compute_huss(varvals,time):
+def compute_huss(varvals,time,gvars):
     """Method to compute specific humidity
     q2: mixing ratio [kg kg-2]
     time: list of times corresponding to q2 1st dimension
@@ -95,7 +95,7 @@ def compute_huss(varvals,time):
     
     return huss,atts
 
-def compute_wss(varvals,time):
+def compute_wss(varvals,time,gvars):
     """Method to compute wind speed
     u10: zonal wind [m s-1]
     v10: meridional wind [m s-1]
@@ -120,7 +120,7 @@ def compute_wss(varvals,time):
     
     return wss,atts
 
-def compute_uas(varvals,time):
+def compute_uas(varvals,time,gvars):
     """Method to compute eastward wind
     u10: zonal wind [m s-1]
     time: list of times corresponding to u10 1st dimension
@@ -142,7 +142,7 @@ def compute_uas(varvals,time):
     return uas,atts
 
 
-def compute_vas(varvals,time):
+def compute_vas(varvals,time,gvars):
     """Method to compute northward wind
     v10: meridional wind [m s-1]
     time: list of times corresponding to v10 dimension
@@ -163,7 +163,7 @@ def compute_vas(varvals,time):
 
     return vas,atts
 
-def compute_evspsbl(varvals,time):
+def compute_evspsbl(varvals,time,gvars):
     """Method to compute surface evaporation flux
        The original variable was accumulated throughout the simulation. Accumulation must be removed.
        sfcevp: accumulated surface evaporation. Including the timestep previous to the first one in this period [kg m-2]
@@ -188,7 +188,7 @@ def compute_evspsbl(varvals,time):
     
     return evspsbl,atts
 
-def compute_mrso(varvals,time):
+def compute_mrso(varvals,time,gvars):
     """Method to compute the total soil moisture content
        Integrates through all soil layers
        smstot: total soil moisture in each layer [m3 m-3]
@@ -200,6 +200,8 @@ def compute_mrso(varvals,time):
     """
     smstot=varvals['SMSTOT'][:]
     dzs=varvals['DZS'][:]
+    filemask=nc.Dataset(gvars.fileref_att,'r')
+    mask=filemask.variables['LANDMASK'][0,:,:]
     if len(time)!=smstot.shape[0]:
         sys.exit('ERROR in compute_mrso: The lenght of time variable does not correspond to var first dimension')
     
@@ -207,10 +209,11 @@ def compute_mrso(varvals,time):
     atts=pm.get_varatt(sn="soil_moisture_content",ln="Total soil moisture content",un="kg m-2",ts="time: point values %s seconds" %(tseconds))
     
     mrso=smstot*1000*np.sum(dzs)
+    mrso[:,mask==0]=pm.const.missingval
     
     return mrso,atts
 
-def compute_sst(varvals,time):
+def compute_sst(varvals,time,gvars):
     """Method to compute the sea surface temperature
        sst_in: sea surface temperature [K]
        time: list of times corresponding to sst 1st dimension
@@ -219,6 +222,8 @@ def compute_sst(varvals,time):
        atts: attributes of the output variable to be used in the output netcdf
     """
     sst_in=varvals['SST'][:]
+    filemask=nc.Dataset(gvars.fileref_att,'r')
+    mask=filemask.variables['LANDMASK'][0,:,:]
     if len(time)!=sst_in.shape[0]:
         sys.exit('ERROR in compute_sst: The lenght of time variable does not correspond to var first dimension')
     
@@ -226,10 +231,11 @@ def compute_sst(varvals,time):
     atts=pm.get_varatt(sn="sea_surface_temperature",ln="sea surface temperature",un="K",ts="time: point values %s seconds" %(tseconds)) 
     
     sst_out=sst_in
+    sst_out[:,mask==1]=pm.const.missingval
     
     return sst_out,atts
     
-def compute_potevp(varvals,time):
+def compute_potevp(varvals,time,gvars):
     """Method to compute surface potential evaporation flux
        The original variable was accumulated throughout the simulation. Accumulation must be removed.
        potevp_in: accumulated surface potential evaporation. Including the timestep previous to the first one in this period [kg m-2]
@@ -253,7 +259,7 @@ def compute_potevp(varvals,time):
     
     return potevp_out,atts
 
-def compute_rsds(varvals,time):
+def compute_rsds(varvals,time,gvars):
     """Method to compute downward shortwave surface radiation
        swdown: downward short wave flux at ground surface [W m-2]
        time: list of times corresponding to swdown 1st dimension
@@ -272,7 +278,7 @@ def compute_rsds(varvals,time):
     
     return rsds,atts
 
-def compute_rlds(varvals,time):
+def compute_rlds(varvals,time,gvars):
     """Method to compute downward longwave surface radiation
        glw: downward long wave flux at ground surface [W m-2]
        time: list of times corresponding to glw 1st dimension
@@ -291,7 +297,7 @@ def compute_rlds(varvals,time):
 
     return rlds,atts
     
-def compute_hfls(varvals,time):
+def compute_hfls(varvals,time,gvars):
     """Method to compute surface latent heat flux
        lh: latent heat flux at the surface [W m-2]
        time: list of times corresponding to lh 1st dimension
@@ -310,7 +316,7 @@ def compute_hfls(varvals,time):
 
     return hfls,atts
     
-def compute_hfss(varvals,time):
+def compute_hfss(varvals,time,gvars):
     """Method to compute surface sensible heat flux
        hfx: upward heat flux at the surface [W m-2]
        time: list of times corresponding to emiss 1st dimension
@@ -329,7 +335,7 @@ def compute_hfss(varvals,time):
 
     return hfss,atts
 
-def compute_emiss(varvals,time):
+def compute_emiss(varvals,time,gvars):
     """Method to compute surface emissivity
        emiss_in: surface emissivity
        time: list of times corresponding to emiss 1st dimension
@@ -348,7 +354,7 @@ def compute_emiss(varvals,time):
 
     return emiss_out,atts
 
-def compute_albedo(varvals,time):
+def compute_albedo(varvals,time,gvars):
     """Method to compute surface albedo
     albedo_in: surface albedo
     time: list of times corresponding to emiss 1st dimension
@@ -367,7 +373,7 @@ def compute_albedo(varvals,time):
 
     return albedo_out,atts
 
-def compute_rlus(varvals,time):
+def compute_rlus(varvals,time,gvars):
     """Method to compute upward longwave surface radiation
 
     tsk: surface skin temperature [K]
@@ -390,7 +396,7 @@ def compute_rlus(varvals,time):
 
     return rlus,atts
     
-def compute_tasmeantstep(varvals,time):
+def compute_tasmeantstep(varvals,time,gvars):
     """Method to compute the daily mean 2-m temperature using all timesteps of the model
        t2mean: mean 2-m temperature over all timesteps [K]
        time: list of times corresponding to swdown 1st dimension
@@ -409,7 +415,7 @@ def compute_tasmeantstep(varvals,time):
     
     return tasmeantstep,atts
     
-def compute_tasmintstep(varvals,time):
+def compute_tasmintstep(varvals,time,gvars):
     """Method to compute the daily min 2-m temperature using all timesteps of the model
        t2min: min 2-m temperature over all timesteps [K]
        time: list of times corresponding to swdown 1st dimension
@@ -428,7 +434,7 @@ def compute_tasmintstep(varvals,time):
 
     return tasmintstep,atts
     
-def compute_tasmaxtstep(varvals,time):
+def compute_tasmaxtstep(varvals,time,gvars):
     """Method to compute the daily max 2-m temperature using all timesteps of the model
        t2max: max 2-m temperature over all timesteps [K]
        time: list of times corresponding to swdown 1st dimension
@@ -447,7 +453,7 @@ def compute_tasmaxtstep(varvals,time):
 
     return tasmaxtstep,atts
 
-def compute_wssmaxtstep(varvals,time):
+def compute_wssmaxtstep(varvals,time,gvars):
     """Method to compute the daily max wind speed using all timesteps of the model
        spduv10max: daily max wind speed over all timesteps [m s-1]
        time: list of times corresponding to uv10max5 1st dimension
@@ -466,7 +472,7 @@ def compute_wssmaxtstep(varvals,time):
 
     return wssmaxtstep,atts
 
-def compute_pr5maxtstep(varvals,time):
+def compute_pr5maxtstep(varvals,time,gvars):
     """Method to compute the max 5-minute precipitationusing all timesteps of the model
        prmax5: maximum 5-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -485,7 +491,7 @@ def compute_pr5maxtstep(varvals,time):
 
     return pr5maxtstep,atts
 
-def compute_pr10maxtstep(varvals,time):
+def compute_pr10maxtstep(varvals,time,gvars):
     """Method to compute the max 10-minute precipitationusing all timesteps of the model
        prmax10: maximum 10-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -504,7 +510,7 @@ def compute_pr10maxtstep(varvals,time):
 
     return pr10maxtstep,atts
 
-def compute_pr20maxtstep(varvals,time):
+def compute_pr20maxtstep(varvals,time,gvars):
     """Method to compute the max 20-minute precipitationusing all timesteps of the model
        prmax20: maximum 20-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -523,7 +529,7 @@ def compute_pr20maxtstep(varvals,time):
 
     return pr20maxtstep,atts
     
-def compute_pr30maxtstep(varvals,time):
+def compute_pr30maxtstep(varvals,time,gvars):
     """Method to compute the max 30-minute precipitationusing all timesteps of the model
        prmax30: maximum 30-minute precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -543,7 +549,7 @@ def compute_pr30maxtstep(varvals,time):
     return pr30maxtstep,atts
     
 
-def compute_pr1Hmaxtstep(varvals,time):
+def compute_pr1Hmaxtstep(varvals,time,gvars):
     """Method to compute the max 1-hour precipitationusing all timesteps of the model
        prmax1H: maximum 1-hour precipitation using all timesteps [kg m-2 s-1]
        time: list of times corresponding to swdown 1st dimension
@@ -562,7 +568,7 @@ def compute_pr1Hmaxtstep(varvals,time):
 
     return pr1Hmaxtstep,atts
     
-def compute_wss5maxtstep(varvals,time):
+def compute_wss5maxtstep(varvals,time,gvars):
     """Method to compute the max 5-minute wind speed using all timesteps of the model
        uv10max5: maximum 5-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max5 1st dimension
@@ -581,7 +587,7 @@ def compute_wss5maxtstep(varvals,time):
 
     return wss5maxtstep,atts
 
-def compute_wss10maxtstep(varvals,time):
+def compute_wss10maxtstep(varvals,time,gvars):
     """Method to compute the max 10-minute wind speed using all timesteps of the model
        uv10max10: maximum 10-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max10 1st dimension
@@ -600,7 +606,7 @@ def compute_wss10maxtstep(varvals,time):
 
     return wss10maxtstep,atts
 
-def compute_wss20maxtstep(varvals,time):
+def compute_wss20maxtstep(varvals,time,gvars):
     """Method to compute the max 20-minute wind speed using all timesteps of the model
        uv10max20: maximum 20-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max20 1st dimension
@@ -619,7 +625,7 @@ def compute_wss20maxtstep(varvals,time):
 
     return wss20maxtstep,atts
 
-def compute_wss30maxtstep(varvals,time):
+def compute_wss30maxtstep(varvals,time,gvars):
     """Method to compute the max 30-minute wind speed using all timesteps of the model
        uv10max30: maximum 30-mimute wind speed using all timesteps [m s-1]
        time: list of times corresponding to uv10max30 1st dimension
@@ -638,7 +644,7 @@ def compute_wss30maxtstep(varvals,time):
 
     return wss30maxtstep,atts
 
-def compute_wss1Hmaxtstep(varvals,time):
+def compute_wss1Hmaxtstep(varvals,time,gvars):
     """Method to compute the max 1-hour wind speed using all timesteps of the model
     uv10max1H: maximum 1-hour wind speed using all timesteps [m s-1]
     time: list of times corresponding to uv10max1H 1st dimension

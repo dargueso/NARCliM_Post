@@ -10,12 +10,12 @@ domain = d02
 
 outfile_patt=CCRC_NARCliM_
 
-overwrite=False
+overwrite=True
 
 #### Requested output variables (DO NOT CHANGE THIS LINE) ####
 
 # tas
-pracc
+# pracc
 # ps
 # huss
 # wss
@@ -23,7 +23,7 @@ pracc
 # vas
 # evspsbl
 # mrso
-# sst
+sst
 # potevp
 # rsds	
 # rlds	
