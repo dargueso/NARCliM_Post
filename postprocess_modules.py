@@ -30,8 +30,8 @@ class const:
 	rcp = Rd/cp
 	tkelvin = 273.15
 	missingval = 1.e+20
-
-
+	
+	
 # *************************************************************************************
 class gvar:
 	def __init__(self,inputinf):
@@ -39,26 +39,22 @@ class gvar:
 			self.GCM_calendar='no_leap'
 		else:
 			self.GCM_calendar='standard'
-
-
-			self.ref_date=dt.datetime(1949,12,1,00,00,00)
-
-			self.pathin=inputinf['pathin']
-			self.pathout=inputinf['pathout']
-			self.GCM=inputinf['GCM']
-			self.RCM=inputinf['RCM']
-			self.syear=int(inputinf['syear'])
-			self.eyear=int(inputinf['eyear'])
-			self.domain=inputinf['domain']
-			self.overwrite=inputinf['overwrite']
-			self.outfile_patt=inputinf['outfile_patt']
-	
-			self.fileref_att='%s/wrfout_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
+		self.ref_date=dt.datetime(1949,12,1,00,00,00)
+		self.pathin=inputinf['pathin']
+		self.pathout=inputinf['pathout']
+		self.GCM=inputinf['GCM']
+		self.RCM=inputinf['RCM']
+		self.syear=int(inputinf['syear'])
+		self.eyear=int(inputinf['eyear'])
+		self.domain=inputinf['domain']
+		self.overwrite=inputinf['overwrite']
+		self.outfile_patt=inputinf['outfile_patt']
+		self.fileref_att='%s/wrfout_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
 
 
 # *************************************************************************************
 def create_outdir(gvars):
-	fullpathout='%s%s/%s/%s-%s/%s/' %(gvars.pathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain)
+	fullpathout='%s%s-%s/%s/%s/postprocess/%s/' %(gvars.pathout,gvars.syear,gvars.eyear,gvars.GCM,gvars.RCM,gvars.domain)
   
 	# CREATE OUTPUT DIR IF IT DOESN'T EXIST
 	if not os.path.exists(fullpathout):
@@ -78,6 +74,8 @@ def create_outtime(dates,gvars):
 	time[:-1]=datehours[:-1]+np.diff(datehours)/2
 	time[-1]=datehours[-1]+(datehours[-1]-datehours[-2])/2
 	return time
+
+
 # *************************************************************************************
 def create_timebnds(time):
 	time_bnds=np.zeros((len(time),2),dtype=np.float64)
@@ -89,6 +87,8 @@ def create_timebnds(time):
 	time_bnds[-1,1]=time[-1]+(time[-1]-time[-2])/2
 	
 	return time_bnds
+
+
 # *************************************************************************************
 def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
 	accvar={}
@@ -103,6 +103,8 @@ def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
 			accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
 
 	return accvar
+
+
 # *************************************************************************************
 def mv_timestep(wrfvar,varvals,year,gvars,filet):
 	accvar={}
@@ -119,22 +121,14 @@ def mv_timestep(wrfvar,varvals,year,gvars,filet):
 			accvar[wrfv]=np.concatenate((varvals[wrfv][:],fillvar),axis=0)
 			accvar[wrfv]=accvar[wrfv][1:,:,:]
 	return accvar
+
+
 # *************************************************************************************
 def get_wrfvars(wrfvar,fin):
 	variabs={}
 	for wrfv in wrfvar:
 		variabs[wrfv]=fin.variables[wrfv][:].astype('float64')
 	return	variabs
-# *************************************************************************************
-def add_leapdays(varvals):
-	months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
-	days_all=np.asarray([date[i].day for i in xrange(len(date))])
-	index=np.where(np.logical_and(months_all==2,days_all==29))
-  
-	for wrfv in wrfvar:
-		varvals[wrfv]=add_leap(varvals[wrfv],index)
-	
-	return varvals
   
 
 # *************************************************************************************
@@ -351,27 +345,31 @@ def get_wrfdate(time):
 
 
 # *************************************************************************************
-def add_leap(varval,index):
+def add_leapdays(varvals,wrfvar,date,time_step):
 	"""Method that add missing values to the 29th February in leap year for
 	those simulations that are run without leap years.
-
+	
 	varval: 3-D matrix with time, latitude and longitude in the first, second and third dimensions. 
 	The time dimension has one year of data without 29th february in a leap-year case.
-
+	
 	index: is the index of the 29th feburary in the time dimension.
 	"""
-
-	temp=np.zeros((varval.shape[0]+1,varval.shape[1],varval.shape[2]))
-	temp[0:index[0][0]-1,:,:]=varval[0:index[0][0]-1,:,:]
-	temp[index[0][0]:index[0][23],:,:]=const.missingval
-	temp[index[0][23]+1:,:,:]=varval[0:index[0][0]:,:,:]
-	del varval
-	varval=temp
-	del temp 
-
-	return varval
-
-
+	
+	months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
+	days_all=np.asarray([date[i].day for i in xrange(len(date))])
+	index=np.where(np.logical_and(months_all==2,days_all==29))
+	tt=24/time_step
+	
+	for wrfv in wrfvar:
+		temp=np.ones((varvals[wrfv].shape[0]+tt,varvals[wrfv].shape[1],varvals[wrfv].shape[2]))*const.missingval
+		
+		temp[0:index[0][0]+1,:,:]=varvals[wrfv][0:index[0][0]+1,:,:]
+		temp[index[0][0]+tt+1:,:,:]=varvals[wrfv][index[0][0]+1:,:,:]
+		
+		varvals[wrfv]=temp
+		
+	return varvals
+  
 
 # *************************************************************************************
 def get_globatt(GCM,RCM,sch_info,perturb=None):

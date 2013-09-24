@@ -65,7 +65,8 @@ for filet in file_type:
 	sper=gvars.syear
 	eper=gvars.eyear
 	perstep=1
-	
+	filet='wrfout'
+
 	if filet=='wrfhrly':
 		n_files=12      
 		time_step=1 #hours between two time steps
@@ -97,12 +98,15 @@ for filet in file_type:
 		ctime_year=pm.checkpoint(0)
 		per_f=per+perstep-1
 
-		if filet=='wrfout':
-			n_leap=0
-			for pp in np.arange(per,per_f+1):
-				if cal.isleap(pp):
-					n_leap=n_leap+1	
+		n_leap=0
+		for pp in np.arange(per,per_f+1):
+			if cal.isleap(pp):
+				n_leap=n_leap+1	
+			if filet=='wrfout' and gvars.GCM_calendar!='no_leap':
 				n_files=perstep*365+n_leap
+			else:
+				n_files=perstep*365
+				
 
 		# SELECTING FILES TO READ
 		files_list=pm.file_list(gvars, per, per_f, filet, n_files)
@@ -120,12 +124,8 @@ for filet in file_type:
 				wrfvar=(pm.getwrfname(var)[0]).split('-')
 				time_old, varvals=pm.read_list(files_list, var)	
 
-				if gvars.GCM_calendar=='noleap' and cal.isleap(per)==True:
-					varvals=add_leapdays(varvals)
-
 				# FIRST/LAST YEAR, MONTH, DAY AND HOUR OF ALL READ FILES
 				year_i, month_i, day_i, hour_i = pm.get_wrfdate(time_old[0,:])
-				mins=0
 				year_f, month_f, day_f, hour_f = pm.get_wrfdate(time_old[-1,:])
 
 				# DEFINE TIME BOUNDS VARIABLES 
@@ -135,17 +135,12 @@ for filet in file_type:
 				# DEFINE DATES USING STANDARD CALENDAR
 				n_days = dt.datetime(per_f+1,month_i,day_i,hour_i)-dt.datetime(per,month_i,day_i,hour_i)
 				n_timesteps=n_days.days*int(24./time_step)
-				date = pm.get_dates(year_i,month_i,day_i,hour_i,mins,time_step,n_timesteps)
+				date = pm.get_dates(year_i,month_i,day_i,hour_i,0,time_step,n_timesteps)
 				time=pm.date2hours(date,gvars.ref_date)
 
-				# -------------------
-				# CHECKING: Check if the of time steps is right
-				if n_timesteps!=time_old.shape[0]:
-					print '\n', 'ERROR: the number of timesteps in period ', per,' is INCORRECT'
-					print 'There should be: ', n_timesteps
-					print 'There are: ', time_old.shape[0]
-					print 'SCRIPT stops running ','\n'
-					sys.exit(0)
+				# ADD LEAP DAY FOR MODELS WITHOU IT 
+				if gvars.GCM_calendar=='no_leap' and n_leap>=1:
+					varvals=pm.add_leapdays(varvals,wrfvar,date,time_step)
 
 				# ***********************************************
 				# ACCUMULATED VARIABLES NEED ONE TIME STEP MORE TO COMPUTE DIFFERENCES
