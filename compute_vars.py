@@ -199,7 +199,6 @@ def compute_mrso(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     smstot=varvals['SMSTOT'][:]
-    dzs=varvals['DZS'][:]
     filemask=nc.Dataset(gvars.fileref_att,'r')
     mask=filemask.variables['LANDMASK'][:]
 
@@ -211,7 +210,7 @@ def compute_mrso(varvals,time,gvars):
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="soil_moisture_content",ln="Total soil moisture content",un="kg m-2",ts="time: point values %s seconds" %(tseconds))
     
-    mrso=smstot*1000*np.sum(dzs)
+    mrso=smstot
     mrso[:,mask==0]=pm.const.missingval
     return mrso,atts
 

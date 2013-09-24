@@ -32,13 +32,13 @@ def compute_daily(var,time,stat):
 	#In the reshape, keep right order for the last two dimensions (lat,lon)
 	var_r=np.reshape(var,[nsteps,ndays,var.shape[-2],var.shape[-1]],order='F')
 	if stat == 'acc':
-	    dvar=np.sum(var_r,axis=0)
+	    dvar=np.ma.sum(var_r,axis=0)
 	elif stat == 'mean':
-	    dvar=np.mean(var_r,axis=0)
+	    dvar=np.ma.mean(var_r,axis=0)
 	elif stat == 'max':
-	    dvar=np.max(var_r,axis=0)
+	    dvar=np.ma.max(var_r,axis=0)
 	elif stat == 'min':
-	    dvar=np.min(var_r,axis=0)
+	    dvar=np.ma.min(var_r,axis=0)
 
 	return dvar,dtime
     
@@ -62,7 +62,7 @@ def compute_monthly(var,time,stat):
 	
 
 	var=np.squeeze(var)
-	mvar=np.zeros((max(months),)+var.shape[1:],dtype=np.float64)*pm.const.missingval
+	mvar=np.ma.ones((max(months),)+var.shape[1:],dtype=np.float64)*pm.const.missingval
 
 	#Calculating the middle of each month. Data is provided in the mid point between the time_bounds
 	mtime=[0]*max(months)
@@ -74,16 +74,16 @@ def compute_monthly(var,time,stat):
 
 	if stat == 'acc':
 	    for mo in xrange(max(months)):
-	        mvar[mo,:,:]=np.sum(var[months==mo+1,:,:],axis=0)
+	        mvar[mo,:,:]=np.ma.sum(var[months==mo+1,:,:],axis=0)
 	if stat == 'mean':
 	    for mo in xrange(max(months)):
-	        mvar[mo,:,:]=np.mean(var[months==mo+1,:,:],axis=0)
+	        mvar[mo,:,:]=np.ma.mean(var[months==mo+1,:,:],axis=0)
 	if stat == 'max':
 	    for mo in xrange(max(months)):
-	        mvar[mo,:,:]=np.max(var[months==mo+1,:,:],axis=0)
+	        mvar[mo,:,:]=np.ma.max(var[months==mo+1,:,:],axis=0)
 	if stat == 'min':
 	    for mo in xrange(max(months)):
-	        mvar[mo,:,:]=np.min(var[months==mo+1,:,:],axis=0)
+	        mvar[mo,:,:]=np.ma.min(var[months==mo+1,:,:],axis=0)
 
 
 	return mvar,mtime
