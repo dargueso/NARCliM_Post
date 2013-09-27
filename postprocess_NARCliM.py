@@ -54,7 +54,7 @@ fullpathout=pm.create_outdir(gvars)
 datenow=dt.datetime.now().strftime("%Y-%m-%d_%H:%M")
 logfile = '%spostprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain,datenow)
 print 'The output messages are written to %s' %(logfile)
-#sys.stdout = open('%s' %(logfile), "w") 
+sys.stdout = open('%s' %(logfile), "w") 
 
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
@@ -154,24 +154,24 @@ for filet in file_type:
   print ' =======================  FILE TYPE :',filet, ' FINISHED ==============', '\n', '\n',
   ctime=pm.checkpoint(ctime_filet)
 
-# #***********************************************
-# # DAILY STATISTICS
-# # Loop over all types of WRF output files (i.e., wrfhrly, wrfout, etc) 
-# for filet in file_type:
-#   if (filet!='wrfxtrm') and (filet!='wrfdly'): # These files are already daily
-#     for varname in varinfo[filet].keys():
-#       if varname in out_variables:
-#         stat_all=varinfo[filet][varname].split(',')
-#         pm.create_dailyfiles(gvars,varname,stat_all)
-#           
-#           
-# #***********************************************
-# # MONTHLY STATISTICS
-# for filet in file_type:
-#   for varname in varinfo[filet].keys():
-#     if varname in out_variables:
-#       stat_all=varinfo[filet][varname].split(',')
-#       pm.create_monthlyfiles(gvars,varname,stat_all)
+#***********************************************
+# DAILY STATISTICS
+# Loop over all types of WRF output files (i.e., wrfhrly, wrfout, etc) 
+for filet in file_type:
+  if (filet!='wrfxtrm') and (filet!='wrfdly'): # These files are already daily
+    for varname in varinfo[filet].keys():
+      if varname in out_variables:
+        stat_all=varinfo[filet][varname].split(',')
+        pm.create_dailyfiles(gvars,varname,stat_all)
+          
+          
+#***********************************************
+# MONTHLY STATISTICS
+for filet in file_type:
+  for varname in varinfo[filet].keys():
+    if varname in out_variables:
+      stat_all=varinfo[filet][varname].split(',')
+      pm.create_monthlyfiles(gvars,varname,stat_all)
 
 
 #***********************************************
