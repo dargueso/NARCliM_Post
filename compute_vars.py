@@ -120,8 +120,8 @@ def compute_wss(varvals,time,gvars):
     
     return wss,atts
 
-def compute_uas(varvals,time,gvars):
-    """Method to compute eastward wind
+def compute_nonrotuas(varvals,time,gvars):
+    """Method to compute eastward wind (NOT ROTATED)
     u10: zonal wind [m s-1]
     time: list of times corresponding to u10 1st dimension
     ---
@@ -133,7 +133,7 @@ def compute_uas(varvals,time,gvars):
         sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to uas first dimension')
         
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="eastward_wind",ln="Eastward surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
+    atts=pm.get_varatt(sn="eastward_wind",ln="Eastward near-surface wind (not rotated)",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
     
     # Zonal wind unstagged
     # uas=0.5*(u10[:,:,:-1]+u10[:,:,1:])
@@ -142,8 +142,8 @@ def compute_uas(varvals,time,gvars):
     return uas,atts
 
 
-def compute_vas(varvals,time,gvars):
-    """Method to compute northward wind
+def compute_nonrotvas(varvals,time,gvars):
+    """Method to compute northward wind (NOT ROTATED)
     v10: meridional wind [m s-1]
     time: list of times corresponding to v10 dimension
     ---
@@ -155,13 +155,70 @@ def compute_vas(varvals,time,gvars):
         sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to vas first dimension')
 
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="northward_wind",ln="Northward surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
+    atts=pm.get_varatt(sn="northward_wind",ln="Northward near-surface wind (not rotated)",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
 
     # Zonal wind unstagged
     # vas=0.5*(v10[:,:-1,:]+v10[:,1:,:])
     vas = v10
 
     return vas,atts
+
+def compute_uas(varvals,time,gvars):
+    """Method to compute eastward wind (ROTATED - EARTH COORDINATES)
+    u10: zonal wind [m s-1]
+    v10: meridional wind [m s-1]
+    time: list of times corresponding to u10 1st dimension
+    ---
+    uas: earth-coordinates eastward wind [m s-1]
+    atts: attributes of the output variable to be used in the output netcdf
+    """
+    u10=varvals['U10'][:]
+    v10=varvals['V10'][:]
+    if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
+        sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to U10 or V10 first dimension')
+        
+    fileref=nc.Dataset(gvars.fileref_att,'r')
+    sina=fileref.variables['SINALPHA'][:]
+    cosa=fileref.variables['COSALPHA'][:]
+    sina_all=np.array([np.tile(sina, (1,1)) for i in xrange(len(time))])
+    cosa_all=np.array([np.tile(cosa, (1,1)) for i in xrange(len(time))])
+    
+    
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="eastward_wind",ln="Eastward near-surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
+
+    uas = u10[:]*cosa_all[:]-v10[:]*sina_all[:]
+
+    return uas,atts
+
+
+def compute_vas(varvals,time,gvars):
+    """Method to compute northward wind (ROTATED - EARTH COORDINATES)
+    u10: zonal wind [m s-1]
+    v10: meridional wind [m s-1]
+    time: list of times corresponding to v10 dimension
+    ---
+    vas: earth-coordinates northward wind [m s-1]
+    atts: attributes of the output variable to be used in the output netcdf
+    """
+    u10=varvals['U10'][:]
+    v10=varvals['V10'][:]
+    if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
+        sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to U10 or V10 first dimension')
+    
+    fileref=nc.Dataset(gvars.fileref_att,'r')
+    sina=fileref.variables['SINALPHA'][:]
+    cosa=fileref.variables['COSALPHA'][:]
+    sina_all=np.array([np.tile(sina, (1,1)) for i in xrange(len(time))])
+    cosa_all=np.array([np.tile(cosa, (1,1)) for i in xrange(len(time))])
+    
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="northward_wind",ln="Northward near-surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
+
+    vas = v10[:]*cosa_all[:]+u10[:]*sina_all[:]
+
+    return vas,atts
+
 
 def compute_evspsbl(varvals,time,gvars):
     """Method to compute surface evaporation flux
