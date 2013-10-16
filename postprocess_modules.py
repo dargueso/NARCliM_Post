@@ -54,7 +54,7 @@ class gvar:
 
 # *************************************************************************************
 def create_outdir(gvars):
-  fullpathout='%s%s-%s/%s/%s/postprocess/%s/' %(gvars.pathout,gvars.syear,gvars.eyear,gvars.GCM,gvars.RCM,gvars.domain)
+  fullpathout='%s/postprocess/%s-%s/%s/%s/%s/' %(gvars.pathout,gvars.syear,gvars.eyear,gvars.GCM,gvars.RCM,gvars.domain)
   
   # CREATE OUTPUT DIR IF IT DOESN'T EXIST
   if not os.path.exists(fullpathout):
