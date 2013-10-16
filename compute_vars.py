@@ -180,14 +180,14 @@ def compute_uas(varvals,time,gvars):
     fileref=nc.Dataset(gvars.fileref_att,'r')
     sina=fileref.variables['SINALPHA'][:]
     cosa=fileref.variables['COSALPHA'][:]
-    sina_all=np.array([np.tile(sina, (1,1)) for i in xrange(len(time))])
-    cosa_all=np.array([np.tile(cosa, (1,1)) for i in xrange(len(time))])
+    sina_all=np.tile(sina, (len(time),1,1)) 
+    cosa_all=np.tile(cosa, (len(time),1,1))
     
     
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="eastward_wind",ln="Eastward near-surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
 
-    uas = u10[:]*cosa_all[:]-v10[:]*sina_all[:]
+    uas = u10[:]*cosa_all[:]+v10[:]*sina_all[:]
 
     return uas,atts
 
@@ -209,13 +209,13 @@ def compute_vas(varvals,time,gvars):
     fileref=nc.Dataset(gvars.fileref_att,'r')
     sina=fileref.variables['SINALPHA'][:]
     cosa=fileref.variables['COSALPHA'][:]
-    sina_all=np.array([np.tile(sina, (1,1)) for i in xrange(len(time))])
-    cosa_all=np.array([np.tile(cosa, (1,1)) for i in xrange(len(time))])
+    sina_all=np.tile(sina, (len(time),1,1)) 
+    cosa_all=np.tile(cosa, (len(time),1,1)) 
     
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="northward_wind",ln="Northward near-surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
 
-    vas = v10[:]*cosa_all[:]+u10[:]*sina_all[:]
+    vas = v10[:]*cosa_all[:]-u10[:]*sina_all[:]
 
     return vas,atts
 
