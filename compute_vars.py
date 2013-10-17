@@ -61,6 +61,8 @@ def compute_pracc(varvals,time,gvars):
     """
     rainc=varvals['RAINC'][:]
     rainnc=varvals['RAINNC'][:]
+    rainc=np.ma.masked_equal(rainc,pm.const.missingval)
+    rainnc=np.ma.masked_equal(rainnc,pm.const.missingval)
     #rainc and rainnc includes the timestep previous to the first one to remove the accumulation.
     if (len(time)!=rainc.shape[0]-1) or (len(time)!=rainnc.shape[0]-1):
         sys.exit('ERROR in compute_pracc: The lenght of time variable does not correspond to rainc or rainnc first dimension')
