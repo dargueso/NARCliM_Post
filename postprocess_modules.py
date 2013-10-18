@@ -54,7 +54,7 @@ class gvar:
 
 # *************************************************************************************
 def create_outdir(gvars):
-  fullpathout='%s/postprocess/%s-%s/%s/%s/%s/' %(gvars.pathout,gvars.syear,gvars.eyear,gvars.GCM,gvars.RCM,gvars.domain)
+  fullpathout='%spostprocess/%s-%s/%s/%s/%s/' %(gvars.pathout,gvars.syear,gvars.eyear,gvars.GCM,gvars.RCM,gvars.domain)
   
   # CREATE OUTPUT DIR IF IT DOESN'T EXIST
   if not os.path.exists(fullpathout):
@@ -194,7 +194,7 @@ def read_input(filename):
   os.remove('filevarnames.tmp')
   os.remove('fileopts.tmp') 
   
-  print 'Variables that will be obtained from postprocessing:'
+  print 'Variables that will be obtained from postprocessing:',varnames
   return inputinf,varnames
 
 # *************************************************************************************
