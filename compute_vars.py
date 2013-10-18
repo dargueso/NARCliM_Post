@@ -18,6 +18,7 @@ def compute_tas(varvals,time,gvars):
     atts: attributes of the output variable to be used in the output netcdf 
     """
     t2=varvals['T2'][:]
+    t2=np.ma.masked_equal(t2,pm.const.missingval)
     if len(time)!=t2.shape[0]:
         sys.exit('ERROR in compute_tas: The lenght of time variable does not correspond to t2 first dimension')     
     
@@ -38,13 +39,14 @@ def compute_ps(varvals,time,gvars):
     atts: attributes of the output variable to be used in the output netcdf 
     """
     psfc=varvals['PSFC'][:]
+    psfc=np.ma.masked_equal(psfc,pm.const.missingval)
     if len(time)!=psfc.shape[0]:
         sys.exit('ERROR in compute_ps: The lenght of time variable does not correspond to psfc first dimension')     
 
     #Generating a dictionary with the output attributes of the variable
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
     atts=pm.get_varatt(sn="surface_air_pressure",ln="surface pressure",un="Pa",ts="time: point values %s seconds" %(tseconds))
-
+    
     ps=psfc    
     return ps,atts
 
@@ -87,6 +89,7 @@ def compute_huss(varvals,time,gvars):
     atts: attributes of the output variable to be used in the output netcdf
     """
     q2=varvals['Q2'][:]
+    q2=np.ma.masked_equal(q2,pm.const.missingval)
     if len(time)!=q2.shape[0]:
         sys.exit('ERROR in compute_huss: The lenght of time variable does not correspond to var first dimension')
     
@@ -108,6 +111,8 @@ def compute_wss(varvals,time,gvars):
     """
     u10=varvals['U10'][:]
     v10=varvals['V10'][:]
+    u10=np.ma.masked_equal(u10,pm.const.missingval)
+    v10=np.ma.masked_equal(v10,pm.const.missingval)
     if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
         sys.exit('ERROR in compute_wss: The lenght of time variable does not correspond to u10 or v10 first dimension')
     
@@ -131,6 +136,7 @@ def compute_nonrotuas(varvals,time,gvars):
     atts: attributes of the output variable to be used in the output netcdf
     """
     u10=varvals['U10'][:]
+    u10=np.ma.masked_equal(u10,pm.const.missingval)
     if len(time)!=u10.shape[0]:
         sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to uas first dimension')
         
@@ -153,6 +159,7 @@ def compute_nonrotvas(varvals,time,gvars):
     atts: attributes of the output variable to be used in the output netcdf
     """
     v10=varvals['V10'][:]
+    v10=np.ma.masked_equal(v10,pm.const.missingval)
     if len(time)!=v10.shape[0]:
         sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to vas first dimension')
 
@@ -176,6 +183,8 @@ def compute_uas(varvals,time,gvars):
     """
     u10=varvals['U10'][:]
     v10=varvals['V10'][:]
+    u10=np.ma.masked_equal(u10,pm.const.missingval)
+    v10=np.ma.masked_equal(v10,pm.const.missingval)
     if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
         sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to U10 or V10 first dimension')
         
@@ -205,6 +214,8 @@ def compute_vas(varvals,time,gvars):
     """
     u10=varvals['U10'][:]
     v10=varvals['V10'][:]
+    u10=np.ma.masked_equal(u10,pm.const.missingval)
+    v10=np.ma.masked_equal(v10,pm.const.missingval)
     if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
         sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to U10 or V10 first dimension')
     
@@ -232,7 +243,9 @@ def compute_evspsbl(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     sfcevp=varvals['SFCEVP'][:]
-    #sfcevp includes the timestep previous to the first one to remove the accumulation. 
+    sfcevp=np.ma.masked_equal(sfcevp,pm.const.missingval)
+
+   #sfcevp includes the timestep previous to the first one to remove the accumulation. 
     if len(time)!=sfcevp.shape[0]-1:
         sys.exit('ERROR in compute_evspsbl: The lenght of time variable does not correspond to var first dimension')
     
@@ -258,6 +271,7 @@ def compute_mrso(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     smstot=varvals['SMSTOT'][:]
+    smstot=np.ma.masked_equal(smstot,pm.const.missingval)
     filemask=nc.Dataset(gvars.fileref_att,'r')
     mask=filemask.variables['LANDMASK'][:]
 
@@ -282,6 +296,7 @@ def compute_sst(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     sst_in=varvals['SST'][:]
+    sst_in=np.ma.masked_equal(sst_in,pm.const.missingval)
     filemask=nc.Dataset(gvars.fileref_att,'r')
     mask=filemask.variables['LANDMASK'][:]
 
@@ -308,6 +323,7 @@ def compute_potevp(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     potevp_in=varvals['POTEVP'][:]
+    potevp_in=np.ma.masked_equal(potevp_in,pm.const.missingval)
     #potevp includes the timestep previous to the first one to remove the accumulation. 
     if len(time)!=potevp_in.shape[0]-1:
         sys.exit('ERROR in compute_potevp: The lenght of time variable does not correspond to var first dimension')    
@@ -331,6 +347,7 @@ def compute_rsds(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """ 
     swdown=varvals['SWDOWN'][:]
+    swdown=np.ma.masked_equal(swdown,pm.const.missingval)
     if len(time)!=swdown.shape[0]:
         sys.exit('ERROR in compute_rsds: The lenght of time variable does not correspond to var first dimension')
     
@@ -350,6 +367,7 @@ def compute_rlds(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     glw=varvals['GLW'][:]
+    glw=np.ma.masked_equal(glw,pm.const.missingval)
     if len(time)!=glw.shape[0]:
         sys.exit('ERROR in compute_rlds: The lenght of time variable does not correspond to var first dimension')
 
@@ -369,6 +387,7 @@ def compute_hfls(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     lh=varvals['LH'][:]
+    lh=np.ma.masked_equal(lh,pm.const.missingval)
     if len(time)!=lh.shape[0]:
         sys.exit('ERROR in compute_hfls: The lenght of time variable does not correspond to var first dimension')
 
@@ -388,6 +407,7 @@ def compute_hfss(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     hfx=varvals['HFX'][:]
+    hfx=np.ma.masked_equal(hfx,pm.const.missingval)
     if len(time)!=hfx.shape[0]:
         sys.exit('ERROR in compute_hfss: The lenght of time variable does not correspond to var first dimension')
 
@@ -407,6 +427,7 @@ def compute_emiss(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     emiss_in=varvals['EMISS'][:]
+    emiss=np.ma.masked_equal(emiss,pm.const.missingval)
     if len(time)!=emiss_in.shape[0]:
         sys.exit('ERROR in compute_emiss: The lenght of time variable does not correspond to var first dimension')
 
@@ -426,6 +447,7 @@ def compute_albedo(varvals,time,gvars):
     atts: attributes of the output variable to be used in the output netcdf
     """
     albedo_in=varvals['ALBEDO'][:]  
+    albedo_in=np.ma.masked_equal(albedo_in,pm.const.missingval)
     if len(time)!=albedo_in.shape[0]:
         sys.exit('ERROR in compute_albedo: The lenght of time variable does not correspond to var first dimension')
 
@@ -448,6 +470,8 @@ def compute_rlus(varvals,time,gvars):
     """
     tsk=varvals['TSK'][:]
     emiss=varvals['EMISS'][:]  
+    tsk=np.ma.masked_equal(tsk,pm.const.missingval)
+    emiss=np.ma.masked_equal(emiss,pm.const.missingval)
     if (len(time)!=tsk.shape[0]) or(len(time)!=emiss.shape[0]) :
         sys.exit('ERROR in compute_rlus: The lenght of time variable does not correspond to emiss or tsk first dimension')
 
@@ -468,6 +492,7 @@ def compute_tasmeantstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     t2mean=varvals['T2MEAN'][:]
+    t2mean=np.ma.masked_equal(t2mean,pm.const.missingval)
     if len(time)!=t2mean.shape[0]:
         sys.exit('ERROR in compute_tasmeantstep: The lenght of time variable does not correspond to var first dimension')
     
@@ -487,6 +512,7 @@ def compute_tasmintstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     t2min=varvals['T2MIN'][:]
+    t2min=np.ma.masked_equal(t2min,pm.const.missingval)
     if len(time)!=t2min.shape[0]:
         sys.exit('ERROR in compute_tasmintstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -506,6 +532,7 @@ def compute_tasmaxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     t2max=varvals['T2MAX'][:]
+    t2max=np.ma.masked_equal(t2max,pm.const.missingval)
     if len(time)!=t2max.shape[0]:
         sys.exit('ERROR in compute_tasmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -525,6 +552,7 @@ def compute_wssmaxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     spduv10max=varvals['SPDUV10MAX'][:]
+    spduv10max=np.ma.masked_equal(spduv10max,pm.const.missingval)
     if len(time)!=spduv10max.shape[0]:
         sys.exit('ERROR in compute_wssmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -544,6 +572,7 @@ def compute_pr5maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     prmax5=varvals['PRMAX5'][:]
+    prmax5=np.ma.masked_equal(prmax5,pm.const.missingval)
     if len(time)!=prmax5.shape[0]:
         sys.exit('ERROR in compute_pr5maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -563,6 +592,7 @@ def compute_pr10maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     prmax10=varvals['PRMAX10'][:]
+    prmax10=np.ma.masked_equal(prmax10,pm.const.missingval)
     if len(time)!=prmax10.shape[0]:
         sys.exit('ERROR in compute_pr10maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -582,6 +612,7 @@ def compute_pr20maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     prmax20=varvals['PRMAX20'][:]
+    prmax20=np.ma.masked_equal(prmax20,pm.const.missingval)
     if len(time)!=prmax20.shape[0]:
         sys.exit('ERROR in compute_pr20maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -601,6 +632,7 @@ def compute_pr30maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     prmax30=varvals['PRMAX30'][:]
+    prmax30=np.ma.masked_equal(prmax30,pm.const.missingval)
     if len(time)!=prmax30.shape[0]:
         sys.exit('ERROR in compute_pr30maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -621,6 +653,7 @@ def compute_pr1Hmaxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     prmax1H=varvals['PRMAX1H'][:]
+    prmax1H=np.ma.masked_equal(prmax1H,pm.const.missingval)
     if len(time)!=prmax1H.shape[0]:
         sys.exit('ERROR in compute_pr1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -640,6 +673,7 @@ def compute_wss5maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     uv10max5=varvals['UV10MAX5'][:]
+    uv10max5=np.ma.masked_equal(uv10max5,pm.const.missingval)
     if len(time)!=uv10max5.shape[0]:
         sys.exit('ERROR in compute_wss5maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -659,6 +693,7 @@ def compute_wss10maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     uv10max10=varvals['UV10MAX10'][:]
+    uv10max10=np.ma.masked_equal(uv10max10,pm.const.missingval)
     if len(time)!=uv10max10.shape[0]:
         sys.exit('ERROR in compute_wss10maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -678,6 +713,7 @@ def compute_wss20maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     uv10max20=varvals['UV10MAX20'][:]
+    uv10max20=np.ma.masked_equal(uv10max20,pm.const.missingval)
     if len(time)!=uv10max20.shape[0]:
         sys.exit('ERROR in compute_wss20maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -697,6 +733,7 @@ def compute_wss30maxtstep(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     uv10max30=varvals['UV10MAX30'][:]
+    uv10max30=np.ma.masked_equal(uv10max30,pm.const.missingval)
     if len(time)!=uv10max30.shape[0]:
         sys.exit('ERROR in compute_wss30maxtstep: The lenght of time variable does not correspond to var first dimension')
 
@@ -716,6 +753,7 @@ def compute_wss1Hmaxtstep(varvals,time,gvars):
     atts: attributes of the output variable to be used in the output netcdf
     """
     uv10max1H=varvals['UV10MAX1H'][:]
+    uv10max1H=np.ma.masked_equal(uv10max1H,pm.const.missingval)
     if len(time)!=uv10max1H.shape[0]:
         sys.exit('ERROR in compute_wss1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
