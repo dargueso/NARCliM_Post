@@ -615,7 +615,7 @@ def checkfile(file_out,overwrite):
   print '  --> OUTPUT FILE:'
   print '         ', file_out
   if fileexist==True:
-    if overwrite=='False':
+    if overwrite==False:
       print '          +++ FILE ALREADY EXISTS +++'
       filewrite=False
     else:
