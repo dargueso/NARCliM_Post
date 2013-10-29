@@ -611,7 +611,10 @@ def checkfile(file_out,overwrite):
   # IF THE FILE ALREADY EXISTS
   # If it does then go to the next one...
   fileexist=os.path.exists(file_out)
+  if overwrite=='False':
+    overwrite=False
   filewrite=False
+
   print '  --> OUTPUT FILE:'
   print '         ', file_out
   if fileexist==True:
