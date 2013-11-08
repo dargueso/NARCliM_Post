@@ -839,7 +839,7 @@ def read_list(files_list,var):
       files_in.append((files_list[int(nt_v[tt-1]):int(nt_v[tt])], wrfvar))
   
   
-    var_v = Parallel(n_jobs=njobs)(delayed(read_block_Dataset)(*files_in[i]) for i in xrange(len(files_in)))
+    var_v = Parallel(n_jobs=njobs)(delayed(read_block)(*files_in[i]) for i in xrange(len(files_in)))
 
     for i in np.arange(0,njobs):
       if i==0:
