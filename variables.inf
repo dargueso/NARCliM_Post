@@ -15,6 +15,9 @@ rsds					wrfout				DAY,MON				mean
 rlds					wrfout				DAY,MON				mean
 hfls					wrfout				DAY,MON				mean
 hfss					wrfout				DAY,MON				mean
+albedo					wrfout				DAY,MON				mean
+emiss					wrfout				DAY,MON				mean
+rlus					wrfout				DAY,MON				mean
 pr5maxtstep				wrfdly				DAY,MON				max
 pr10maxtstep			wrfdly				DAY,MON				max
 pr20maxtstep			wrfdly				DAY,MON				max
