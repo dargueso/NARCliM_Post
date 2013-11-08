@@ -611,9 +611,9 @@ def checkfile(file_out,overwrite):
   # IF THE FILE ALREADY EXISTS
   # If it does then go to the next one...
   fileexist=os.path.exists(file_out)
+  filewrite=False
   if overwrite=='False':
     overwrite=False
-  filewrite=False
 
   print '  --> OUTPUT FILE:'
   print '         ', file_out
@@ -807,7 +807,7 @@ def read_list(files_list,var):
   else:
     method='Dataset'
 
-
+  
   # ---------------------
   if method=='MFDataset':
     print files_list
@@ -838,7 +838,7 @@ def read_list(files_list,var):
       files_in.append((files_list[int(nt_v[tt-1]):int(nt_v[tt])], wrfvar))
   
   
-    var_v = Parallel(n_jobs=njobs)(delayed(read_block)(*files_in[i]) for i in xrange(len(files_in)))
+    var_v = Parallel(n_jobs=njobs)(delayed(read_block_Dataset)(*files_in[i]) for i in xrange(len(files_in)))
 
     for i in np.arange(0,njobs):
       if i==0:
@@ -851,53 +851,15 @@ def read_list(files_list,var):
           varvals[wrfv]=np.concatenate((varvals[wrfv],var_v[i][1][wrfv]))
   # ---------------------
 
-
-  # ---------------------
-  if method=='Dataset1':
-    varvals={}
-
-    step=int(float(len(files_list))/5.)
-    vec=np.arange(0,len(files_list)+step,step)
-    varvals={}
-    for i in np.arange(0,5):
-      ctime=checkpoint(0)
-      print files_list[vec[i]:vec[i+1]]
-    
-      fin=nc.MFDataset(files_list[vec[i]:vec[i+1]]) # Read all files
-      print '   --> EXTRACTING VARIABLE Time'
-      temptime = fin.variables['Times'][:] # Get time variable
-    
-      print '   --> EXTRACTING VARIABLE ',var
-      tempvar=get_wrfvars(wrfvar,fin)
-      fin.close()
-    
-      if i==0:
-        time=temptime
-        for ii,wrfv in enumerate(wrfvar):
-          varvals[wrfv]=tempvar[wrfv]
-      else:
-        time=np.concatenate((time,temptime))
-        for ii,wrfv in enumerate(wrfvar):
-          varvals[wrfv]=np.concatenate((varvals[wrfv],tempvar[wrfv]))
-   # ---------------------
-
- 
-  # ---------------------
-  if method=='CDO':
-    time=[]
-    varvals=[]
-  
-    for ff in files_list:
-      command = 'cdo selname,%s %s %s' % (vname, file, out_file)
-      sub.call(command, shell=True)
-      sub.call('cdo mergetime %s output.%s.nc' % (file_mask, vname), shell=True)
-   # --------------------- 
   ctime=checkpoint(ctime_read)
   return np.asarray(time), varvals
 
 #**************************************************************************************
 def read_block(files_in,wrfvar):
-  
+  """ Extract wrfvar and time variables from the list of files files_in.
+      The output is an array with times and a dictionary caonting arrays with
+      the different variables.
+  """  
   fin=nc.MFDataset(files_in) # Read all files
   temptime = fin.variables['Times'][:] # Get time variable
   tempvar=get_wrfvars(wrfvar,fin)
@@ -905,6 +867,36 @@ def read_block(files_in,wrfvar):
 
   return temptime, tempvar
   
+#**************************************************************************************
+def read_block_Dataset(files_in,wrfvar):
+  """ Extract wrfvar and time variables from the list of files files_in.
+      The output is an array with times and a dictionary caonting arrays with
+      the different variables.
+      It does the same as read_block but using Dataset instead of MFDatset. It might
+      be slower than read_block but it has the advantage to work even if some files 
+      of the list do not have the same number of variables.
+  """  
+  tempvar={}
+  for ff,ifile in enumerate(files_in):
+    fin=nc.Dataset(ifile) # Read all files
+    temptimet = fin.variables['Times'][:] # Get time variable
+    tempvart=get_wrfvars(wrfvar,fin)
+    fin.close()  
+
+    if ff==0:
+      temptime=temptimet
+      tempvar=tempvart
+
+    else:
+      temptime=np.concatenate((temptime,temptimet))
+      for ii,wrfv in enumerate(wrfvar):
+        tempvar[wrfv]=np.concatenate((tempvar[wrfv],tempvart[wrfv]))
+
+
+  return temptime, tempvar
+
+  
+#**************************************************************************************
 def get_filefreq(filet):
   """ Method to get information about the type of file
       filet: type of file (wrfhrly, wrfout,wrfxtrm, wrfdly)
