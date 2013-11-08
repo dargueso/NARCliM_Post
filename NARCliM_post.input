@@ -17,29 +17,32 @@ overwrite=False
 
 tas		
 pracc	
-#ps		
-#huss	
-#wss		
-#uas		
-#vas		
-# evspsbl	
-# mrso	
-# sst		
-# potevp	
-# rsds	
-# rlds	
-# hfls	
-# hfss	
-# pr5maxtstep
-# pr10maxtste
-# pr20maxtste
-# pr30maxtste
-# pr1Hmaxtste
-# wss5maxtste
-# wss10maxtst
-# wss20maxtst
-# wss30maxtst
-# wss1Hmaxtst
-# tasmeantste
-# tasmintstep
-# tasmaxtstep
+ps		
+huss	
+wss		
+uas		
+vas		
+evspsbl	
+mrso	
+sst		
+potevp	
+rsds	
+rlds	
+hfls	
+hfss	
+albedo
+emiss
+rlus
+pr5maxtstep
+pr10maxtste
+pr20maxtste
+pr30maxtste
+pr1Hmaxtste
+wss5maxtste
+wss10maxtst
+wss20maxtst
+wss30maxtst
+wss1Hmaxtst
+tasmeantste
+tasmintstep
+tasmaxtstep
