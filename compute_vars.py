@@ -427,7 +427,7 @@ def compute_emiss(varvals,time,gvars):
        atts: attributes of the output variable to be used in the output netcdf
     """
     emiss_in=varvals['EMISS'][:]
-    emiss=np.ma.masked_equal(emiss,pm.const.missingval)
+    emiss_in=np.ma.masked_equal(emiss_in,pm.const.missingval)
     if len(time)!=emiss_in.shape[0]:
         sys.exit('ERROR in compute_emiss: The lenght of time variable does not correspond to var first dimension')
 
@@ -479,7 +479,7 @@ def compute_rlus(varvals,time,gvars):
     atts=pm.get_varatt(sn="surface_upwelling_longwave_flux_in_air",ln="Upwelling surface LW radiation",un="W m-2",ts="time: point values %s seconds" %(tseconds))
 
     #calculating with net lw radiation using Stefan-Boltzmann
-    rlus=emiss*(pm.const.stefanbolzt)*tsk**4
+    rlus=emiss*(pm.const.stefanboltz)*tsk**4
 
     return rlus,atts
     

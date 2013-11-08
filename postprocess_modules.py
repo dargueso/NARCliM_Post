@@ -26,6 +26,7 @@ class const:
   es_Atetens_ice = 9.5
   es_Btetens_ice = 265.5
   g = 9.81
+  stefanboltz = 5.670373e-8
   p1000mb = 100000.
   rcp = Rd/cp
   tkelvin = 273.15
