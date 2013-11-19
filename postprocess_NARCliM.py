@@ -42,8 +42,13 @@ help="file with the input arguments", metavar="INPUTFILE")
 inputinf,out_variables=pm.read_input(opts.infile)
 
 #### Reading variable info file ######
-varinfo=pm.read_varinfo("./variables.inf")
+varinfo,varnames=pm.read_varinfo("./variables.inf")
 file_type=varinfo.keys()
+
+#### Checking that all requested variables are valid ######
+for var in out_variables:
+  if var not in varnames:
+    sys.exit("ERROR: The variable %s is not valid. It is not contained in the variables.inf file and thus I don't know how to process it. Please check that the spelling of variable %s is correct." %(var, var))
 
 #### Creating global variables ####
 gvars=pm.gvar(inputinf)

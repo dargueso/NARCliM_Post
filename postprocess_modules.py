@@ -235,8 +235,8 @@ def read_varinfo(filename):
 
 
   varinfo=dictionary2entries(filetype,varname,statsreq)
-
-  return varinfo
+  
+  return varinfo,varname
 
  
 # *************************************************************************************
