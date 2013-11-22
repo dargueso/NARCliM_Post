@@ -448,6 +448,43 @@ def dictionary2entries(vals1, vals2, vals3):
         dicjeff[vals1[ii]][vals2[ii]]=vals3[ii]
   return dicjeff
 
+# *************************************************************************************
+def check_pracc_values(varval,varatt):
+  """ Check for negative values in precipitation variables
+  In the case negative values are found the script convert them to zero and
+  print a messages in the log file. Also an error message is displayer at the end
+  of the log file.
+
+  Input: precipitation variable  
+  Output: error message or nothing
+  Author: Alejanro Di Luca, Daniel Argueso
+  Created: 21/11/2013
+  Last Modification: 21/11/2013
+
+  """
+  print '\n', ' CHECKING FOR NEGATIVE VALUES IN THE PRECIPITATION FIELD ','\n'
+  import numpy as np
+  import sys
+
+  error_msg=''
+ 
+  Negative = np.any(varval < 0)
+  
+  if Negative==True:
+    negative = np.ma.masked_less(varval,0).mask
+    varval[negative]=0.
+
+    print "\n", ' A TOTAL OF ',np.sum(negative),\
+        ' NEGATIVE VALUES WERE FOUND IN THE PRECIPITATION FIELD','\n'
+    print 'ALL VALUES WERE SET TO ZERO '
+    
+    error_msg='*********************************************',\
+        '          CHECK THE FULL LOG FILE!!!          ',\
+        'THERE ARE NEGATIVE VALUES IN SOME PRECIPITATION FIELDS!!!',\
+        '*************************************************'
+    
+  return error_msg
+
 
 # *************************************************************************************
 def create_netcdf(info,gvars, varval, time, time_bnds):

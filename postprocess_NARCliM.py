@@ -49,6 +49,7 @@ file_type=varinfo.keys()
 for var in out_variables:
   if var not in varnames:
     sys.exit("ERROR: The variable %s is not valid. It is not contained in the variables.inf file and thus I don't know how to process it. Please check that the spelling of variable %s is correct." %(var, var))
+error_msg=[]
 
 #### Creating global variables ####
 gvars=pm.gvar(inputinf)
@@ -59,7 +60,7 @@ fullpathout=pm.create_outdir(gvars)
 datenow=dt.datetime.now().strftime("%Y-%m-%d_%H:%M")
 logfile = '%spostprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain,datenow)
 print 'The output messages are written to %s' %(logfile)
-sys.stdout = open('%s' %(logfile), "w") 
+#sys.stdout = open('%s' %(logfile), "w") 
 
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
@@ -147,7 +148,11 @@ for filet in file_type:
         # CALL COMPUTE_VAR MODULE
         compute=getattr(comv,'compute_'+var) # FROM STRING TO ATTRIBUTE
         varval, varatt=compute(varvals,date,gvars)
-
+        
+        # CHECK PRECIPITATION VALUES
+        if var=='pracc':
+          error_msg.append(pm.check_pracc_values(varval,varatt))
+  
         # INFO NEEDED TO WRITE THE OUTPUT NETCDF
         netcdf_info=[file_out, var, varatt, time_bounds]
 
@@ -248,5 +253,4 @@ else:
   for bdf in badfilesname:
     print bdf
         
-
-
+print '\n','\n',error_msg
