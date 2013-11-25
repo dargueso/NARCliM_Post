@@ -449,11 +449,11 @@ def dictionary2entries(vals1, vals2, vals3):
   return dicjeff
 
 # *************************************************************************************
-def check_pracc_values(varval,varatt):
-  """ Check for negative values in precipitation variables
-  In the case negative values are found the script convert them to zero and
-  print a messages in the log file. Also an error message is displayer at the end
-  of the log file.
+def check_pracc_values(varval,date):
+  """ Check for negative values in precipitation variables. If there is one time step
+  with negative values then replace all values of that time stepo by zero values.
+  A message error is written in the log file. Also an error message is displayed at 
+  the end of the log file.
 
   Input: precipitation variable  
   Output: error message or nothing
@@ -467,21 +467,26 @@ def check_pracc_values(varval,varatt):
   import sys
 
   error_msg=''
- 
+  error_dates=[]
+
   Negative = np.any(varval < 0)
   
   if Negative==True:
-    negative = np.ma.masked_less(varval,0).mask
-    varval[negative]=0.
+    itemindex=np.where(varval < 0)
+    last_tstep=-1
+    for tstep in itemindex[0]:
+      if tstep!=last_tstep:
+        varval[tstep]=0
+        error_dates.append(date[tstep].strftime("%Y-%m-%d %H:%M:%S"))
+        last_tstep=tstep
 
-    print "\n", ' A TOTAL OF ',np.sum(negative),\
-        ' NEGATIVE VALUES WERE FOUND IN THE PRECIPITATION FIELD','\n'
-    print 'ALL VALUES WERE SET TO ZERO '
+    print "\n", ' ===>>> A TOTAL OF ',np.sum(itemindex),\
+        '  NEGATIVE VALUES WERE FOUND IN THE PRECIPITATION FIELD IN ',\
+        error_dates,'\n'
+    print '  ===>>> ALL VALUES WERE SET TO ZERO '
     
-    error_msg='*********************************************',\
-        '          CHECK THE FULL LOG FILE!!!          ',\
-        'THERE ARE NEGATIVE VALUES IN SOME PRECIPITATION FIELDS!!!',\
-        '*************************************************'
+    error_msg='THERE ARE NEGATIVE PRECIPITATION VALUES IN:',\
+        error_dates
     
   return error_msg
 

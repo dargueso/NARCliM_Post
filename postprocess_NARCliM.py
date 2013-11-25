@@ -60,7 +60,7 @@ fullpathout=pm.create_outdir(gvars)
 datenow=dt.datetime.now().strftime("%Y-%m-%d_%H:%M")
 logfile = '%spostprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain,datenow)
 print 'The output messages are written to %s' %(logfile)
-#sys.stdout = open('%s' %(logfile), "w") 
+sys.stdout = open('%s' %(logfile), "w") 
 
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
@@ -151,7 +151,7 @@ for filet in file_type:
         
         # CHECK PRECIPITATION VALUES
         if var=='pracc':
-          error_msg.append(pm.check_pracc_values(varval,varatt))
+          error_msg.append(pm.check_pracc_values(varval,date))
   
         # INFO NEEDED TO WRITE THE OUTPUT NETCDF
         netcdf_info=[file_out, var, varatt, time_bounds]
