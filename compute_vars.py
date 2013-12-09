@@ -511,13 +511,16 @@ def compute_tasmintstep(varvals,time,gvars):
        tasmintstep:min 2-m temperature over all timesteps [K]
        atts: attributes of the output variable to be used in the output netcdf
     """
+    
     t2min=varvals['T2MIN'][:]
+    print len(time)
+    print t2min.shape
     t2min=np.ma.masked_equal(t2min,pm.const.missingval)
     if len(time)!=t2min.shape[0]:
         sys.exit('ERROR in compute_tasmintstep: The lenght of time variable does not correspond to var first dimension')
 
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts="time: mean 24 hour value from point values 60.0 second",hg="2 m")
+    atts=pm.get_varatt(sn="air_temperature",ln="Minimum surface air temperature",un="K",ts="time: min 24 hour value from point values 60.0 second",hg="2 m")
 
     tasmintstep=t2min
 
@@ -537,7 +540,7 @@ def compute_tasmaxtstep(varvals,time,gvars):
         sys.exit('ERROR in compute_tasmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts="time: mean 24 hour value from point values 60.0 second",hg="2 m")
+    atts=pm.get_varatt(sn="air_temperature",ln="Maximum surface air temperature",un="K",ts="time: max 24 hour value from point values 60.0 second",hg="2 m")
 
     tasmaxtstep=t2max
 

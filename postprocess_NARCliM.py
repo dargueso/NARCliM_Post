@@ -60,7 +60,7 @@ fullpathout=pm.create_outdir(gvars)
 datenow=dt.datetime.now().strftime("%Y-%m-%d_%H:%M")
 logfile = '%spostprocess_%s_%s_%s-%s_%s_%s.log' %(fullpathout,gvars.GCM,gvars.RCM,gvars.syear,gvars.eyear,gvars.domain,datenow)
 print 'The output messages are written to %s' %(logfile)
-sys.stdout = open('%s' %(logfile), "w") 
+#sys.stdout = open('%s' %(logfile), "w") 
 
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
@@ -121,10 +121,16 @@ for filet in file_type:
         n_timesteps=n_days.days*int(24./time_step)
         date = pm.get_dates(year_i,month_i,day_i,hour_i,0,time_step,n_timesteps)
         time=pm.date2hours(date,gvars.ref_date)
-
-        # ADD LEAP DAY FOR MODELS WITHOU IT 
-        if gvars.GCM_calendar=='no_leap' and n_leap>=1:
-          varvals=pm.add_leapdays(varvals,wrfvar,date,time_step)
+        
+        # Redefine dates within the file for no leap calendars
+        # For checking purposes only (in compute_var module)
+        if gvars.GCM_calendar=='no_leap':
+          months_all=np.asarray([date[i].month for i in xrange(len(date))])
+          days_all=np.asarray([date[i].day for i in xrange(len(date))])
+          leap_indices=np.where((months_all==2) & (days_all==29))[:][0]
+          date_var=[i for j,i in enumerate(date) if j not in leap_indices]
+        else:
+          date_var=date
 
         # ***********************************************
         # ACCUMULATED VARIABLES NEED ONE TIME STEP MORE TO COMPUTE DIFFERENCES
@@ -143,11 +149,15 @@ for filet in file_type:
           time=pm.date2hours(date,gvars.ref_date)
           time=[time[i]+time_step/2 for i in xrange(len(time))]
           time_bnds=pm.create_timebnds(time)
-          varvals=pm.mv_timestep(wrfvar,varvals,per_f,gvars,filet)
+          #varvals=pm.mv_timestep(wrfvar,varvals,per_f,gvars,filet)
 
         # CALL COMPUTE_VAR MODULE
         compute=getattr(comv,'compute_'+var) # FROM STRING TO ATTRIBUTE
-        varval, varatt=compute(varvals,date,gvars)
+        varval, varatt=compute(varvals,date_var,gvars)
+        
+        # ADD LEAP DAY FOR MODELS WITHOU IT 
+        if gvars.GCM_calendar=='no_leap' and n_leap>=1:
+          varval=pm.add_leapdays(varval,date)
         
         # CHECK PRECIPITATION VALUES
         if var=='pracc':

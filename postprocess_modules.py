@@ -346,7 +346,7 @@ def get_wrfdate(time):
 
 
 # *************************************************************************************
-def add_leapdays(varvals,wrfvar,date,time_step):
+def add_leapdays(varval,date):
   """Method that add missing values to the 29th February in leap year for
   those simulations that are run without leap years.
   
@@ -356,20 +356,24 @@ def add_leapdays(varvals,wrfvar,date,time_step):
   index: is the index of the 29th feburary in the time dimension.
   """
   
-  months_all=np.asarray([date[i].month for i in xrange(len(date))]) 
+  months_all=np.asarray([date[i].month for i in xrange(len(date))])
   days_all=np.asarray([date[i].day for i in xrange(len(date))])
-  index=np.where(np.logical_and(months_all==2,days_all==29))
-  tt=24/time_step
+  leap_indices=(months_all==2) & (days_all==29)
   
-  for wrfv in wrfvar:
-    temp=np.ones((varvals[wrfv].shape[0]+tt,varvals[wrfv].shape[1],varvals[wrfv].shape[2]))*const.missingval
+  temp=np.ones((len(date),)+varval.shape[1:],dtype=np.float64)*const.missingval
+  temp[np.logical_not(leap_indices),:]=varval
+  varval=temp
+  
+  
+  # index=np.where((months_all==2)&(days_all==29))[0]
+  # print index+1
+  # print date[index[0]]
+  # print date[index[0]+1]
+  # for wrfv in wrfvar:
+  #   for lyd in index:
+  #     varvals[wrfv]=np.insert(varvals[wrfv],lyd+1,np.ones(varvals[wrfv].shape[1:])*const.missingval,0)
     
-    temp[0:index[0][0]+1,:,:]=varvals[wrfv][0:index[0][0]+1,:,:]
-    temp[index[0][0]+tt+1:,:,:]=varvals[wrfv][index[0][0]+1:,:,:]
-    
-    varvals[wrfv]=temp
-    
-  return varvals
+  return varval
   
 
 # *************************************************************************************
