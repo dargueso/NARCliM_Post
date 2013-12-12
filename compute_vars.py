@@ -77,7 +77,7 @@ def compute_pracc(varvals,time,gvars):
     #Calculating difference between each timestep to remove the accumulation
     pracc=np.zeros((rainc.shape[0]-1,)+rainc.shape[1:],dtype=np.float64)
     pracc[:,:,:]=np.diff(rainc+rainnc,axis=0)
-    
+    pracc[pracc>pm.const.missingval]=pm.const.missingval
     return pracc,atts
     
 def compute_huss(varvals,time,gvars):
