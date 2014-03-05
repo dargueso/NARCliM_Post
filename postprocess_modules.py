@@ -948,41 +948,44 @@ def get_filefreq(filet):
   """ Method to get information about the type of file
       filet: type of file (wrfhrly, wrfout,wrfxtrm, wrfdly)
       ---
-      nfiles: number of files per period
-      time_step: hours between two time steps
-      file_freq: string defining the frequency
-      tbounds: whether the output file should include time bounds.
+      - period: number of years of the period.
+      - n_files: number of files per period. If n_files=-1 then
+      it assumes that there is one file per day. Leap years are
+      corrected accordingly.
+      - time_step: hours between two time steps
+      - file_freq: string defining the frequency.
+      - tbounds: whether the output file should include time bounds.
   """
   if filet=='wrfhrly':
     n_files=12      
     time_step=1 #hours between two time steps
     file_freq='01H'
     tbounds=False
-    perstep=1
+    period=1
 
   elif filet=='wrfout':
-    n_files=0
+    n_files=-1
     time_step=3 #hours between two time steps
     file_freq='03H'
     tbounds=False
-    perstep=5
+    period=5
 
   elif filet=='wrfxtrm':
     n_files=60      
     time_step=24 #hours between two time steps
     file_freq='DAY'
     tbounds=True
-    perstep=5
+    period=5
 
   elif filet=='wrfdly':
     n_files=60      
     time_step=24 #hours between two time steps
     file_freq='DAY'
     tbounds=True
-    perstep=5
+    period=5
   
   else:  
     sys.exit('The file tipe %s is erroneus' %(filet))
     
     
-  return n_files,time_step,file_freq,tbounds,perstep
+  return n_files,time_step,file_freq,tbounds,period

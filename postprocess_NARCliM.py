@@ -73,23 +73,23 @@ for filet in file_type:
   eper=gvars.eyear
 
   # Getting information about the input file type
-  n_files,time_step,file_freq,tbounds,perstep=pm.get_filefreq(filet)
+  n_files,time_step,file_freq,tbounds,period=pm.get_filefreq(filet)
 
 
   # LOOP OVER PERIODS
-  for per in np.arange(sper,eper+1,perstep):
+  for per in np.arange(sper,eper+1,period):
     ctime_year=pm.checkpoint(0)
-    per_f=per+perstep-1
+    per_f=per+period-1
 
     n_leap=0
     for pp in np.arange(per,per_f+1):
       if cal.isleap(pp):
         n_leap=n_leap+1	
-      if filet=='wrfout':
+      if n_files==-1:
         if gvars.GCM_calendar!='no_leap':
-          n_files=perstep*365+n_leap
+          n_files=period*365+n_leap
         else:
-          n_files=perstep*365
+          n_files=period*365
 
     # SELECTING FILES TO READ
     if len(pm.intersect(varinfo[filet].keys(),out_variables))>0:
@@ -204,7 +204,7 @@ for filet in file_type:
     if varname in out_variables:
       print 'Checking %s files' %(varname)
 
-      n_files,time_step,file_freq,tbounds,perstep=pm.get_filefreq(filet)
+      n_files,time_step,file_freq,tbounds,period=pm.get_filefreq(filet)
       #Checking higher-frequency ones:
       filesvar=sorted(glob.glob('%s/%s%s*%s*.nc' %(fullpathout,gvars.outfile_patt,file_freq,varname)))
       for filep in filesvar:
