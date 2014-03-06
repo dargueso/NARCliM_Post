@@ -525,8 +525,13 @@ def create_netcdf(info,gvars, varval, time, time_bnds):
   # **********************************************************************
   # Read attributes from the geo_file of the corresponding domain
   fin1=nc.Dataset(gvars.fileref_att,mode='r')
-  lon=np.squeeze(fin1.variables['XLONG'][:]) # Getting longitude
-  lat=np.squeeze(fin1.variables['XLAT'][:]) # Getting latitude
+  temp=fin1.variables['XLONG']
+  if temp.ndim==2:
+    lon=np.squeeze(fin1.variables['XLONG'][:]) # Getting longitude
+    lat=np.squeeze(fin1.variables['XLAT'][:]) # Getting latitude
+  if temp.ndim==3:
+    lon=np.squeeze(fin1.variables['XLONG'][0,:,:]) # Getting longitude
+    lat=np.squeeze(fin1.variables['XLAT'][0,:,:]) # Getting latitude
   dx=getattr(fin1, 'DX')
   dy=getattr(fin1, 'DY')
   cen_lat=getattr(fin1, 'CEN_LAT')
@@ -536,6 +541,7 @@ def create_netcdf(info,gvars, varval, time, time_bnds):
   stand_lon=getattr(fin1, 'STAND_LON')
   fin1.close()
   sch_info=read_schemes(gvars.fileref_att) 
+
   #**********************************************************************
   # CREATING NETCDF FILE
   # Create output file
