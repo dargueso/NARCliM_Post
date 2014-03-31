@@ -75,10 +75,13 @@ for filet in file_type:
   # Getting information about the input file type
   n_files,time_step,file_freq,tbounds,period=pm.get_filefreq(filet)
 
-
   # LOOP OVER PERIODS
   for per in np.arange(sper,eper+1,period):
     ctime_year=pm.checkpoint(0)
+
+    # Getting information about the input file type
+    n_files,time_step,file_freq,tbounds,period=pm.get_filefreq(filet)
+
     per_f=per+period-1
 
     n_leap=0
