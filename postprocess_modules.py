@@ -818,7 +818,7 @@ def intersect(a, b):
 
 
 # ***********************************************************
-def file_list(gvars, per, per_f, filet,n_files):
+def file_list(gvars,per,per_f,filet,n_files):
   tot_files=0
   print '\n', ' -> PROCESSING PERIOD: ', str(per)+' - '+str(per_f)
   #  files_in=[]
@@ -834,8 +834,8 @@ def file_list(gvars, per, per_f, filet,n_files):
   for pp,pper in enumerate(np.arange(per+1,per_f+1)):
     loadfiles = sorted(glob.glob(gvars.pathin+'%s_%s_%s*' % (filet,gvars.domain,pper))) # Specify path
     files_in=np.concatenate((files_in,loadfiles))
-  
-  print '  -->  Number of files to read:', len(files_in)  ,n_files
+  print files_in
+  print '  -->  Number of files to read:', len(files_in), n_files
   
   # CHECKING: Check if the number of files is right
   if len(files_in)!=n_files:
@@ -962,36 +962,38 @@ def get_filefreq(filet):
       - file_freq: string defining the frequency.
       - tbounds: whether the output file should include time bounds.
   """
+  file_info={}
+
   if filet=='wrfhrly':
-    n_files=12      
-    time_step=1 #hours between two time steps
-    file_freq='01H'
-    tbounds=False
-    period=1
+    file_info['n_files']=12      
+    file_info['time_step']=1 #hours between two time steps
+    file_info['file_freq']='01H'
+    file_info['tbounds']=False
+    file_info['period']=1
 
   elif filet=='wrfout':
-    n_files=-1
-    time_step=3 #hours between two time steps
-    file_freq='03H'
-    tbounds=False
-    period=5
+    file_info['n_files']=-1
+    file_info['time_step']=3 #hours between two time steps
+    file_info['file_freq']='03H'
+    file_info['tbounds']=False
+    file_info['period']=5
 
   elif filet=='wrfxtrm':
-    n_files=60      
-    time_step=24 #hours between two time steps
-    file_freq='DAY'
-    tbounds=True
-    period=5
+    file_info['n_files']=60      
+    file_info['time_step']=24 #hours between two time steps
+    file_info['file_freq']='DAY'
+    file_info['tbounds']=True
+    file_info['period']=5
 
   elif filet=='wrfdly':
-    n_files=60      
-    time_step=24 #hours between two time steps
-    file_freq='DAY'
-    tbounds=True
-    period=5
+    file_info['n_files']=60      
+    file_info['time_step']=24 #hours between two time steps
+    file_info['file_freq']='DAY'
+    file_info['tbounds']=True
+    file_info['period']=5
   
   else:  
     sys.exit('The file tipe %s is erroneus' %(filet))
     
     
-  return n_files,time_step,file_freq,tbounds,period
+  return file_info

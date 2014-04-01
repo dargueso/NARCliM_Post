@@ -73,14 +73,16 @@ for filet in file_type:
   eper=gvars.eyear
 
   # Getting information about the input file type
-  n_files,time_step,file_freq,tbounds,period=pm.get_filefreq(filet)
+  file_info=pm.get_filefreq(filet)
+  n_files=file_info['n_files']
+  time_step=file_info['time_step']
+  file_freq=file_info['file_freq']
+  tbounds=file_info['tbounds']
+  period=file_info['period']
 
   # LOOP OVER PERIODS
   for per in np.arange(sper,eper+1,period):
     ctime_year=pm.checkpoint(0)
-
-    # Getting information about the input file type
-    n_files,time_step,file_freq,tbounds,period=pm.get_filefreq(filet)
 
     per_f=per+period-1
 
@@ -88,7 +90,7 @@ for filet in file_type:
     for pp in np.arange(per,per_f+1):
       if cal.isleap(pp):
         n_leap=n_leap+1	
-      if n_files==-1:
+      if file_info['n_files']==-1:
         if gvars.GCM_calendar!='no_leap':
           n_files=period*365+n_leap
         else:
@@ -207,7 +209,10 @@ for filet in file_type:
     if varname in out_variables:
       print 'Checking %s files' %(varname)
 
-      n_files,time_step,file_freq,tbounds,period=pm.get_filefreq(filet)
+      file_info=pm.get_filefreq(filet)
+      time_step=file_info['time_step']
+      file_freq=file_info['file_freq']
+
       #Checking higher-frequency ones:
       filesvar=sorted(glob.glob('%s/%s%s*%s*.nc' %(fullpathout,gvars.outfile_patt,file_freq,varname)))
       for filep in filesvar:
