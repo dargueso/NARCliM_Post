@@ -164,6 +164,10 @@ for filet in file_type:
         if gvars.GCM_calendar=='no_leap' and n_leap>=1:
           varval=pm.add_leapdays(varval,date)
         
+        # CHECK ZEROS IN WRFDLY AND WRFXTRM
+        if filet=='wrfxtrm' or filet=='wrfdly':
+          error_msg.append(pm.check_zeros_values(varval,date,gvars,filet))
+
         # CHECK PRECIPITATION VALUES
         if var=='pracc':
           error_msg.append(pm.check_pracc_values(varval,date))

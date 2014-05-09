@@ -31,7 +31,18 @@ class const:
   rcp = Rd/cp
   tkelvin = 273.15
   missingval = 1.e+20
-  
+ 
+
+# *************************************************************************************
+def function_latentheat(T):
+  '''
+  Function to calculate the vaporization latent heat as a function of temperature (equation valide between -25 and 40 C)
+  '''
+  if T>250:
+    T=T-const.tkelvin
+
+  L = 1000.*(2500.8 - 2.36*T + 0.0016*T**2 - 0.00006*T**3) # in J/kg
+  return L
   
 # *************************************************************************************
 class gvar:
@@ -494,6 +505,62 @@ def check_pracc_values(varval,date):
     
   return error_msg
 
+# *************************************************************************************
+def check_zeros_values(varval,date,gvars,filet):
+  """ Check for zeros values in wrfdly and wrfxtrm files. For those time steps where all
+  fields are zero we replace them by missing values.
+  A message error is written in the log file. Also an error message is displayed at 
+  the end of the log file.
+
+  Input: a given variable from wrdly-wrfxtrm files.  
+  Output: error message or nothing
+  Author: Alejanro Di Luca, Daniel Argueso
+  Created: 10/05/2014
+  Last Modification: 10/05/2014
+
+  """
+  print '\n', ' CHECKING FOR FIELDS WITH ALL ZEROS ','\n'
+  import numpy as np
+  import sys
+
+  error_msg=''
+  error_dates=[]
+
+  count=0
+  # Check for zeros in the variable
+  for tstep in range(0,varval.shape[0]):
+    Zero = np.all(varval[tstep,:,:]==0)
+  
+    if Zero==True:    
+      mm=str(date[tstep].month)
+      if date[tstep].month<=9:
+        mm='0'+str(date[tstep].month)
+      
+      # Check for zeros in the a variable that cannot have all zeros
+      filename=gvars.pathin+filet+'_'+gvars.domain+'_'+str(date[tstep].year)+'-'+mm+'-01_00:00:00'
+      fin=nc.Dataset(filename,mode='r')
+      if filet=='wrfxtrm':
+        temp=fin.variables['T2MEAN'][:]
+      if filet=='wrfdly':
+        temp=fin.variables['UV10MAX5'][:]
+      nn=int(date[tstep].day)-1
+      Zero2 = np.all(temp[nn,:,:]==0)
+
+      if Zero2==True:    
+        varval[tstep,:,:]=const.missingval
+        error_dates.append(date[tstep].strftime("%Y-%m-%d %H:%M:%S"))
+        count=count+1
+
+  print "\n", ' ===>>> A TOTAL OF ',count,\
+      '  FIELDS WITH ONLY ZERO VALUES WERE FOUND',\
+      error_dates
+  if count>0:
+    print '     ==>> ALL VALUES WERE SET TO MISSING VALUE '
+    
+  error_msg='THERE ARE ONLY-ZERO VALUES IN:',\
+      error_dates
+    
+  return error_msg
 
 # *************************************************************************************
 def create_netcdf(info,gvars, varval, time, time_bnds):
@@ -878,7 +945,7 @@ def read_list(files_list,var):
   if method=='Dataset':
     varvals={}
 
-    njobs=10
+    njobs=30
     nlen = len(files_list)/njobs #time step block length
     a=len(files_list)-njobs*nlen 
     nt_v=np.zeros(njobs)

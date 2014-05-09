@@ -316,10 +316,12 @@ def compute_sst(varvals,time,gvars):
 def compute_potevp(varvals,time,gvars):
     """Method to compute surface potential evaporation flux
        The original variable was accumulated throughout the simulation. Accumulation must be removed.
-       potevp_in: accumulated surface potential evaporation. Including the timestep previous to the first one in this period [kg m-2]
+       potevp_in: accumulated surface potential evaporation. Including the timestep previous to the first one in this period [W/m-2]\
+       We convert the units from [W/m-2] to [kg m-2 s-1]: multiply the mean rate by the total number of seconds (3*3600) and 
+       divide by the latent heat of vaporization. I assume that the mean temperature is about 20 C.
        time: list of times corresponding to potevp 1st dimension
        ---
-       potevp_out: Surface evaporation flux [kg m-2 s-1]
+       potevp_out: Potential evaporation flux [kg m-2 s-1]
        atts: attributes of the output variable to be used in the output netcdf
     """
     potevp_in=varvals['POTEVP'][:]
@@ -329,12 +331,12 @@ def compute_potevp(varvals,time,gvars):
         sys.exit('ERROR in compute_potevp: The lenght of time variable does not correspond to var first dimension')    
     
     tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-    atts=pm.get_varatt(sn="water_potential_evaporation_flux",ln="Potential evaporation",un="W m-2",ts="time: point values %s seconds" %(tseconds))
+    atts=pm.get_varatt(sn="water_potential_evaporation_flux",ln="Potential evaporation",un="kg m-2 s-1",ts="time: point values %s seconds" %(tseconds))
     
     #Calculating difference between each timestep to remove the accumulation
     #Divided by the number of seconds in each timestep to calculate the flux
     potevp_out=np.zeros((potevp_in.shape[0]-1,)+potevp_in.shape[1:],dtype=np.float64)
-    potevp_out[:,:,:]=np.diff(potevp_in,axis=0)/tseconds
+    potevp_out[:,:,:]=np.diff(potevp_in,axis=0)*tseconds/pm.function_latentheat(293.)
     
     return potevp_out,atts
 
