@@ -1,0 +1,48 @@
+#File with NARCliM postprocessing input arguments
+
+pathin = %pathin%
+pathout = %pathout%
+GCM = %GCM%
+RCM = %RCM%
+syear = %syear%
+eyear = %eyear%
+domain = %domain%
+
+outfile_patt=CCRC_NARCliM_
+
+overwrite=True
+
+
+#### Requested output variables (DO NOT CHANGE THIS LINE) ####
+
+# tas   
+pracc 
+# ps    
+# huss  
+# wss   
+# uas   
+# vas   
+# evspsbl 
+# mrso  
+# sst   
+# potevp  
+# rsds  
+# rlds  
+# hfls  
+# hfss  
+# albedo
+# emiss
+# rlus
+# pr5maxtstep
+# pr10maxtstep
+# pr20maxtstep
+# pr30maxtstep
+# pr1Hmaxtstep
+# wss5maxtstep
+# wss10maxtstep
+# wss20maxtstep
+# wss30maxtstep
+# wss1Hmaxtstep
+# tasmeantstep
+# tasmintstep
+# tasmaxtstep
