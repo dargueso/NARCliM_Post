@@ -1,6 +1,7 @@
 import re
 import sys
 import os
+import time
 import netCDF4 as nc
 import numpy as np
 import datetime as dt
@@ -31,20 +32,10 @@ class const:
   rcp = Rd/cp
   tkelvin = 273.15
   missingval = 1.e+20
- 
-
-# *************************************************************************************
-def function_latentheat(T):
-  '''
-  Function to calculate the vaporization latent heat as a function of temperature (equation valide between -25 and 40 C)
-  '''
-  if T>250:
-    T=T-const.tkelvin
-
-  L = 1000.*(2500.8 - 2.36*T + 0.0016*T**2 - 0.00006*T**3) # in J/kg
-  return L
+  
   
 # *************************************************************************************
+
 class gvar:
   def __init__(self,inputinf):
     if inputinf['GCM']=='CCCMA3.1':
@@ -64,6 +55,16 @@ class gvar:
     self.fileref_att='%s/wrfout_%s_%s-01-01_00:00:00' %(self.pathin,self.domain,self.syear)
 
 
+# *************************************************************************************
+def function_latentheat(T):
+  '''
+  Function to calculate the vaporization latent heat as a function of temperature (equation valide between -25 and 40 C)
+  '''
+  if T>250:
+    T=T-const.tkelvin
+
+  L = 1000.*(2500.8 - 2.36*T + 0.0016*T**2 - 0.00006*T**3) # in J/kg
+  return L
 # *************************************************************************************
 def create_outdir(gvars):
   fullpathout='%spostprocess/%s-%s/%s/%s/%s/' %(gvars.pathout,gvars.syear,gvars.eyear,gvars.GCM,gvars.RCM,gvars.domain)
@@ -116,6 +117,69 @@ def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
 
   return accvar
 
+
+# *************************************************************************************
+def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list):
+  """ Accumulated variables require the first file of the next period 
+      to calculate the rate for the last timesptep of the current period.
+
+      Added: 9/May/2014: Added feature to solve discontinuity issues. When a month is rerun, there might be a drift between the previous run and the new one that reflects in the accumulated variables. When calculating the rates, these discontinuities might appear as negative values or positive values (more dificult to detect). When the date in a month is posterior to the netx month, it means that it was rerun afterwards. The rate before and after the last for that month are used to get a value for the last rate.
+      This works for files that has "history" attribute. WRF outputs don't have this attribute by default. NARCliM files do have this attribute because they were processed with nco tools. (ncks and nccopy)
+  """
+  #Get all years in the date array, without duplicates
+  setyears=set([date[i].year for i in xrange(len(date))])
+  setmonths=set([date[i].month for i in xrange(len(date))])
+  discont=False
+  
+  for ye in setyears:
+    for mo in setmonths:
+      try:
+        smfile_index=files_list.index('%s%s_%s_%s-%s-01_00:00:00' %(gvars.pathin,filet,gvars.domain,ye,str(mo).rjust(2,"0")))
+        if smfile_index==0:
+          #Nothing needs to be done in the first timestep
+          continue
+        else:
+          #Getting creation dates for files
+          lastmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(files_list[smfile_index-1])),'%a %b %d %H:%M:%S %Y')
+          nextmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(files_list[smfile_index])),'%a %b %d %H:%M:%S %Y')
+
+          #If a month was rerun after the next month  
+          if (nextmonth_date-lastmonth_date).total_seconds()<0:
+            discont=True
+            value_index=date.index(dt.datetime(ye,mo,1,00,00,00))
+            print value_index
+            varval[value_index-1,:,:]=(varval[value_index-2,:,:]+varval[value_index,:,:])/2.
+            print "Discontinuity between %s-%s and %s-%s " %(ye,mo,ye,mo-1)
+            
+      except ValueError:
+        continue
+
+  #Correcting final time step of the period (except for the end of the simulation)
+  if per_f<gvars.eyear:
+    nextperiod_file_name='%s%s_%s_%s-01-01_00:00:00' %(gvars.pathin,filet,gvars.domain,per_f+1)
+    #Take last file of the list
+    thisperiod_file_name_last=files_list[-1]  
+
+
+    lastmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(thisperiod_file_name_last)),'%a %b %d %H:%M:%S %Y')
+    nextmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(nextperiod_file_name)),'%a %b %d %H:%M:%S %Y')
+
+    #If a month was rerun after the next month
+    if (nextmonth_date-lastmonth_date).total_seconds()<0:
+      discont=True
+      
+      next_file=nc.Dataset(nextperiod_file_name,mode='r')
+      next_tstep=np.squeeze(next_file.variables[var][0:2,:,:])
+      next_rate=np.diff(next_tstep,axis==0)
+      varval[-1,:,:]=(varval[-2,:,:]+next_rate)/2.
+      print "Discontinuity between %s-%s and %s-%s " %(ye,mo,ye,mo-1)
+
+  if discont==True:
+    print "A discontinuity was found. The above months were rerun and there are possible mismatches at the end of these month"
+    print "The last time record of each month was replaced by the interpolation of the previous and the next values in time"
+
+
+  return varval
 
 # *************************************************************************************
 def mv_timestep(wrfvar,varvals,year,gvars,filet):

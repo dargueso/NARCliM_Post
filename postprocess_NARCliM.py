@@ -81,11 +81,18 @@ for filet in file_type:
   period=file_info['period']
 
   # LOOP OVER PERIODS
+  # Looping from starting year to last year using a stride equal 
+  # to the # of years contained in the postprocessed files
+  # e.g. present: from 1990 to 2009 every 5 years (for daily variables)
+  
   for per in np.arange(sper,eper+1,period):
     ctime_year=pm.checkpoint(0)
-
+    
+    #Calculating the last year of the period
     per_f=per+period-1
 
+    #Calculating the number of files that should exist
+    #for that period and that file type (for checking purposes)
     n_leap=0
     for pp in np.arange(per,per_f+1):
       if cal.isleap(pp):
@@ -139,7 +146,7 @@ for filet in file_type:
 
         # ***********************************************
         # ACCUMULATED VARIABLES NEED ONE TIME STEP MORE TO COMPUTE DIFFERENCES
-        if var=='pracc' or var=='potevp' or var=='evspsbl':
+        if var in ['pracc','potevp','evspsbl']:
 
           # DEFINE TIME BOUNDS FOR ACCUMULATED VARIABLES
           time_bounds=True
@@ -154,7 +161,7 @@ for filet in file_type:
           time=pm.date2hours(date,gvars.ref_date)
           time=[time[i]+time_step/2 for i in xrange(len(time))]
           time_bnds=pm.create_timebnds(time)
-          #varvals=pm.mv_timestep(wrfvar,varvals,per_f,gvars,filet)
+          varvals=pm.mv_timestep(wrfvar,varvals,per_f,gvars,filet)
 
         # CALL COMPUTE_VAR MODULE
         compute=getattr(comv,'compute_'+var) # FROM STRING TO ATTRIBUTE
@@ -164,10 +171,14 @@ for filet in file_type:
         if gvars.GCM_calendar=='no_leap' and n_leap>=1:
           varval=pm.add_leapdays(varval,date)
         
+        # CHECK DISCONTINUITY ISSUES
+        if var in ['pracc','potevp','evspsbl']:
+          varval=pm.check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list)
+          
         # CHECK ZEROS IN WRFDLY AND WRFXTRM
         if filet=='wrfxtrm' or filet=='wrfdly':
           error_msg.append(pm.check_zeros_values(varval,date,gvars,filet))
-
+          
         # CHECK PRECIPITATION VALUES
         if var=='pracc':
           error_msg.append(pm.check_pracc_values(varval,date))
