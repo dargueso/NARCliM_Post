@@ -24,6 +24,6 @@ for gind,gname in enumerate(GCM_names):
     for pind,pname in enumerate(Period_names):
       for dind,dname in enumerate(Domain_names):
         fullpath_out=cu.get_postproc_location(gname,rname,pname)[0]
-        fullpath_in="/srv/ccrc/data13/z3393020/NARCliM_newpost/postprocess/%s/%s/%s/%s/" %(Period_covers[pind],gname,rname,dname)
-        #print "rsync -avzn --stats %s/* %s/%s/*" %(fullpath_in,fullpath_out,dname)
-        subprocess.call("rsync -avz --stats %s/* %s/%s/*" %(fullpath_in,fullpath_out,dname),shell=True)
+        fullpath_in="/srv/ccrc/data13/z3393020/NARCliM_newpost/postprocess/%s/%s/%s/%s" %(Period_covers[pind],gname,rname,dname)
+        print "rsync -avz --stats %s/* %s%s/" %(fullpath_in,fullpath_out,dname)
+        subprocess.call("rsync -avz --stats %s/* %s%s/" %(fullpath_in,fullpath_out,dname),shell=True)
