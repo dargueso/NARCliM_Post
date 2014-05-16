@@ -32,7 +32,7 @@ for gind,gcm in enumerate(GCM_names):
                       '%pathout%' : pathout,
                       '%GCM%'     : gcm,
                       '%RCM%'     : rcm,
-                      '%syear'    : str(syear),
+                      '%syear%'    : str(syear),
                       '%eyear%'   : str(eyear),
                       '%domain%'  : domain,
                       }
@@ -41,7 +41,7 @@ for gind,gcm in enumerate(GCM_names):
           for linerep in namelist_dic.keys():
             line=line.replace(linerep,namelist_dic[linerep])
 
-          fout.write(lines)
+          fout.write(line)
 
 
 

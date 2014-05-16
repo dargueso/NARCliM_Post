@@ -22,10 +22,10 @@ pracc
 # wss   
 # uas   
 # vas   
-# evspsbl 
+evspsbl 
 # mrso  
 # sst   
-# potevp  
+potevp  
 # rsds  
 # rlds  
 # hfls  
@@ -33,16 +33,16 @@ pracc
 # albedo
 # emiss
 # rlus
-# pr5maxtstep
-# pr10maxtstep
-# pr20maxtstep
-# pr30maxtstep
-# pr1Hmaxtstep
-# wss5maxtstep
-# wss10maxtstep
-# wss20maxtstep
-# wss30maxtstep
-# wss1Hmaxtstep
-# tasmeantstep
-# tasmintstep
-# tasmaxtstep
+pr5maxtstep
+pr10maxtstep
+pr20maxtstep
+pr30maxtstep
+pr1Hmaxtstep
+wss5maxtstep
+wss10maxtstep
+wss20maxtstep
+wss30maxtstep
+wss1Hmaxtstep
+#tasmeantstep
+tasmintstep
+tasmaxtstep
