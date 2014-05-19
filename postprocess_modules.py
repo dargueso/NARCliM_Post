@@ -119,7 +119,7 @@ def add_timestep_acc(wrfvar,varvals,year,gvars,filet):
 
 
 # *************************************************************************************
-def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list):
+def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list,time_step):
   """ Accumulated variables require the first file of the next period 
       to calculate the rate for the last timesptep of the current period.
 
@@ -135,19 +135,16 @@ def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list):
     for mo in setmonths:
       try:
         smfile_index=files_list.index('%s%s_%s_%s-%s-01_00:00:00' %(gvars.pathin,filet,gvars.domain,ye,str(mo).rjust(2,"0")))
-        if smfile_index==0:
-          #Nothing needs to be done in the first timestep
-          continue
-        else:
+        if smfile_index!=0:
+
           #Getting creation dates for files
-          lastmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(files_list[smfile_index-1])),'%a %b %d %H:%M:%S %Y')
-          nextmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(files_list[smfile_index])),'%a %b %d %H:%M:%S %Y')
+          lastmonth_date=os.path.getmtime(files_list[smfile_index-1])
+          nextmonth_date=os.path.getmtime(files_list[smfile_index])
 
           #If a month was rerun after the next month  
-          if (nextmonth_date-lastmonth_date).total_seconds()<0:
+          if nextmonth_date<lastmonth_date:
             discont=True
             value_index=date.index(dt.datetime(ye,mo,1,00,00,00))
-            print value_index
             varval[value_index-1,:,:]=(varval[value_index-2,:,:]+varval[value_index,:,:])/2.
             print "Discontinuity between %s-%s and %s-%s " %(ye,mo,ye,mo-1)
             
@@ -156,22 +153,29 @@ def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list):
 
   #Correcting final time step of the period (except for the end of the simulation)
   if per_f<gvars.eyear:
-    nextperiod_file_name='%s%s_%s_%s-01-01_00:00:00' %(gvars.pathin,filet,gvars.domain,per_f+1)
+    
+    nextfile_name='%s%s_%s_%s-01-01_00:00:00' %(gvars.pathin,filet,gvars.domain,per_f+1)
     #Take last file of the list
-    thisperiod_file_name_last=files_list[-1]  
-
-
-    lastmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(thisperiod_file_name_last)),'%a %b %d %H:%M:%S %Y')
-    nextmonth_date=dt.datetime.strptime(time.ctime(os.path.getmtime(nextperiod_file_name)),'%a %b %d %H:%M:%S %Y')
+    lastmonth_date=os.path.getmtime(files_list[-1])
+    nextmonth_date=os.path.getmtime(nextfile_name)
 
     #If a month was rerun after the next month
-    if (nextmonth_date-lastmonth_date).total_seconds()<0:
+    if nextmonth_date<lastmonth_date:
       discont=True
       
-      next_file=nc.Dataset(nextperiod_file_name,mode='r')
-      next_tstep=np.squeeze(next_file.variables[var][0:2,:,:])
-      next_rate=np.diff(next_tstep,axis==0)
-      varval[-1,:,:]=(varval[-2,:,:]+next_rate)/2.
+      aux_date_var=get_dates(per_f+1,1,1,0,0,time_step,1)
+      aux_wrfvar=(getwrfname(var)[0]).split('-')
+      aux_varvals={}
+      for wrfv in aux_wrfvar:
+        nextfile=nc.Dataset(nextfile_name)
+        aux_varvals[wrfv]=np.squeeze(nextfile.variables[wrfv][:2,:,:])
+      
+      
+  
+      compute=getattr(comv,'compute_'+var)
+      auxvarval, auxvaratt=compute(aux_varvals,aux_date_var,gvars)
+      varval[-1,:,:]=(varval[-2,:,:]+auxvarval)/2.
+      
       print "Discontinuity between %s-%s and %s-%s " %(ye,mo,ye,mo-1)
 
   if discont==True:

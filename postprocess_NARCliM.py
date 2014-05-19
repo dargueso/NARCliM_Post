@@ -173,7 +173,7 @@ for filet in file_type:
         
         # CHECK DISCONTINUITY ISSUES
         if var in ['pracc','potevp','evspsbl']:
-          varval=pm.check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list)
+          varval=pm.check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list,time_step)
           
         # CHECK ZEROS IN WRFDLY AND WRFXTRM
         if filet=='wrfxtrm' or filet=='wrfdly':

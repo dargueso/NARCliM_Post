@@ -9,10 +9,10 @@
 import subprocess
 import numpy as np
 GCM_names=['MIROC3.2','CCCMA3.1','ECHAM5','CSIRO-MK30']
-RCM_names=['R1','R2','R3']
+RCM_names=['R2','R2','R3']
 Period_names=['1990-2010','2020-2040','2060-2080']
 Domain_names=['d01','d02']
-indeck="NARClIM_post.input.deck"
+indeck="NARCliM_post.input.deck"
 
 
 
@@ -21,7 +21,7 @@ for gind,gcm in enumerate(GCM_names):
     for pind,period in enumerate(Period_names):
       for dind,domain in enumerate(Domain_names):
         pathin = "/home/z3393020//WRFouts/NARCliM/%s/%s/%s/out/" %(gcm,rcm,period)
-        pathout="/srv/ccrc/data13/z3393020/NARCliM_newpost/"
+        pathout="/srv/ccrc/data13/z3393020/NARCliM_newpost2/"
         fin = open (indeck,"r")
         fout = open ("NARCliM_repost_%s_%s_%s.input"%(gcm,rcm,period),"w")
         syear=np.int(period[0:4])
