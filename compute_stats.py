@@ -51,7 +51,8 @@ def compute_monthly(var,time,stat):
      mvar: monthly statistic of the variable
      mtime: list of times corresponding to mvar 1st dimension
   """
-  if stat not in ['acc', 'mean','min','max']:
+
+  if stat not in ['acc', 'mean','min','max', 'minmean', 'maxmean']:
     sys.exit("ERROR the requested monthly statistic %s does not exist. Please choose between 'acc', 'mean', 'min' or 'max'" %(stat))
   if len(time)!=var.shape[0]:
     sys.exit('ERROR in compute_monthly: The lenght of time variable does not correspond to var first dimension')
@@ -84,6 +85,13 @@ def compute_monthly(var,time,stat):
   if stat == 'min':
       for mo in xrange(max(months)):
           mvar[mo,:,:]=np.ma.min(var[months==mo+1,:,:],axis=0)
+  if stat == 'maxmean':
+      print "processing 'maxmean'."
+      for mo in xrange(max(months)):
+          mvar[mo,:,:]=np.ma.mean(var[months==mo+1,:,:],axis=0)
+  if stat == 'minmean':
+      for mo in xrange(max(months)):
+          mvar[mo,:,:]=np.ma.mean(var[months==mo+1,:,:],axis=0)
 
 
   return mvar,mtime

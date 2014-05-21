@@ -843,7 +843,7 @@ def get_yearsfile(fileall,varname):
 
 
 # ***********************************************************
-def create_dailyfiles(gvars,varname,stat_all):
+def create_dailyfiles(gvars,varname,stat_all, varinfo):
   syp=gvars.syear
   fullpathout=create_outdir(gvars)
   fileall=sorted(glob.glob('%s/%s0?H_*_%s.nc' %(fullpathout,gvars.outfile_patt,varname)))
@@ -854,11 +854,8 @@ def create_dailyfiles(gvars,varname,stat_all):
     eyp=((int(syp)/5)+1)*5
     loadfile=False
     for stat in stat_all:
-      if varname=='pracc':
-        varstat=varname
-      else:
-        varstat=varname+stat
-      
+      varstat, targetunused = varinfo.get_source_variables_for_daily_stat(varname, stat)
+     
       file_out='%s/%sDAY_%s-%s_%s.nc' % (fullpathout,gvars.outfile_patt,syp,eyp-1,varstat) # Specify output file
       filewrite=checkfile(file_out,gvars.overwrite)
       if filewrite==True:
@@ -900,30 +897,31 @@ def create_dailyfiles(gvars,varname,stat_all):
 
 
 # ***********************************************************
-def create_monthlyfiles(gvars,varname,stat_all):
+def create_monthlyfiles(gvars,varname,stat_all, varinfo):
   syp=gvars.syear
   fullpathout=create_outdir(gvars)
   for stat in stat_all:
-    if varname=='pracc' or varname[-4:]=='step':
-      varstat=varname
-    else:
-      varstat=varname+stat
-    fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,varstat)))
-    print '%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,varstat)
+    sourcestat, targetstat = varinfo.get_source_variables_for_monthly_stat(varname, stat)
+    print "create_monthlyfiles: processing %(source)s, %(stat)s, %(vname)s" % {
+            'source':sourcestat, 'target': targetstat, 'stat':stat, 'vname':varname
+            }
+
+    fileall=sorted(glob.glob('%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,sourcestat)))
+    print '%s/%sDAY_*_%s.nc' %(fullpathout,gvars.outfile_patt,sourcestat)
     fileref=nc.Dataset(fileall[0],'r')
-    syfile,eyfile=get_yearsfile(fileall,varstat)
+    syfile,eyfile=get_yearsfile(fileall,sourcestat)
     syp=gvars.syear
     while syp<gvars.eyear:
       print 'start period year:', syp
       ctime_var=checkpoint(0)
       eyp=((int(syp)/10)+1)*10
-      print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,varstat)
+      print 'PROCESSING PERIOD %s-%s for variable %s' %(syp,eyp,sourcestat)
       sel_files=[fileall[i] for i in xrange(len(syfile)) if ((syfile[i]>=syp) & (eyfile[i]<eyp))]
       files=nc.MFDataset(sel_files)
       time=nc.num2date(files.variables['time'][:],units=files.variables['time'].units)
-      var=files.variables[varstat][:]
+      var=files.variables[sourcestat][:]
       ctime=checkpoint(ctime_var)
-      file_out=fullpathout+'/%sMON_%s-%s_%s.nc' % (gvars.outfile_patt,syp,eyp-1,varstat) # Specify output file
+      file_out=fullpathout+'/%sMON_%s-%s_%s.nc' % (gvars.outfile_patt,syp,eyp-1,targetstat) # Specify output file
       filewrite=checkfile(file_out,gvars.overwrite)
       if filewrite==True:
         mvar,mtime=coms.compute_monthly(var,time,stat)
@@ -933,11 +931,11 @@ def create_monthlyfiles(gvars,varname,stat_all):
         mtime_bnds=np.reshape(np.concatenate([mtime_bnds_inf,mtime_bnds_sup],axis=0), (len(mtime),2),order='F')
         varatt={}
 
-        for att in fileref.variables[varstat].ncattrs():
-          varatt[att]=getattr(fileref.variables[varstat],att)
+        for att in fileref.variables[sourcestat].ncattrs():
+          varatt[att]=getattr(fileref.variables[sourcestat],att)
         
         # INFO NEEDED TO WRITE THE OUTPUT NETCDF
-        netcdf_info=[file_out, varstat, varatt, True]
+        netcdf_info=[file_out, targetstat, varatt, True]
 
         # CREATE NETCDF FILE
         create_netcdf(netcdf_info,gvars,mvar, mtime_nc, mtime_bnds)

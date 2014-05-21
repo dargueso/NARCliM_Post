@@ -21,6 +21,8 @@ import compute_vars as comv
 import calendar as cal
 import compute_stats as coms
 from dateutil.relativedelta import relativedelta
+import variables_info as cfg
+
 
 # Check initial time
 ctime_i=pm.checkpoint(0)
@@ -42,12 +44,12 @@ help="file with the input arguments", metavar="INPUTFILE")
 inputinf,out_variables=pm.read_input(opts.infile)
 
 #### Reading variable info file ######
-varinfo,varnames=pm.read_varinfo("./variables.inf")
-file_type=varinfo.keys()
+varinfo = cfg.VariablesInfo()
+file_type=varinfo.get_wrf_file_types()
 
 #### Checking that all requested variables are valid ######
 for var in out_variables:
-  if var not in varnames:
+  if not varinfo.is_supported(var):
     sys.exit("ERROR: The variable %s is not valid. It is not contained in the variables.inf file and thus I don't know how to process it. Please check that the spelling of variable %s is correct." %(var, var))
 error_msg=[]
 
@@ -104,17 +106,18 @@ for filet in file_type:
           n_files=period*365
 
     # SELECTING FILES TO READ
-    if len(pm.intersect(varinfo[filet].keys(),out_variables))>0:
+    varset = pm.intersect(varinfo.get_variables(filet),out_variables)
+    if len(varset)>0:
       files_list=pm.file_list(gvars, per, per_f, filet, n_files)
 
     # LOOP OVER VARIABLES IN THE GIVEN KIND OF FILE
-    for var in pm.intersect(varinfo[filet].keys(),out_variables):
+    for var in varset:
       ctime_var=pm.checkpoint(0)
 
       # CHECK IF THE FILE ALREADY EXISTS
       file_out='%s%s%s_%s-%s_%s.nc' % (fullpathout,gvars.outfile_patt,file_freq,per,per_f,var) # Specify output file
       filewrite=pm.checkfile(file_out,gvars.overwrite)
-      if filewrite==True:
+      if filewrite:
 
         # READ FILES FROM THE CORRESPONDING PERIOD
         wrfvar=(pm.getwrfname(var)[0]).split('-')
@@ -200,19 +203,19 @@ for filet in file_type:
 # Loop over all types of WRF output files (i.e., wrfhrly, wrfout, etc) 
 for filet in file_type:
   if (filet!='wrfxtrm') and (filet!='wrfdly'): # These files are already daily
-    for varname in varinfo[filet].keys():
+    for varname in varinfo.get_daily_variables(filet):
       if varname in out_variables:
-        stat_all=varinfo[filet][varname].split(',')
-        pm.create_dailyfiles(gvars,varname,stat_all)
+        stat_all=varinfo.get_daily_variable_stats(filet, varname)
+        pm.create_dailyfiles(gvars,varname,stat_all, varinfo)
           
           
 #***********************************************
 # MONTHLY STATISTICS
 for filet in file_type:
-  for varname in varinfo[filet].keys():
+  for varname in varinfo.get_monthly_variables(filet):
     if varname in out_variables:
-      stat_all=varinfo[filet][varname].split(',')
-      pm.create_monthlyfiles(gvars,varname,stat_all)
+      stat_all=varinfo.get_monthly_variable_stats(filet, varname)
+      pm.create_monthlyfiles(gvars,varname,stat_all, varinfo)
 
 
 #***********************************************
@@ -220,7 +223,7 @@ for filet in file_type:
 badfiles=0
 badfilesname=[]
 for filet in file_type:
-  for varname in varinfo[filet].keys():
+  for varname in varinfo.get_variables(filet):
     if varname in out_variables:
       print 'Checking %s files' %(varname)
 
