@@ -94,15 +94,23 @@ class VariablesInfo(object):
             returns: the name of the source daily stat from which to process the variable
                      and the name of the monthly target stat
          """
-
+        if vname[-4:]=='step':
+          if statt in ['maxmean','minmean']:
+            return vname, vname + 'mean'
+          else:
+            return vname, vname + stat
+        
         if stat == 'maxmean':
             return vname + 'max', vname + 'maxmean'
         
         if stat == 'minmean':
             return vname + 'min', vname + 'minmean'
 
-        if vname=='pracc' or vname[-4:]=='step':
+        if vname=='pracc':
             return vname, vname
+            
+        
+            
 
         return vname+stat, vname+stat
 
