@@ -95,7 +95,7 @@ class VariablesInfo(object):
                      and the name of the monthly target stat
          """
         if vname[-4:]=='step':
-          if statt in ['maxmean','minmean']:
+          if stat in ['maxmean','minmean']:
             return vname, vname + 'mean'
           else:
             return vname, vname + stat
