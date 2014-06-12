@@ -1011,7 +1011,7 @@ def read_list(files_list,var):
   if method=='Dataset':
     varvals={}
 
-    njobs=30
+    njobs=10
     nlen = len(files_list)/njobs #time step block length
     a=len(files_list)-njobs*nlen 
     nt_v=np.zeros(njobs)
