@@ -20,6 +20,8 @@ import numpy as np
 import sys
 import os
 import glob
+import ccrc_utils as cu
+
 
 GCM_names=['MIROC3.2','CCCMA3.1','ECHAM5','CSIRO-MK30']
 RCM_names=['R1','R2','R3']
@@ -42,7 +44,7 @@ for g in xrange(len(GCM_names)):
             %(GCM_names[g],RCM_names[r],Period_names[p],Domain_names[d])
         
         # Retrieving the location where postprocessed data are stored
-        pathin=get_postproc_location(GCM_names[g],RCM_names[r],Period_names[p])[0]
+        pathin=cu.get_postproc_location(GCM_names[g],RCM_names[r],Period_names[p])[0]
 
         # Output files are going to the same directory...
         pathout=pathin
