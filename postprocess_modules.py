@@ -533,9 +533,9 @@ def dictionary2entries(vals1, vals2, vals3):
   return dicjeff
 
 # *************************************************************************************
-def check_pracc_values(varval,date):
-  """ Check for negative values in precipitation variables. If there is one time step
-  with negative values then replace all values of that time stepo by zero values.
+def check_negative_values(var,varval,date):
+  """ Check for negative values in accumulated variables. If there is one time step
+  with negative values then replace all values of that time stepo by zero values (precip) or the previous value (evap and potevp).
   A message error is written in the log file. Also an error message is displayed at 
   the end of the log file.
 
@@ -543,7 +543,7 @@ def check_pracc_values(varval,date):
   Output: error message or nothing
   Author: Alejanro Di Luca, Daniel Argueso
   Created: 21/11/2013
-  Last Modification: 21/11/2013
+  Last Modification: 30/06/2014
 
   """
   print '\n', ' CHECKING FOR NEGATIVE VALUES IN THE PRECIPITATION FIELD ','\n'
@@ -560,7 +560,10 @@ def check_pracc_values(varval,date):
     last_tstep=-1
     for tstep in itemindex[0]:
       if tstep!=last_tstep:
-        varval[tstep]=0
+        if var == "pracc":
+          varval[tstep]=0
+        elif var in ['potevp','evspsbl']:
+          varval[tstep]=varval[tstep-1]
         error_dates.append(date[tstep].strftime("%Y-%m-%d %H:%M:%S"))
         last_tstep=tstep
 
