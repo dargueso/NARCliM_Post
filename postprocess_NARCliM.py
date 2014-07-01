@@ -183,8 +183,8 @@ for filet in file_type:
           error_msg.append(pm.check_zeros_values(varval,date,gvars,filet))
           
         # CHECK PRECIPITATION VALUES
-        if var=='pracc':
-          error_msg.append(pm.check_pracc_values(varval,date))
+        if var in ['pracc','potevp','evspsbl']:
+          error_msg.append(pm.check_negative_values(var,varval,date))
   
         # INFO NEEDED TO WRITE THE OUTPUT NETCDF
         netcdf_info=[file_out, var, varatt, time_bounds]

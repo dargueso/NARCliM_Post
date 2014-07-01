@@ -315,10 +315,14 @@ def compute_sst(varvals,time,gvars):
     
 def compute_potevp(varvals,time,gvars):
     """Method to compute surface potential evaporation flux
-       The original variable was accumulated throughout the simulation. Accumulation must be removed.
-       potevp_in: accumulated surface potential evaporation. Including the timestep previous to the first one in this period [W/m-2]\
-       We convert the units from [W/m-2] to [kg m-2 s-1]: multiply the mean rate by the total number of seconds (3*3600) and 
-       divide by the latent heat of vaporization. I assume that the mean temperature is about 20 C.
+
+       The original variable (POTEVP) was accumulated every 3 hours and has units of m. 
+       The units in the original wrfout says W/m2 but this is WRONG based on looking at the 
+	code and the magnitude of the values obtained assuming W/m2.
+
+       Convert the units from [m] to [kg m-2 s-1]: multiply by the density of water and divide by
+	the total number of seconds in the averaged period (3*3600).
+
        time: list of times corresponding to potevp 1st dimension
        ---
        potevp_out: Potential evaporation flux [kg m-2 s-1]
@@ -336,7 +340,7 @@ def compute_potevp(varvals,time,gvars):
     #Calculating difference between each timestep to remove the accumulation
     #Divided by the number of seconds in each timestep to calculate the flux
     potevp_out=np.zeros((potevp_in.shape[0]-1,)+potevp_in.shape[1:],dtype=np.float64)
-    potevp_out[:,:,:]=np.diff(potevp_in,axis=0)*tseconds/pm.function_latentheat(293.)
+    potevp_out[:,:,:]=np.diff(potevp_in,axis=0)*pm.const.rhowater/tseconds
     
     return potevp_out,atts
 
