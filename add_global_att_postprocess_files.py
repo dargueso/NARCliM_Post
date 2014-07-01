@@ -32,7 +32,7 @@ Domain_names=['d01','d02']
 gatt_name=['Conventions','Comments_on_Conventions','version']
 gatt_value={'Conventions':'CF-1.6',\
               'Comments_on_Conventions':'Some variables do not strictly follow CF-1.6 conventions (e.g., precipitation is given as an accumulated quantity rather than as a flux quantity).',\
-'version':'2.0'}
+'version':'2.1'}
 
 
 for g in xrange(len(GCM_names)):
@@ -71,6 +71,9 @@ for g in xrange(len(GCM_names)):
                 # Check if the attribute already exists
                 if np.any(np.asarray(globatt.keys())==gatt)==False:
                   setattr(fout,gatt,gatt_value[gatt])   
-              
+                else:
+                  if globatt[gatt]!=gatt_value[gatt]:
+                    setattr(fout,gatt,gatt_value[gatt])   
+
               fout.close()
 
