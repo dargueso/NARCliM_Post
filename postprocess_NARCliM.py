@@ -182,8 +182,8 @@ for filet in file_type:
         if filet=='wrfxtrm' or filet=='wrfdly':
           error_msg.append(pm.check_zeros_values(varval,date,gvars,filet))
           
-        # CHECK PRECIPITATION VALUES
-        if var in ['pracc','potevp','evspsbl']:
+        # CHECK NEGATIVE VALUES
+        if var in ['pracc']:
           error_msg.append(pm.check_negative_values(var,varval,date))
   
         # INFO NEEDED TO WRITE THE OUTPUT NETCDF

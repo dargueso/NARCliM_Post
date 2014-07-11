@@ -156,6 +156,7 @@ def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list,time_s
   if per_f<gvars.eyear:
     
     nextfile_name='%s%s_%s_%s-01-01_00:00:00' %(gvars.pathin,filet,gvars.domain,per_f+1)
+    print '%s%s_%s_%s-01-01_00:00:00' %(gvars.pathin,filet,gvars.domain,per_f+1)
     #Take last file of the list
     lastmonth_date=os.path.getmtime(files_list[-1])
     nextmonth_date=os.path.getmtime(nextfile_name)
@@ -164,20 +165,22 @@ def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list,time_s
     if nextmonth_date<lastmonth_date:
       discont=True
       
-      aux_date_var=get_dates(per_f+1,1,1,0,0,time_step,1)
+      aux_date_var=get_dates(per_f+1,1,1,0,0,time_step,7)
       aux_wrfvar=(getwrfname(var)[0]).split('-')
       aux_varvals={}
       for wrfv in aux_wrfvar:
         nextfile=nc.Dataset(nextfile_name)
-        aux_varvals[wrfv]=np.squeeze(nextfile.variables[wrfv][:2,:,:])
+        aux_varvals[wrfv]=np.squeeze(nextfile.variables[wrfv][:8,:,:])
       
-      
-  
+
       compute=getattr(comv,'compute_'+var)
+
       auxvarval, auxvaratt=compute(aux_varvals,aux_date_var,gvars)
-      varval[-1,:,:]=(varval[-2,:,:]+auxvarval)/2.
+
+      varval[-1,:,:]=(varval[-2,:,:]+auxvarval[0,:,:])/2.
+
       
-      print "Discontinuity between %s-%s and %s-%s " %(ye,mo,ye,mo-1)
+      print "Discontinuity between %s-%s and %s-%s " %(per_f+1,"01",per_f,"12")
 
   if discont==True:
     print "A discontinuity was found. The above months were rerun and there are possible mismatches at the end of these month"
@@ -560,12 +563,11 @@ def check_negative_values(var,varval,date):
     last_tstep=-1
     for tstep in itemindex[0]:
       if tstep!=last_tstep:
-        if var == "pracc":
-          varval[tstep]=0
-        elif var in ['potevp','evspsbl']:
-          varval[tstep]=varval[tstep-1]
+        varval[tstep]=0
         error_dates.append(date[tstep].strftime("%Y-%m-%d %H:%M:%S"))
         last_tstep=tstep
+        
+
 
     print "\n", ' ===>>> A TOTAL OF ',np.sum(itemindex),\
         '  NEGATIVE VALUES WERE FOUND IN THE PRECIPITATION FIELD IN ',\
