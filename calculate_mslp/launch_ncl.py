@@ -24,8 +24,8 @@ import postprocess_modules as pm
 
 # Loop parameters
 domain='d02'
-GCM_names=['MIROC3.2','CCCMA3.1','ECHAM5','CSIRO-MK30']
-GCM_out={'MIROC3.2':'MIROC3.2','CCCMA3.1':'WRF_CCCMA','ECHAM5':'WRF_ECHAM5','CSIRO-MK30':'WRF_MK30'}
+GCM_names=['MIROC3.2','CCCMA3.1','ECHAM5','CSIRO-MK3.0']
+GCM_out={'MIROC3.2':'MIROC3.2','CCCMA3.1':'WRF_CCCMA','ECHAM5':'WRF_ECHAM5','CSIRO-MK3.0':'WRF_MK30'}
 RCM_names=['R1','R2','R3']
 Periods=['1990-2010','2060-2080']
 runcommand='./runncl.sh calculate_mslp_arguments.ncl '

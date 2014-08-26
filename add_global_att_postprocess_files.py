@@ -23,7 +23,7 @@ import glob
 import ccrc_utils as cu
 
 
-GCM_names=['MIROC3.2','CCCMA3.1','ECHAM5','CSIRO-MK30']
+GCM_names=['MIROC3.2','CCCMA3.1','ECHAM5','CSIRO-MK3.0']
 RCM_names=['R1','R2','R3']
 Period_names=['1990-2010','2020-2040','2060-2080']
 Domain_names=['d01','d02']
