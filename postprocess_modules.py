@@ -148,6 +148,14 @@ def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list,time_s
             value_index=date.index(dt.datetime(ye,mo,1,00,00,00))
             varval[value_index-1,:,:]=(varval[value_index-2,:,:]+varval[value_index,:,:])/2.
             print "Discontinuity between %s-%s and %s-%s " %(ye,mo,ye,mo-1)
+          
+          
+          # MANUAL FIXING OF DISCONTINUITIES
+          # if (ye==2026) & (mo==10):
+          #   discont=True
+          #   value_index=date.index(dt.datetime(ye,mo,1,00,00,00))
+          #   varval[value_index-1,:,:]=(varval[value_index-2,:,:]+varval[value_index,:,:])/2.
+          #   print "Discontinuity between %s-%s and %s-%s " %(ye,mo,ye,mo-1)
             
       except ValueError:
         continue
@@ -160,7 +168,9 @@ def check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list,time_s
     #Take last file of the list
     lastmonth_date=os.path.getmtime(files_list[-1])
     nextmonth_date=os.path.getmtime(nextfile_name)
-
+    
+    
+    
     #If a month was rerun after the next month
     if nextmonth_date<lastmonth_date:
       discont=True
