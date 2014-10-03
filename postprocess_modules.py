@@ -368,6 +368,7 @@ def read_schemes(filename):
   schemes['cu_physics']=filein.CU_PHYSICS
   schemes['bl_pbl_physics']=filein.BL_PBL_PHYSICS
   schemes['ra_sw_physics']=filein.RA_SW_PHYSICS
+  schemes['mp_physics']=filein.MP_PHYSICS
   schemes['sf_surface_physics']=filein.SF_SURFACE_PHYSICS
   
   fileschemes=open("./WRF_schemes.inf")
