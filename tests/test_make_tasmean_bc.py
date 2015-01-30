@@ -24,10 +24,10 @@ _tasmaxmean.nc"
       self.NNRP_d02_tmax = self.testfiledir + "NNRP_d02_tasmaxmean.nc"
       
    # Tear-down. This is done after each test
-   def TearDown(self):
-      pass
-      subprocess.call(["rm", "out.nc"])
-      subprocess.call(["rm", "outfile.nc"])
+   def tearDown(self):
+      print "Running TearDown"
+      subprocess.call(["rm", "bcor/out.nc"])
+      subprocess.call(["rm", "bcor/outfile.nc"])
 
    # Failure cases
    def test1_except(self):
@@ -42,11 +42,11 @@ _tasmaxmean.nc"
 
    # TEST WITH CCCMA3.1 R1 2020-2029 d01
    def test2(self):
-      make_tasmean_bc(self.CCCMA_d01_tmin, self.CCCMA_d01_tmax, "out.nc", 
+      make_tasmean_bc(self.CCCMA_d01_tmin, self.CCCMA_d01_tmax, "bcor/out.nc", 
          "John Smith", "email@email.email")
 
       # Test coordinates
-      ncnew    = ncdf.Dataset("out.nc")
+      ncnew    = ncdf.Dataset("bcor/out.nc")
       ncminold = ncdf.Dataset(self.CCCMA_d01_tmin)
 
       # Latitudes
@@ -162,11 +162,11 @@ _tasmaxmean.nc"
 
    # TEST WITH NNRP R3 1950-1959 d02
    def test3(self):
-      make_tasmean_bc(self.NNRP_d02_tmin, self.NNRP_d02_tmax, "outfile.nc", 
+      make_tasmean_bc(self.NNRP_d02_tmin, self.NNRP_d02_tmax,"bcor/outfile.nc", 
          "Roman Olson", "privatemail@email.privatemail")
 
       # Test coordinates
-      ncnew    = ncdf.Dataset("outfile.nc")
+      ncnew    = ncdf.Dataset("bcor/outfile.nc")
       ncminold = ncdf.Dataset(self.NNRP_d02_tmin)
 
       # Latitudes
