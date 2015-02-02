@@ -40,7 +40,8 @@
 
 # HISTORY
 # ========
-# Jan 29, 2014 => Written by Roman Olson, UNSW.
+# Jan 29 2014 => Written by Roman Olson, UNSW.
+# Feb 02 2015 => Improved variable and global comments fields.
 # ======================================================================
 def make_tasmean_bc(minfile, maxfile, outfile, author, email):
 
@@ -79,6 +80,9 @@ def make_tasmean_bc(minfile, maxfile, outfile, author, email):
    minfile_glob["contact"] = email 
    minfile_glob["history"] = "\n On " + datetime.utcnow().isoformat(' ') + \
    " UTC created mean temperature from tasminmean_bc and tasmaxmean_bc." 
+   minfile_glob.update(comments="tasmean_bc is not an original NARCliM\
+ variable. It is calculated as an average of tasminmean_bc and tasmaxmean_bc\
+ variables")
 
    # Tasmean
    tasmean_attrs = dict(minfileobj.variables["tasminmean_bc"].__dict__.copy())
@@ -86,6 +90,9 @@ def make_tasmean_bc(minfile, maxfile, outfile, author, email):
    tasmean_attrs.update(history="Created by averaging tasminmean_bc (monthly\
  mean minimum temperature) and tasmaxmean_bc (monthly mean maximum temperature)\
 .")
+   tasmean_attrs.update(comment="tasmean_bc is not an original NARCliM\
+ variable. It is calculated as an average of tasminmean_bc and tasmaxmean_bc\
+ variables")
    attrs = {"tasmean_bc":tasmean_attrs, "global":minfile_glob} 
 
    # WRITE OUTPUT FILE

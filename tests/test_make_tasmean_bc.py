@@ -1,5 +1,5 @@
 # To test make_tasmean_bc
-# Jan 29, 2014. Roman Olson, CCRC, UNSW.
+# Feb 02, 2015. Roman Olson, CCRC, UNSW.
 
 import pdb
 import unittest
@@ -120,7 +120,11 @@ _tasmaxmean.nc"
  tasminmean_bc (monthly\
  mean minimum temperature) and tasmaxmean_bc (monthly mean maximum temperature)\
 ."
+      datacomok = datadictnew["comment"] == "tasmean_bc is not an original\
+ NARCliM variable. It is calculated as an average of tasminmean_bc and\
+ tasmaxmean_bc variables"
       datadictnew.pop("history")
+      datadictnew.pop("comment")
       # Can't compare fill values since they have changed type
       self.assertEqual(datadictnew["_FillValue"], 1e+20)
       datadictnew.pop("_FillValue")
@@ -128,7 +132,7 @@ _tasmaxmean.nc"
       dataattrsok = dict(datadictnew) == dict(datadictold)
 
       dataok = datafillok and datashapeok and datatypeok and datadtypeok \
- and dataattrshistok and dataattrsok
+ and dataattrshistok and datacomok and dataattrsok
       self.assertTrue(dataok) 
 
       
@@ -140,7 +144,11 @@ _tasmaxmean.nc"
  from tasminmean_bc and tasmaxmean_bc.")
       authorok = globnew["author"] == "John Smith"
       emailok  = globnew["contact"] == "email@email.email"
-
+      comok = globnew["comments"] == "tasmean_bc is not an original NARCliM\
+ variable. It is calculated as an average of tasminmean_bc and tasmaxmean_bc\
+ variables"
+      globnew.pop("comments")
+      globold.pop("comments")
       globnew.pop("history")
       globold.pop("history")
       globnew.pop("author")
@@ -155,7 +163,7 @@ _tasmaxmean.nc"
       globold.pop("date")
 
       globattrsok = dict(globnew) == dict(globold)
-      globok = histok and authorok and emailok and globattrsok
+      globok = histok and authorok and emailok and comok and globattrsok
 
       self.assertTrue(globok) #!+
      
@@ -247,6 +255,10 @@ _tasmaxmean.nc"
  tasminmean_bc (monthly\
  mean minimum temperature) and tasmaxmean_bc (monthly mean maximum temperature)\
 ."
+      datacomok = datadictnew["comment"] == "tasmean_bc is not an original\
+ NARCliM variable. It is calculated as an average of tasminmean_bc and\
+ tasmaxmean_bc variables"
+      datadictnew.pop("comment")
       datadictnew.pop("history")
       # Can't compare fill values since they have changed type
       self.assertEqual(datadictnew["_FillValue"], 1e+20)
@@ -255,7 +267,7 @@ _tasmaxmean.nc"
       dataattrsok = dict(datadictnew) == dict(datadictold)
 
       dataok = datafillok and datashapeok and datatypeok and datadtypeok \
- and dataattrshistok and dataattrsok
+ and dataattrshistok and datacomok and dataattrsok
       self.assertTrue(dataok) #!+
 
       
@@ -267,7 +279,12 @@ _tasmaxmean.nc"
  from tasminmean_bc and tasmaxmean_bc.")
       authorok = globnew["author"] == "Roman Olson"
       emailok  = globnew["contact"] == "privatemail@email.privatemail"
-
+      comok = globnew["comments"] == "tasmean_bc is not an original NARCliM\
+ variable. It is calculated as an average of tasminmean_bc and tasmaxmean_bc\
+ variables"
+ 
+      globnew.pop("comments")
+      globold.pop("comments")
       globnew.pop("history")
       globold.pop("history")
       globnew.pop("author")
@@ -282,7 +299,7 @@ _tasmaxmean.nc"
       globold.pop("date")
 
       globattrsok = dict(globnew) == dict(globold)
-      globok = histok and authorok and emailok and globattrsok
+      globok = histok and authorok and emailok and comok and globattrsok
 
       self.assertTrue(globok) #!+
 
