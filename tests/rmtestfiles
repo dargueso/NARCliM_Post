@@ -1,0 +1,20 @@
+#!/bin/bash
+# PURPOSE
+# =========
+# To remove *nc bias-corrected files recusrively in this directory. 
+# Only works from
+# the directory where the script is located, to prevent problems.
+
+# STATUS
+# =======
+# Working
+
+# WARNING! This program removes files!!!
+
+# Feb 02 2015 => Written by Roman Olson, CCRC, UNSW
+
+if [ "$PWD" == "${NARCLIM_SCRIPTS}NARCliM_postprocess/tests" ]; then
+   echo "Right directory!!!"
+   rm $(find bcor/ -name '*.nc')
+fi
+
