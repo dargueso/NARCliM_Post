@@ -65,7 +65,8 @@ print 'The output messages are written to %s' %(logfile)
 sys.stdout = open('%s' %(logfile), "w") 
 
 #***********************************************
-# LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc) 
+# LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc)
+# This loop generates high-frequency output
 for filet in file_type:
   ctime_filet=pm.checkpoint(0)
   print '\n','\n', '*************************************'
