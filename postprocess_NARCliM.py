@@ -66,7 +66,8 @@ sys.stdout = open('%s' %(logfile), "w")
 
 #***********************************************
 # LOOP OVER ALL TYPES OF WRF FILE OUTPUTS (i.e., wrfhrly, wrfout, etc)
-# This loop generates high-frequency output
+# This loop generates high-frequency output, with the same time
+# resolution as the original files.
 for filet in file_type:
   ctime_filet=pm.checkpoint(0)
   print '\n','\n', '*************************************'

@@ -262,8 +262,8 @@ def compute_evspsbl(varvals,time,gvars):
 
 def compute_mrso(varvals,time,gvars):
     """Method to compute the total soil moisture content
-       Integrates through all soil layers
-       smstot: total soil moisture in each layer [m3 m-3]
+       Uses SMSTOT which is moisture integrated through all layers
+       smstot: total soil moisture  [m3 m-3]
        dzs: thickness of each soil layer [m]
        time: list of times corresponding to smstot 1st dimension
        ---
