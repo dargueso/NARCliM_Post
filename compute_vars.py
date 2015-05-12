@@ -50,7 +50,55 @@ def compute_ps(varvals,time,gvars):
     ps=psfc    
     return ps,atts
 
+def compute_prcacc(varvals,time,gvars):
+    """Method to compute convective precipitation
+    The original variable was accumulated throughout the simulation. Accumulation must be removed (But it is not converted to flux)
+    rainc: convective rainfall accumulated. Including the timestep previous to the first one in this period [kg m-2]
+    time: list of times corresponding to rainc 1st dimension
+    ---
+    prcacc: accumulated convective rainfall (prcacc) since last record [kg m-2]
+    atts: attributes of the output variable to be used in the output netcdf
+    """
+    
+    rainc=varvals['RAINC'][:]
+    rainc=np.ma.masked_equal(rainc,pm.const.missingval)
+    if (len(time)!=rainc.shape[0]-1):
+        sys.exit('ERROR in compute_prcacc: The lenght of time variable does not correspond to rainc first dimension')
+    #Generating a dictionary with the output attributes of the variable
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="convective_precipitation_amount",ln="Accumulated convective precipitation",un="Kg m-2",ts="time: point values %s seconds" %(tseconds))
+    
+    #Calculating difference between each timestep to remove the accumulation
+    prcacc=np.zeros((rainc.shape[0]-1,)+rainc.shape[1:],dtype=np.float64)
+    prcacc[:,:,:]=np.diff(rainc,axis=0)
+    prcacc[prcacc>pm.const.missingval]=pm.const.missingval
+    return prcacc,atts
+    
+def compute_prncacc(varvals,time,gvars):
+    """Method to compute non-convective precipitation
+    The original variable was accumulated throughout the simulation. Accumulation must be removed (But it is not converted to flux)
+    rainnc: non-convective rainfall accumulated. Including the timestep previous to the first one in this period [kg m-2]
+    time: list of times corresponding to rainc 1st dimension
+    ---
+    prcacc: accumulated convective rainfall (prcacc) since last record [kg m-2]
+    atts: attributes of the output variable to be used in the output netcdf
+    """
 
+    rainnc=varvals['RAINNC'][:]
+    rainnc=np.ma.masked_equal(rainnc,pm.const.missingval)
+    print len(time), rainnc.shape[0]-1
+    if (len(time)!=rainnc.shape[0]-1):
+        sys.exit('ERROR in compute_prncacc: The lenght of time variable does not correspond to rainnc first dimension')
+    #Generating a dictionary with the output attributes of the variable
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="nonconvective_precipitation_amount",ln="Accumulated non-convective precipitation",un="Kg m-2",ts="time: point values %s seconds" %(tseconds))
+
+    #Calculating difference between each timestep to remove the accumulation
+    prncacc=np.zeros((rainnc.shape[0]-1,)+rainnc.shape[1:],dtype=np.float64)
+    prncacc[:,:,:]=np.diff(rainnc,axis=0)
+    prncacc[prncacc>pm.const.missingval]=pm.const.missingval
+    return prncacc,atts
+    
 def compute_pracc(varvals,time,gvars):
     """Method to compute precipitation
     The original variable was accumulated throughout the simulation. Accumulation must be removed (But it is not converted to flux)

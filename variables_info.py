@@ -6,6 +6,8 @@ class VariablesInfo(object):
         'wrfhrly': {'tas'          :{'D': ('mean','min','max'), 'M': ('mean','min','max', 'minmean', 'maxmean')}, 
                     'wss'          :{'D': ('mean','max'), 'M': ('mean','max')},
                     'pracc'        :{'D': ('acc' ,), 'M': ('acc' ,)}, 
+                    'prcacc'       :{'D': ('acc' ,), 'M': ('acc' ,)},
+                    'prncacc'      :{'D': ('acc' ,), 'M': ('acc' ,)},
                     'ps'           :{'D': ('mean',), 'M': ('mean',)}, 
                     'huss'         :{'D': ('mean',), 'M': ('mean',)}, 
                     'uas'          :{'D': ('mean',), 'M': ('mean',)},  

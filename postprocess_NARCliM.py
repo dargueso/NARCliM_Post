@@ -151,7 +151,7 @@ for filet in file_type:
 
         # ***********************************************
         # ACCUMULATED VARIABLES NEED ONE TIME STEP MORE TO COMPUTE DIFFERENCES
-        if var in ['pracc','potevp','evspsbl']:
+        if var in ['pracc','prcacc','prncacc','potevp','evspsbl']:
 
           # DEFINE TIME BOUNDS FOR ACCUMULATED VARIABLES
           time_bounds=True
@@ -177,7 +177,7 @@ for filet in file_type:
           varval=pm.add_leapdays(varval,date)
         
         # CHECK DISCONTINUITY ISSUES
-        if var in ['pracc','potevp','evspsbl']:
+        if var in ['pracc','prcacc','prncacc','potevp','evspsbl']:
           varval=pm.check_rerundiscontinuity(var,varval,date,per_f,gvars,filet,files_list,time_step)
           
         # CHECK ZEROS IN WRFDLY AND WRFXTRM
@@ -185,7 +185,7 @@ for filet in file_type:
           error_msg.append(pm.check_zeros_values(varval,date,gvars,filet))
           
         # CHECK NEGATIVE VALUES
-        if var in ['pracc']:
+        if var in ['pracc','prcacc','prncacc']:
           error_msg.append(pm.check_negative_values(var,varval,date))
   
         # INFO NEEDED TO WRITE THE OUTPUT NETCDF
