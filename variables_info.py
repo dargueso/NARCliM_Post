@@ -84,8 +84,9 @@ class VariablesInfo(object):
             returns: the name of the source sub daily stat from which to process the variable
                      and the name of the daily target stat
         """
-        if vname=='pracc':
-            return 'pracc','pracc' 
+        if vname in ['pracc','prcacc','prncacc']:
+            return vname,vname 
+            
 
         return vname+stat, vname+stat 
 
