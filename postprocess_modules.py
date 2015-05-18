@@ -888,7 +888,7 @@ def create_dailyfiles(gvars,varname,stat_all, varinfo):
 
       for stat in stat_all:
         ctime_var=checkpoint(0)
-        if varname=='pracc':
+        if varname in ['pracc','prcacc','prncacc']:
           varstat=varname
         else:
           varstat=varname+stat

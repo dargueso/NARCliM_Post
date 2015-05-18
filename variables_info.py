@@ -109,8 +109,8 @@ class VariablesInfo(object):
         if stat == 'minmean':
             return vname + 'min', vname + 'minmean'
 
-        if vname=='pracc':
-            return vname, vname
+        if vname in ['pracc','prcacc','prncacc']:
+            return vname,vname
             
         
             
