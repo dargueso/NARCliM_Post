@@ -84,10 +84,13 @@ for filet in file_type:
   tbounds=file_info['tbounds']
   period=file_info['period']
 
-  # LOOP OVER PERIODS
+  #=============================================================================
+  # HIGH-FREQUENCY LOOP
+  # Computes high-frequency variables, calculates time bounds, performs checks
   # Looping from starting year to last year using a stride equal 
   # to the # of years contained in the postprocessed files
   # e.g. present: from 1990 to 2009 every 5 years (for daily variables)
+  #==============================================================================
   
   for per in np.arange(sper,eper+1,period):
     ctime_year=pm.checkpoint(0)
