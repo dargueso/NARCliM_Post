@@ -37,6 +37,10 @@ prncacc
 # albedo
 # emiss
 # rlus
+# snm
+# snc
+# snw
+# snd
 # pr5maxtstep
 # pr10maxtstep
 # pr20maxtstep

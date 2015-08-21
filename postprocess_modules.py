@@ -342,6 +342,7 @@ def getwrfname(varname):
        'huss':['Q2'], 'hurs':['PSFC-T2-Q2'],'clt':['CLDFRA'],'wss':['U10-V10'], 'sst':['SST'],'rsds':['SWDOWN'], 'rlds':['GLW'],\
        'emiss':['EMISS'], 'albedo':['ALBEDO'], 'hfls':['LH'], 'hfss':['HFX'],'evspsbl':['SFCEVP'],\
        'mrso':['SMSTOT'], 'potevp':['POTEVP'], 'rlus':['TSK-EMISS'],'tasmeantstep':['T2MEAN'],\
+       'snm':['ACSNOM'],'snc':['SNOWC'],'snw':['SNOW'],'snd':['SNOWH'],\
        'tasmintstep':['T2MIN'],'tasmaxtstep':['T2MAX'],'wssmaxtstep':['SPDUV10MAX'], 'pr5maxtstep':['PRMAX5'],\
        'pr10maxtstep':['PRMAX10'],'pr20maxtstep':['PRMAX20'],'pr30maxtstep':['PRMAX30'], 'pr1Hmaxtstep':['PRMAX1H'],\
        'wss5maxtstep':['UV10MAX5'], 'wss10maxtstep':['UV10MAX10'], 'wss20maxtstep':['UV10MAX20'],\

@@ -197,7 +197,7 @@ def compute_clt(varvals,time,gvars):
       sys.exit('ERROR in compute_clt: The lenght of time variable does not correspond to var first dimension')
       
   tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
-  atts=pm.get_varatt(sn="cloud_area_fraction",ln="Total cloud fraction",un="%",ts="time: point values %s seconds" %(tseconds),hg="")
+  atts=pm.get_varatt(sn="cloud_area_fraction",ln="Total cloud fraction",un="%",ts="time: point values %s seconds" %(tseconds))
   
   clt=cldfra*100.
   return wss,atts
@@ -590,6 +590,87 @@ def compute_rlus(varvals,time,gvars):
     rlus=emiss*(pm.const.stefanboltz)*tsk**4
 
     return rlus,atts
+    
+
+def compute_snm(varvals,time,gvars):
+  """Method to compute surface snow melt
+  acsnom: ACSNOM - accumulated snow melt from wrf outputs [kg m-2]
+  time: list of times corresponding to acsnom dimension (-1 because accumulated)
+  ---
+  snm: surface snow melt [kg m-2 s-1]
+  atts: attributes of the output variable to be used in the output netcdf
+  """
+  acsnom=varvals['ACSNOM'][:]
+  acsnom=np.ma.masked_equal(acsnom,pm.const.missingval)
+  if (len(time)!=acsnom.shape[0]-1):
+      sys.exit('ERROR in compute_snm: The lenght of time variable does not correspond to acsnom first dimension')
+  #Generating a dictionary with the output attributes of the variable
+  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  atts=pm.get_varatt(sn="surface_snow_melt_flux",ln="Surface snow melt",un="Kg m-2 s-1",ts="time: point values %s seconds" %(tseconds))
+  
+  #Calculating difference between each timestep to remove the accumulation
+  snm=np.zeros((acsnom.shape[0]-1,)+acsnom.shape[1:],dtype=np.float64)
+  snm[:,:,:]=np.diff(snm,axis=0)/tseconds
+  snm[snm>pm.const.missingval]=pm.const.missingval
+  return snm,atts
+
+def compute_snc(varvals,time,gvars):
+  """Method to compute snow area fraction
+  snowc: SNOWC - flag indicating snow coverage from wrf outputs []
+  time: list of times corresponding to snowc dimension
+  ---
+  snc: snow area fraction [%]
+  atts: attributes of the output variable to be used in the output netcdf
+  """
+  snowc=varvals['SNOWC'][:]
+  snowc=np.ma.masked_equal(snowc,pm.const.missingval)
+  if (len(time)!=snowc.shape[0]-1):
+      sys.exit('ERROR in compute_snc: The lenght of time variable does not correspond to snowc first dimension')
+  #Generating a dictionary with the output attributes of the variable
+  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  atts=pm.get_varatt(sn="surface_snow_area_fraction",ln="Snow area fraction",un="%",ts="time: point values %s seconds" %(tseconds))
+
+  snc[:,:,:]=snowc
+  return snc,atts
+
+def compute_snw(varvals,time,gvars):
+  """Method to compute surface snow amount
+  snow: SNOW - snow water equivalent from wrf outputs [kg m-2]
+  time: list of times corresponding to snowc dimension
+  ---
+  snw: snow area fraction [%]
+  atts: attributes of the output variable to be used in the output netcdf
+  """
+  snow=varvals['SNOW'][:]
+  snow=np.ma.masked_equal(snow,pm.const.missingval)
+  if (len(time)!=snowc.shape[0]-1):
+      sys.exit('ERROR in compute_snw: The lenght of time variable does not correspond to snow first dimension')
+  #Generating a dictionary with the output attributes of the variable
+  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  atts=pm.get_varatt(sn="surface_snow_amount",ln="Surface snow amount",un="kg m-2",ts="time: point values %s seconds" %(tseconds))
+
+  snw[:,:,:]=snow
+  return snw,atts
+
+def compute_snd(varvals,time,gvars):
+  """Method to compute snow depth
+  snowh: SNOWH - physical snowdepth from wrf outputs [m]
+  time: list of times corresponding to snowh dimension
+  ---
+  snd: snow depth [m]
+  atts: attributes of the output variable to be used in the output netcdf
+  """
+  snowh=varvals['SNOWH'][:]
+  snowh=np.ma.masked_equal(snowh,pm.const.missingval)
+  if (len(time)!=snowh.shape[0]-1):
+      sys.exit('ERROR in compute_snd: The lenght of time variable does not correspond to snowh first dimension')
+  #Generating a dictionary with the output attributes of the variable
+  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  atts=pm.get_varatt(sn="surface_snow_thickness",ln="Snow depth",un="m",ts="time: point values %s seconds" %(tseconds))
+
+  snd[:,:,:]=snowh
+  return snd,atts
+    
     
 def compute_tasmeantstep(varvals,time,gvars):
     """Method to compute the daily mean 2-m temperature using all timesteps of the model
