@@ -147,7 +147,61 @@ def compute_huss(varvals,time,gvars):
     huss=q2/(1+q2)
     
     return huss,atts
+    
+def compute_hurs(varvals,time,gvars):
+    """Method to compute relative humidity
+    psfc: psfc from wrf files [Pa]
+    t2: T2 from wrf files [K] 
+    q2: mixing ratio [kg kg-2]
+    time: list of times corresponding to t2 1st dimension
+    ---
+    hurs: relative humidity [%]
+    atts: attributes of the output variable to be used in the output netcdf
+    """
+    psfc=varvals['PSFC'][:]
+    psfc=np.ma.masked_equal(psfc,pm.const.missingval)
+    t2=varvals['T2'][:]
+    t2=np.ma.masked_equal(t2,pm.const.missingval)
+    q2=varvals['Q2'][:]
+    q2=np.ma.masked_equal(q2,pm.const.missingval)
+    
+    if len(time)!=t2.shape[0]:
+        sys.exit('ERROR in compute_hurs: The lenght of time variable does not correspond to var first dimension')
 
+    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    atts=pm.get_varatt(sn="relative_humidity",ln="Near-Surface Relative Humidity",un="%",ts="time: point values %s seconds" %(tseconds),hg="2 m")
+    
+    e = q2*psfc/(100.*(const.epsilon_gamma+q2)) #e in hPA
+    es = np.where(
+        t2-const.tkelvin <=0., 
+        const.es_base_tetens*10.**(((t2-const.tkelvin)*const.es_Atetens_ice)/
+        ((t2-const.tkelvin)+const.es_Btetens_ice)), #ICE
+        const.es_base_tetens*10.**(((t2-const.tkelvin)*const.es_Atetens_vapor)/
+          ((t2-const.tkelvin)+const.es_Btetens_vapor))) #(else) Vapor
+    hurs=(e/es)*100
+    return hurs,atts    
+
+def compute_clt(varvals,time,gvars):
+  """ Method to compute cloud fraction
+      cldfra: CLDFRA from wrf files []
+      time: list of times corresponding to cldfra 1st dimension
+      ---
+      clt: cloud fraction [%]
+      atts: attributes of the output variable to be used in the output netcdf
+  """
+  
+  cldfra=varvals['CLDFRA'][:]
+  cldfra=np.ma.masked_equal(cldfra,pm.const.missingval)
+  
+  if len(time)!=cldfra.shape[0]:
+      sys.exit('ERROR in compute_clt: The lenght of time variable does not correspond to var first dimension')
+      
+  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  atts=pm.get_varatt(sn="cloud_area_fraction",ln="Total cloud fraction",un="%",ts="time: point values %s seconds" %(tseconds),hg="")
+  
+  clt=cldfra*100.
+  return wss,atts
+  
 def compute_wss(varvals,time,gvars):
     """Method to compute wind speed
     u10: zonal wind [m s-1]

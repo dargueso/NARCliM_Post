@@ -339,7 +339,7 @@ def getwrfname(varname):
   """
 
   dic={'tas':['T2'],'pracc':['RAINC-RAINNC'],'prcacc':['RAINC'],'prncacc':['RAINNC'],'ps':['PSFC'], 'uas':['U10-V10'], 'vas':['U10-V10'],\
-       'huss':['Q2'], 'wss':['U10-V10'], 'sst':['SST'],'rsds':['SWDOWN'], 'rlds':['GLW'],\
+       'huss':['Q2'], 'hurs':['PSFC-T2-Q2'],'clt':['CLDFRA'],'wss':['U10-V10'], 'sst':['SST'],'rsds':['SWDOWN'], 'rlds':['GLW'],\
        'emiss':['EMISS'], 'albedo':['ALBEDO'], 'hfls':['LH'], 'hfss':['HFX'],'evspsbl':['SFCEVP'],\
        'mrso':['SMSTOT'], 'potevp':['POTEVP'], 'rlus':['TSK-EMISS'],'tasmeantstep':['T2MEAN'],\
        'tasmintstep':['T2MIN'],'tasmaxtstep':['T2MAX'],'wssmaxtstep':['SPDUV10MAX'], 'pr5maxtstep':['PRMAX5'],\
