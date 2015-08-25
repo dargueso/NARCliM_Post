@@ -22,8 +22,9 @@ def compute_tas(varvals,time,gvars):
     if len(time)!=t2.shape[0]:
         sys.exit('ERROR in compute_tas: The lenght of time variable does not correspond to t2 first dimension')     
     
-    #Generating a dictionary with the output attributes of the variable
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    #Generating a dictionary with the output attributes of the
+    #variable
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="air_temperature",ln="Surface air temperature",un="K",ts="time: point values %s seconds" %(tseconds),hg="2 m")
     
     tas=t2[:]    
@@ -43,8 +44,9 @@ def compute_ps(varvals,time,gvars):
     if len(time)!=psfc.shape[0]:
         sys.exit('ERROR in compute_ps: The lenght of time variable does not correspond to psfc first dimension')     
 
-    #Generating a dictionary with the output attributes of the variable
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    #Generating a dictionary with the output attributes of the
+    #variable
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="surface_air_pressure",ln="surface pressure",un="Pa",ts="time: point values %s seconds" %(tseconds))
     
     ps=psfc    
@@ -64,8 +66,9 @@ def compute_prcacc(varvals,time,gvars):
     rainc=np.ma.masked_equal(rainc,pm.const.missingval)
     if (len(time)!=rainc.shape[0]-1):
         sys.exit('ERROR in compute_prcacc: The lenght of time variable does not correspond to rainc first dimension')
-    #Generating a dictionary with the output attributes of the variable
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    #Generating a dictionary with the output attributes of the
+    #variable
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="convective_precipitation_amount",ln="Accumulated convective precipitation",un="Kg m-2",ts="time: point values %s seconds" %(tseconds))
     
     #Calculating difference between each timestep to remove the accumulation
@@ -90,7 +93,7 @@ def compute_prncacc(varvals,time,gvars):
     if (len(time)!=rainnc.shape[0]-1):
         sys.exit('ERROR in compute_prncacc: The lenght of time variable does not correspond to rainnc first dimension')
     #Generating a dictionary with the output attributes of the variable
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="nonconvective_precipitation_amount",ln="Accumulated non-convective precipitation",un="Kg m-2",ts="time: point values %s seconds" %(tseconds))
 
     #Calculating difference between each timestep to remove the accumulation
@@ -117,8 +120,9 @@ def compute_pracc(varvals,time,gvars):
     if (len(time)!=rainc.shape[0]-1) or (len(time)!=rainnc.shape[0]-1):
         sys.exit('ERROR in compute_pracc: The lenght of time variable does not correspond to rainc or rainnc first dimension')
     
-    #Generating a dictionary with the output attributes of the variable
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    #Generating a dictionary with the output attributes of the
+    #variable
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="precipitation_amount",ln="Accumulated precipitation",un="Kg m-2",ts="time: point values %s seconds" %(tseconds))
 
 
@@ -141,7 +145,7 @@ def compute_huss(varvals,time,gvars):
     if len(time)!=q2.shape[0]:
         sys.exit('ERROR in compute_huss: The lenght of time variable does not correspond to var first dimension')
     
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="specific_humidity",ln="Surface specific humidity",un=" ",ts="time: point values %s seconds" %(tseconds),hg="2 m")
     
     huss=q2/(1+q2)
@@ -168,7 +172,7 @@ def compute_hurs(varvals,time,gvars):
     if len(time)!=t2.shape[0]:
         sys.exit('ERROR in compute_hurs: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="relative_humidity",ln="Near-Surface Relative Humidity",un="%",ts="time: point values %s seconds" %(tseconds),hg="2 m")
     
     e = q2*psfc/(100.*(const.epsilon_gamma+q2)) #e in hPA
@@ -196,7 +200,7 @@ def compute_clt(varvals,time,gvars):
   if len(time)!=cldfra.shape[0]:
       sys.exit('ERROR in compute_clt: The lenght of time variable does not correspond to var first dimension')
       
-  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
   atts=pm.get_varatt(sn="cloud_area_fraction",ln="Total cloud fraction",un="%",ts="time: point values %s seconds" %(tseconds))
   
   clt=cldfra*100.
@@ -218,7 +222,7 @@ def compute_wss(varvals,time,gvars):
     if (len(time)!=u10.shape[0]) or (len(time)!=v10.shape[0]):
         sys.exit('ERROR in compute_wss: The lenght of time variable does not correspond to u10 or v10 first dimension')
     
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="air_velocity",ln="Surface wind speed",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")
     
     #Winds need to be unstagged    
@@ -241,8 +245,8 @@ def compute_nonrotuas(varvals,time,gvars):
     u10=np.ma.masked_equal(u10,pm.const.missingval)
     if len(time)!=u10.shape[0]:
         sys.exit('ERROR in compute_uas: The lenght of time variable does not correspond to uas first dimension')
-        
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))      
     atts=pm.get_varatt(sn="eastward_wind",ln="Eastward near-surface wind (not rotated)",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
     
     # Zonal wind unstagged
@@ -265,7 +269,7 @@ def compute_nonrotvas(varvals,time,gvars):
     if len(time)!=v10.shape[0]:
         sys.exit('ERROR in compute_vas: The lenght of time variable does not correspond to vas first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="northward_wind",ln="Northward near-surface wind (not rotated)",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
 
     # Zonal wind unstagged
@@ -296,8 +300,7 @@ def compute_uas(varvals,time,gvars):
     sina_all=np.tile(sina, (len(time),1,1)) 
     cosa_all=np.tile(cosa, (len(time),1,1))
     
-    
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="eastward_wind",ln="Eastward near-surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
 
     uas = u10[:]*cosa_all[:]-v10[:]*sina_all[:]
@@ -327,7 +330,7 @@ def compute_vas(varvals,time,gvars):
     sina_all=np.tile(sina, (len(time),1,1)) 
     cosa_all=np.tile(cosa, (len(time),1,1)) 
     
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="northward_wind",ln="Northward near-surface wind",un="m s-1",ts="time: point values %s seconds" %(tseconds),hg="10 m")    
 
     vas = v10[:]*cosa_all[:]+u10[:]*sina_all[:]
@@ -351,8 +354,7 @@ def compute_evspsbl(varvals,time,gvars):
     if len(time)!=sfcevp.shape[0]-1:
         sys.exit('ERROR in compute_evspsbl: The lenght of time variable does not correspond to var first dimension')
     
-    
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))    
     atts=pm.get_varatt(sn="water_evaporation_flux",ln="Surface evaporation",un="kg m-2 s-1",ts="time: point values %s seconds" %(tseconds))
     
     #Calculating difference between each timestep to remove the accumulation
@@ -381,8 +383,8 @@ def compute_mrso(varvals,time,gvars):
 
     if len(time)!=smstot.shape[0]:
         sys.exit('ERROR in compute_mrso: The lenght of time variable does not correspond to var first dimension')
-    
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))  
     atts=pm.get_varatt(sn="soil_moisture_content",ln="Total soil moisture content",un="kg m-2",ts="time: point values %s seconds" %(tseconds))
     
     mrso=smstot
@@ -407,7 +409,7 @@ def compute_sst(varvals,time,gvars):
     if len(time)!=sst_in.shape[0]:
         sys.exit('ERROR in compute_sst: The lenght of time variable does not correspond to var first dimension')
     
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="sea_surface_temperature",ln="sea surface temperature",un="K",ts="time: point values %s seconds" %(tseconds)) 
     
     sst_out=sst_in
@@ -436,7 +438,7 @@ def compute_potevp(varvals,time,gvars):
     if len(time)!=potevp_in.shape[0]-1:
         sys.exit('ERROR in compute_potevp: The lenght of time variable does not correspond to var first dimension')    
     
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="water_potential_evaporation_flux",ln="Potential evaporation",un="kg m-2 s-1",ts="time: point values %s seconds" %(tseconds))
     
     #Calculating difference between each timestep to remove the accumulation
@@ -459,7 +461,7 @@ def compute_rsds(varvals,time,gvars):
     if len(time)!=swdown.shape[0]:
         sys.exit('ERROR in compute_rsds: The lenght of time variable does not correspond to var first dimension')
     
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="surface_downwelling_shortwave_flux_in_air",ln="Downward SW surface radiation",un="W m-2",ts="time: point values %s seconds" %(tseconds))
     
     rsds=swdown
@@ -479,7 +481,7 @@ def compute_rlds(varvals,time,gvars):
     if len(time)!=glw.shape[0]:
         sys.exit('ERROR in compute_rlds: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="surface_downwelling_longwave_flux_in_air",ln="Downward LW surface radiation",un="W m-2",ts="time: point values %s seconds" %(tseconds))
 
     rlds=glw
@@ -499,7 +501,7 @@ def compute_hfls(varvals,time,gvars):
     if len(time)!=lh.shape[0]:
         sys.exit('ERROR in compute_hfls: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="surface_upward_latent_heat_flux",ln="Latent heat flux at surface",un="W m-2",ts="time: point values %s seconds" %(tseconds))
 
     hfls=lh
@@ -519,7 +521,7 @@ def compute_hfss(varvals,time,gvars):
     if len(time)!=hfx.shape[0]:
         sys.exit('ERROR in compute_hfss: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="surface_upward_sensible_heat_flux",ln="Heat flux at the surface",un="W m-2",ts="time: point values %s seconds" %(tseconds))
 
     hfss=hfx
@@ -539,7 +541,7 @@ def compute_emiss(varvals,time,gvars):
     if len(time)!=emiss_in.shape[0]:
         sys.exit('ERROR in compute_emiss: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="surface_emissivity",ln="Surface emissivity",un="",ts="time: point values %s seconds" %(tseconds))
 
     emiss_out=emiss_in
@@ -559,7 +561,7 @@ def compute_albedo(varvals,time,gvars):
     if len(time)!=albedo_in.shape[0]:
         sys.exit('ERROR in compute_albedo: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="albedo",ln="Surface albedo",un="",ts="time: point values %s seconds" %(tseconds))
 
     albedo_out=albedo_in
@@ -583,7 +585,7 @@ def compute_rlus(varvals,time,gvars):
     if (len(time)!=tsk.shape[0]) or(len(time)!=emiss.shape[0]) :
         sys.exit('ERROR in compute_rlus: The lenght of time variable does not correspond to emiss or tsk first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="surface_upwelling_longwave_flux_in_air",ln="Upwelling surface LW radiation",un="W m-2",ts="time: point values %s seconds" %(tseconds))
 
     #calculating with net lw radiation using Stefan-Boltzmann
@@ -605,7 +607,7 @@ def compute_snm(varvals,time,gvars):
   if (len(time)!=acsnom.shape[0]-1):
       sys.exit('ERROR in compute_snm: The lenght of time variable does not correspond to acsnom first dimension')
   #Generating a dictionary with the output attributes of the variable
-  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
   atts=pm.get_varatt(sn="surface_snow_melt_flux",ln="Surface snow melt",un="Kg m-2 s-1",ts="time: point values %s seconds" %(tseconds))
   
   #Calculating difference between each timestep to remove the accumulation
@@ -627,7 +629,7 @@ def compute_snc(varvals,time,gvars):
   if (len(time)!=snowc.shape[0]-1):
       sys.exit('ERROR in compute_snc: The lenght of time variable does not correspond to snowc first dimension')
   #Generating a dictionary with the output attributes of the variable
-  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
   atts=pm.get_varatt(sn="surface_snow_area_fraction",ln="Snow area fraction",un="%",ts="time: point values %s seconds" %(tseconds))
 
   snc[:,:,:]=snowc
@@ -646,7 +648,7 @@ def compute_snw(varvals,time,gvars):
   if (len(time)!=snowc.shape[0]-1):
       sys.exit('ERROR in compute_snw: The lenght of time variable does not correspond to snow first dimension')
   #Generating a dictionary with the output attributes of the variable
-  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
   atts=pm.get_varatt(sn="surface_snow_amount",ln="Surface snow amount",un="kg m-2",ts="time: point values %s seconds" %(tseconds))
 
   snw[:,:,:]=snow
@@ -665,7 +667,7 @@ def compute_snd(varvals,time,gvars):
   if (len(time)!=snowh.shape[0]-1):
       sys.exit('ERROR in compute_snd: The lenght of time variable does not correspond to snowh first dimension')
   #Generating a dictionary with the output attributes of the variable
-  tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+  tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
   atts=pm.get_varatt(sn="surface_snow_thickness",ln="Snow depth",un="m",ts="time: point values %s seconds" %(tseconds))
 
   snd[:,:,:]=snowh
@@ -685,7 +687,7 @@ def compute_tasmeantstep(varvals,time,gvars):
     if len(time)!=t2mean.shape[0]:
         sys.exit('ERROR in compute_tasmeantstep: The lenght of time variable does not correspond to var first dimension')
     
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="air_temperature",ln="Mean surface air temperature",un="K",ts="time: mean 24 hour value from point values 60.0 second",hg="2 m")
     
     tasmeantstep=t2mean
@@ -708,7 +710,7 @@ def compute_tasmintstep(varvals,time,gvars):
     if len(time)!=t2min.shape[0]:
         sys.exit('ERROR in compute_tasmintstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="air_temperature",ln="Minimum surface air temperature",un="K",ts="time: min 24 hour value from point values 60.0 second",hg="2 m")
 
     tasmintstep=t2min
@@ -728,7 +730,7 @@ def compute_tasmaxtstep(varvals,time,gvars):
     if len(time)!=t2max.shape[0]:
         sys.exit('ERROR in compute_tasmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="air_temperature",ln="Maximum surface air temperature",un="K",ts="time: max 24 hour value from point values 60.0 second",hg="2 m")
 
     tasmaxtstep=t2max
@@ -748,7 +750,7 @@ def compute_wssmaxtstep(varvals,time,gvars):
     if len(time)!=spduv10max.shape[0]:
         sys.exit('ERROR in compute_wssmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="air_velocity",ln="Max. surface wind speed",un="m s-1",ts="time: maximum 24 hour value from point values 60.0 second")
 
     wssmaxtstep=spduv10max
@@ -768,7 +770,7 @@ def compute_pr5maxtstep(varvals,time,gvars):
     if len(time)!=prmax5.shape[0]:
         sys.exit('ERROR in compute_pr5maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="5max_precipitation_flux",ln="Max. 5-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts="time: maximum 5-minute time-window moving averaged values from point values 60.0 second")
 
     pr5maxtstep=prmax5
@@ -788,7 +790,7 @@ def compute_pr10maxtstep(varvals,time,gvars):
     if len(time)!=prmax10.shape[0]:
         sys.exit('ERROR in compute_pr10maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="10max_precipitation_flux",ln="Max. 10-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts="time: maximum 10-minute time-window moving averaged values from point values 60.0 second")
 
     pr10maxtstep=prmax10
@@ -808,7 +810,7 @@ def compute_pr20maxtstep(varvals,time,gvars):
     if len(time)!=prmax20.shape[0]:
         sys.exit('ERROR in compute_pr20maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="20max_precipitation_flux",ln="Max. 20-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts="time: maximum 20-minute time-window moving averaged values from point values 60.0 second")
 
     pr20maxtstep=prmax20
@@ -828,7 +830,7 @@ def compute_pr30maxtstep(varvals,time,gvars):
     if len(time)!=prmax30.shape[0]:
         sys.exit('ERROR in compute_pr30maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="30max_precipitation_flux",ln="Max. 30-minute time-window moving averaged precipitation rate",un="kg m-2 s-1",ts="time: maximum 30-minute time-window moving averaged values from point values 60.0 second")
 
     pr30maxtstep=prmax30
@@ -849,7 +851,7 @@ def compute_pr1Hmaxtstep(varvals,time,gvars):
     if len(time)!=prmax1H.shape[0]:
         sys.exit('ERROR in compute_pr1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="1Hmax_precipitation_flux",ln="Max. 1-hour time-window moving averaged precipitation rate",un="kg m-2 s-1",ts="time: maximum 1-hour time-window moving averaged values from point values 60.0 second")
 
     pr1Hmaxtstep=prmax1H
@@ -869,7 +871,7 @@ def compute_wss5maxtstep(varvals,time,gvars):
     if len(time)!=uv10max5.shape[0]:
         sys.exit('ERROR in compute_wss5maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="5max_air_velocity",ln="Max. 5-minute time-window moving averaged surface wind speed",un="m s-1",ts="time: maximum 5-minute time-window moving averaged values from point values 60.0 second")
 
     wss5maxtstep=uv10max5
@@ -889,7 +891,7 @@ def compute_wss10maxtstep(varvals,time,gvars):
     if len(time)!=uv10max10.shape[0]:
         sys.exit('ERROR in compute_wss10maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="10max_air_velocity",ln="Max. 10-minute time-window moving averaged surface wind speed",un="m s-1",ts="time: maximum 10-minute time-window moving averaged values from point values 60.0 second")
 
     wss10maxtstep=uv10max10
@@ -909,7 +911,7 @@ def compute_wss20maxtstep(varvals,time,gvars):
     if len(time)!=uv10max20.shape[0]:
         sys.exit('ERROR in compute_wss20maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="20max_air_velocity",ln="Max. 20 minute time-window moving averaged surface wind speed",un="m s-1",ts="time: maximum 20-minute time-window moving averaged values from point values 60.0 second")
 
     wss20maxtstep=uv10max20
@@ -929,7 +931,7 @@ def compute_wss30maxtstep(varvals,time,gvars):
     if len(time)!=uv10max30.shape[0]:
         sys.exit('ERROR in compute_wss30maxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="30max_air_velocity",ln="Max. 30 minute time-window moving averaged surface wind speed",un="m s-1",ts="time: maximum 30-minute time-window moving averaged values from point values 60.0 second")
 
     wss30maxtstep=uv10max30
@@ -949,7 +951,7 @@ def compute_wss1Hmaxtstep(varvals,time,gvars):
     if len(time)!=uv10max1H.shape[0]:
         sys.exit('ERROR in compute_wss1Hmaxtstep: The lenght of time variable does not correspond to var first dimension')
 
-    tseconds=round(((time[-1]-time[0]).total_seconds()/len(time)))
+    tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
     atts=pm.get_varatt(sn="1Hmax_air_velocity",ln="Max. 1-hour time-window moving averaged surface wind speed",un="m s-1",ts="time: maximum 1-hour time-window moving averaged values from point values 60.0 second")
 
     wss1Hmaxtstep=uv10max1H
