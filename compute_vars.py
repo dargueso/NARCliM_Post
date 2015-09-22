@@ -146,7 +146,8 @@ def compute_huss(varvals,time,gvars):
         sys.exit('ERROR in compute_huss: The lenght of time variable does not correspond to var first dimension')
     
     tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
-    atts=pm.get_varatt(sn="specific_humidity",ln="Surface specific humidity",un=" ",ts="time: point values %s seconds" %(tseconds),hg="2 m")
+    atts=pm.get_varatt(sn="specific_humidity",ln="Surface specific humidity",
+       un="kg/kg ",ts="time: point values %s seconds" %(tseconds),hg="2 m")
     
     huss=q2/(1+q2)
     
