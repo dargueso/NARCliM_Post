@@ -205,7 +205,7 @@ def compute_clt(varvals,time,gvars):
   atts=pm.get_varatt(sn="cloud_area_fraction",ln="Total cloud fraction",un="%",ts="time: point values %s seconds" %(tseconds))
   
   clt=cldfra*100.
-  return wss,atts
+  return clt,atts
   
 def compute_wss(varvals,time,gvars):
     """Method to compute wind speed
