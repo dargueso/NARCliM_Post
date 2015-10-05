@@ -667,7 +667,7 @@ def compute_snd(varvals,time,gvars):
   """
   snowh=varvals['SNOWH'][:]
   snowh=np.ma.masked_equal(snowh,pm.const.missingval)
-  if (len(time)!=snowh.shape[0]-1):
+  if (len(time)!=snowh.shape[0]):
       sys.exit('ERROR in compute_snd: The lenght of time variable does not correspond to snowh first dimension')
   #Generating a dictionary with the output attributes of the variable
   tseconds=round(((time[-1]-time[0]).total_seconds()/(len(time)-1)))
