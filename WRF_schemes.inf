@@ -68,7 +68,7 @@ sf_sfclay_physics 4 QNSE Sukoriansky,!Galperin!and!Perov!(2005,!BLM)
 sf_sfclay_physics 5 MYNN Nakanishi!and!Niino!(2006,!BLM)
 sf_sfclay_physics 7 Pleim-Xiu Pleim,!(2006,!JAMC)
 sf_sfclay_physics 10 TEMF Angevine,!Jiang!and!Mauriten!(2010,!MWR)
-sf_sfclay_physics 91 Revised_MM5 Paulson!(1970,!JAM),!Dyer!and!Hicks!(1970,!QJRMS),!and!Webb!(1970,!QJRMS)
+sf_sfclay_physics 91 Old_MM5 Paulson!(1970,!JAM),!Dyer!and!Hicks!(1970,!QJRMS),!and!Webb!(1970,!QJRMS)
 sf_surface_physics 0 None No!scheme!used
 sf_surface_physics 1 5-layer_thermal_diffusion Blackadar!(1976!3-SATDAQ,!1978,!4-SATDAQ),!Zhang!and!Anthes!(1982,!JAM)
 sf_surface_physics 2 Noah Chen!and!Dudhia!(2001,!MWR)

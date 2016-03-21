@@ -3,6 +3,7 @@ Authors: Alejandro Di Luca and Daniel Argueso
 Created: 27 September 2013
 Institution: CCRC, UNSW. (Australia)
 
+NOTE: Updated WRF_schemes.inf is good for v3.6
 
 In order to use the new post-process, please read the following instructions.
 
